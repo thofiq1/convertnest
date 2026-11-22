@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { validateFileSize, isDuplicateFile } from "@/utils/fileValidation";
 
 interface ImageResult {
   file: File;
@@ -20,6 +22,8 @@ export default function ImageCompressor() {
   const [outputFormat, setOutputFormat] = useState<"original" | "jpeg" | "webp">("original");
   const [dragOver, setDragOver] = useState(false);
 
+  const [sizeWarnings, setSizeWarnings] = useState<string[]>([]);
+
   // Cleanup object URLs on unmount
   useEffect(() => {
     return () => {
@@ -30,6 +34,15 @@ export default function ImageCompressor() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Warn before leaving page with active work
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (images.length > 0 || images.some((img) => img.processing)) { e.preventDefault(); }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [images]);
 
   const compressImage = async (file: File, q: number, mw: number, fmt: string): Promise<{ blob: Blob; url: string }> => {
     return new Promise((resolve, reject) => {
@@ -80,7 +93,27 @@ export default function ImageCompressor() {
     if (!files) return;
     const imgFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
 
-    const newImages: ImageResult[] = imgFiles.map((file) => ({
+    const warnings: string[] = [];
+    const accepted: File[] = [];
+    for (const f of imgFiles) {
+      const sizeCheck = validateFileSize(f, "image");
+      if (!sizeCheck.valid) {
+        warnings.push(`${f.name}: ${sizeCheck.error}`);
+        continue;
+      }
+      if (sizeCheck.warning) warnings.push(`${f.name}: ${sizeCheck.warning}`);
+      accepted.push(f);
+    }
+
+    // Filter duplicates
+    const existingFiles = images.map((img) => img.file);
+    const unique = accepted.filter((f) => !isDuplicateFile(f, existingFiles));
+    if (unique.length < accepted.length) {
+      warnings.push(`${accepted.length - unique.length} duplicate file(s) skipped.`);
+    }
+    if (warnings.length > 0) setSizeWarnings(warnings);
+
+    const newImages: ImageResult[] = unique.map((file) => ({
       file,
       previewUrl: URL.createObjectURL(file),
       compressedBlob: null,
@@ -92,11 +125,12 @@ export default function ImageCompressor() {
 
     setImages((prev) => [...prev, ...newImages]);
 
-    for (let i = 0; i < imgFiles.length; i++) {
-      const { blob, url } = await compressImage(imgFiles[i], quality, maxWidth, outputFormat);
+    for (let i = 0; i < unique.length; i++) {
+      const currentFile = unique[i];
+      const { blob, url } = await compressImage(currentFile, quality, maxWidth, outputFormat);
       setImages((prev) => {
         const updated = [...prev];
-        const idx = updated.findIndex((r) => r.file === imgFiles[i]);
+        const idx = updated.findIndex((r) => r.file === currentFile);
         if (idx >= 0) {
           updated[idx] = {
             ...updated[idx],
@@ -171,10 +205,20 @@ export default function ImageCompressor() {
   const completedCount = images.filter((img) => img.compressedBlob).length;
 
   return (
+    <ErrorBoundary>
     <ToolLayout
       title="Image Compressor"
       description="Compress images to reduce file size. Adjust quality, resize, and convert formats — all in your browser."
     >
+      {sizeWarnings.length > 0 && (
+        <div style={{
+          padding: "0.75rem 1rem", marginBottom: "1rem",
+          background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.3)",
+          borderRadius: "0.5rem", fontSize: "0.85rem", color: "#b45309",
+        }}>
+          {sizeWarnings.map((w, i) => <div key={i}>⚠ {w}</div>)}
+        </div>
+      )}
       <div
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
@@ -198,7 +242,7 @@ export default function ImageCompressor() {
       {images.length > 0 && (
         <div style={{ marginTop: "1.5rem" }}>
           <div style={{
-            display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem", marginBottom: "1rem",
+            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.75rem", marginBottom: "1rem",
             padding: "1rem", background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.5rem",
           }}>
             <div>
@@ -238,10 +282,32 @@ export default function ImageCompressor() {
             </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-            <button onClick={recompressAll} className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
-              Re-compress with new settings
-            </button>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              <button onClick={recompressAll} className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
+                Re-compress with new settings
+              </button>
+              <button
+                onClick={() => {
+                  const input = document.createElement("input");
+                  input.type = "file"; input.accept = "image/*"; input.multiple = true;
+                  input.onchange = () => handleFiles(input.files); input.click();
+                }}
+                className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
+                + Add More
+              </button>
+              <button
+                onClick={() => {
+                  images.forEach((img) => {
+                    if (img.previewUrl) URL.revokeObjectURL(img.previewUrl);
+                    if (img.compressedUrl) URL.revokeObjectURL(img.compressedUrl);
+                  });
+                  setImages([]);
+                }}
+                className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem", color: "#ef4444" }}>
+                Clear All
+              </button>
+            </div>
             {completedCount > 0 && totalOriginal > 0 && (
               <div style={{ fontSize: "0.85rem", textAlign: "right" }}>
                 <span style={{ color: "var(--muted)" }}>{formatSize(totalOriginal)} → </span>
@@ -323,5 +389,6 @@ export default function ImageCompressor() {
         </p>
       </section>
     </ToolLayout>
+    </ErrorBoundary>
   );
 }

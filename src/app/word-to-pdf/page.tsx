@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { validateFileSize } from "@/utils/fileValidation";
 
 export default function WordToPDF() {
   const [file, setFile] = useState<File | null>(null);
@@ -11,7 +13,17 @@ export default function WordToPDF() {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [fontSize, setFontSize] = useState(12);
   const [dragOver, setDragOver] = useState(false);
+  const [sizeWarning, setSizeWarning] = useState("");
   const previewRef = useRef<HTMLDivElement>(null);
+
+  // Warn before leaving page with active work
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (file || processing || converting) { e.preventDefault(); }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [file, processing, converting]);
 
   const handleFile = useCallback(async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -20,6 +32,14 @@ export default function WordToPDF() {
       alert("Please select a .docx file");
       return;
     }
+
+    const sizeCheck = validateFileSize(f, "word");
+    if (!sizeCheck.valid) {
+      alert(sizeCheck.error);
+      return;
+    }
+    setSizeWarning(sizeCheck.warning || "");
+
     setFile(f);
     setProcessing(true);
     setHtmlContent("");
@@ -98,10 +118,20 @@ export default function WordToPDF() {
   };
 
   return (
+    <ErrorBoundary>
     <ToolLayout
       title="Word to PDF"
       description="Convert Word documents (.docx) to PDF. Preview your document before converting."
     >
+      {sizeWarning && (
+        <div style={{
+          padding: "0.75rem 1rem", marginBottom: "1rem",
+          background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.3)",
+          borderRadius: "0.5rem", fontSize: "0.85rem", color: "#b45309",
+        }}>
+          ⚠ {sizeWarning}
+        </div>
+      )}
       {!file ? (
         <div
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -217,5 +247,6 @@ export default function WordToPDF() {
         </p>
       </section>
     </ToolLayout>
+    </ErrorBoundary>
   );
 }

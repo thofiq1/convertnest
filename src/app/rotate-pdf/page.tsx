@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { validateFileSize } from "@/utils/fileValidation";
 
 interface PageInfo {
   pageNum: number;
@@ -43,17 +45,34 @@ export default function RotatePDF() {
         pageInfos.push({ pageNum: i, thumbnailUrl: url, rotation: 0 });
       }
       setPages(pageInfos);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error loading PDF:", err);
-      alert("Error loading PDF. Please try another file.");
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
+        alert("This PDF is password-protected. Please remove the password first.");
+      } else {
+        alert("Error loading PDF. Please try another file.");
+      }
     }
     setLoading(false);
   }, []);
+
+  // Warn before leaving with unsaved work
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (file || processing) { e.preventDefault(); }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [file, processing]);
 
   const handleFile = useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return;
     const f = files[0];
     if (f.type !== "application/pdf") return;
+    const validation = validateFileSize(f, "pdf");
+    if (!validation.valid) { alert(validation.error); return; }
+    if (validation.warning) alert(validation.warning);
     setFile(f);
     loadPages(f);
   }, [loadPages]);
@@ -100,9 +119,14 @@ export default function RotatePDF() {
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes as BlobPart], { type: "application/pdf" });
       setResultUrl(URL.createObjectURL(blob));
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Rotation error:", err);
-      alert("Error rotating PDF. Please try again.");
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
+        alert("This PDF is password-protected. Please remove the password first.");
+      } else {
+        alert("Error rotating PDF. Please try again.");
+      }
     }
     setProcessing(false);
   };

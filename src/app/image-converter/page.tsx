@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { validateFileSize, isDuplicateFile } from "@/utils/fileValidation";
 
 interface ConvertedImage {
   file: File;
@@ -19,6 +21,8 @@ export default function ImageConverter() {
   const [quality, setQuality] = useState(92);
   const [dragOver, setDragOver] = useState(false);
 
+  const [sizeWarnings, setSizeWarnings] = useState<string[]>([]);
+
   // Cleanup object URLs on unmount
   useEffect(() => {
     return () => {
@@ -29,6 +33,15 @@ export default function ImageConverter() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Warn before leaving page with active work
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (images.length > 0 || images.some((img) => img.processing)) { e.preventDefault(); }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [images]);
 
   const convertImage = async (file: File, fmt: string, q: number): Promise<{ blob: Blob; url: string }> => {
     return new Promise((resolve, reject) => {
@@ -75,7 +88,26 @@ export default function ImageConverter() {
     if (!files) return;
     const imgFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
 
-    const newImages: ConvertedImage[] = imgFiles.map((file) => ({
+    const warnings: string[] = [];
+    const accepted: File[] = [];
+    for (const f of imgFiles) {
+      const sizeCheck = validateFileSize(f, "image");
+      if (!sizeCheck.valid) {
+        warnings.push(`${f.name}: ${sizeCheck.error}`);
+        continue;
+      }
+      if (sizeCheck.warning) warnings.push(`${f.name}: ${sizeCheck.warning}`);
+      accepted.push(f);
+    }
+
+    const existingFiles = images.map((img) => img.file);
+    const unique = accepted.filter((f) => !isDuplicateFile(f, existingFiles));
+    if (unique.length < accepted.length) {
+      warnings.push(`${accepted.length - unique.length} duplicate file(s) skipped.`);
+    }
+    if (warnings.length > 0) setSizeWarnings(warnings);
+
+    const newImages: ConvertedImage[] = unique.map((file) => ({
       file,
       previewUrl: URL.createObjectURL(file),
       convertedBlob: null,
@@ -87,7 +119,7 @@ export default function ImageConverter() {
 
     setImages((prev) => [...prev, ...newImages]);
 
-    for (const imgFile of imgFiles) {
+    for (const imgFile of unique) {
       const { blob, url } = await convertImage(imgFile, outputFormat, quality);
       setImages((prev) => {
         const updated = [...prev];
@@ -157,10 +189,20 @@ export default function ImageConverter() {
   const completedCount = images.filter((img) => img.convertedBlob).length;
 
   return (
+    <ErrorBoundary>
     <ToolLayout
       title="Image Converter"
       description="Convert images between JPG, PNG, WebP, and BMP formats. Batch convert with quality control."
     >
+      {sizeWarnings.length > 0 && (
+        <div style={{
+          padding: "0.75rem 1rem", marginBottom: "1rem",
+          background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.3)",
+          borderRadius: "0.5rem", fontSize: "0.85rem", color: "#b45309",
+        }}>
+          {sizeWarnings.map((w, i) => <div key={i}>⚠ {w}</div>)}
+        </div>
+      )}
       <div
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
@@ -220,17 +262,30 @@ export default function ImageConverter() {
             )}
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-            <button onClick={reconvertAll} className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
-              Re-convert with new settings
-            </button>
-            <button onClick={() => {
-              const input = document.createElement("input");
-              input.type = "file"; input.accept = "image/*"; input.multiple = true;
-              input.onchange = () => handleFiles(input.files); input.click();
-            }} className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
-              + Add More
-            </button>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              <button onClick={reconvertAll} className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
+                Re-convert with new settings
+              </button>
+              <button onClick={() => {
+                const input = document.createElement("input");
+                input.type = "file"; input.accept = "image/*"; input.multiple = true;
+                input.onchange = () => handleFiles(input.files); input.click();
+              }} className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
+                + Add More
+              </button>
+              <button
+                onClick={() => {
+                  images.forEach((img) => {
+                    if (img.previewUrl) URL.revokeObjectURL(img.previewUrl);
+                    if (img.convertedUrl) URL.revokeObjectURL(img.convertedUrl);
+                  });
+                  setImages([]);
+                }}
+                className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem", color: "#ef4444" }}>
+                Clear All
+              </button>
+            </div>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "1rem" }}>
@@ -302,5 +357,6 @@ export default function ImageConverter() {
         </p>
       </section>
     </ToolLayout>
+    </ErrorBoundary>
   );
 }

@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { validateFileSize, isDuplicateFile } from "@/utils/fileValidation";
 
 type QualityPreset = "maximum" | "high" | "medium" | "low";
 
@@ -35,12 +37,43 @@ export default function CompressPDF() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Warn before leaving with unsaved work
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (files.length > 0 || processing) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [files, processing]);
+
+  const [sizeWarnings, setSizeWarnings] = useState<string[]>([]);
+
   const handleFiles = useCallback((newFiles: FileList | null) => {
     if (!newFiles) return;
     const pdfFiles = Array.from(newFiles).filter(
       (f) => f.type === "application/pdf"
     );
-    setFiles((prev) => [...prev, ...pdfFiles]);
+    const warnings: string[] = [];
+    const accepted: File[] = [];
+
+    for (const f of pdfFiles) {
+      const validation = validateFileSize(f, "pdf");
+      if (!validation.valid) {
+        alert(validation.error);
+        continue;
+      }
+      if (validation.warning) warnings.push(validation.warning);
+      accepted.push(f);
+    }
+
+    if (warnings.length > 0) setSizeWarnings(warnings);
+    setFiles((prev) => {
+      // Duplicate detection
+      const unique = accepted.filter((f) => !isDuplicateFile(f, prev));
+      return [...prev, ...unique];
+    });
     setResults([]);
   }, []);
 
@@ -94,8 +127,13 @@ export default function CompressPDF() {
             originalSize: file.size,
             compressedSize: blob.size,
           });
-        } catch {
-          alert(`Could not compress ${file.name}. The file may be corrupted or password-protected.`);
+        } catch (fallbackErr: unknown) {
+          const msg = fallbackErr instanceof Error ? fallbackErr.message : "";
+          if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
+            alert(`"${file.name}" is password-protected. Please remove the password before compressing.`);
+          } else {
+            alert(`Could not compress "${file.name}". The file may be corrupted or unsupported.`);
+          }
         }
       }
     }
@@ -105,6 +143,7 @@ export default function CompressPDF() {
   };
 
   return (
+    <ErrorBoundary fallbackMessage="The PDF compressor encountered an error. Please refresh and try again.">
     <ToolLayout
       title="Compress PDF"
       description="Reduce PDF file size by up to 70% while maintaining quality. Choose your compression level for the perfect balance."
@@ -184,8 +223,45 @@ export default function CompressPDF() {
       </div>
 
       {/* File List */}
+      {sizeWarnings.length > 0 && (
+        <div style={{
+          marginTop: "1rem", padding: "0.75rem 1rem",
+          background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.3)",
+          borderRadius: "0.5rem", fontSize: "0.8rem",
+        }}>
+          <p style={{ fontWeight: 600, marginBottom: "0.3rem", color: "#b45309" }}>⚠ Large File Warning</p>
+          {sizeWarnings.map((w, i) => <p key={i} style={{ color: "var(--muted)", margin: "0.2rem 0" }}>{w}</p>)}
+        </div>
+      )}
+
       {files.length > 0 && (
         <div style={{ marginTop: "1.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+            <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
+              {files.length} file{files.length !== 1 ? "s" : ""}
+            </p>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                onClick={() => {
+                  const input = document.createElement("input");
+                  input.type = "file"; input.accept = ".pdf"; input.multiple = true;
+                  input.onchange = () => handleFiles(input.files); input.click();
+                }}
+                className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
+                + Add More
+              </button>
+              <button
+                onClick={() => {
+                  results.forEach((r) => URL.revokeObjectURL(r.url));
+                  setFiles([]);
+                  setResults([]);
+                }}
+                className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem", color: "#ef4444" }}>
+                Clear All
+              </button>
+            </div>
+          </div>
+
           {files.map((file, i) => (
             <div
               key={i}
@@ -251,6 +327,35 @@ export default function CompressPDF() {
       {/* Results */}
       {results.length > 0 && (
         <div style={{ marginTop: "1.5rem" }}>
+          {/* Total compression summary */}
+          {results.length > 0 && (() => {
+            const totalOriginal = results.reduce((s, r) => s + r.originalSize, 0);
+            const totalCompressed = results.reduce((s, r) => s + r.compressedSize, 0);
+            const totalReduction = totalOriginal > 0 ? ((1 - totalCompressed / totalOriginal) * 100) : 0;
+            const totalSaved = totalOriginal - totalCompressed;
+            return (
+              <div style={{
+                padding: "1rem 1.25rem", marginBottom: "1rem", borderRadius: "0.75rem",
+                background: totalReduction > 5 ? "rgba(34, 197, 94, 0.08)" : "var(--card-bg)",
+                border: `1px solid ${totalReduction > 5 ? "rgba(34, 197, 94, 0.3)" : "var(--card-border)"}`,
+                display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem",
+              }}>
+                <div>
+                  <span style={{ fontSize: "1.5rem", fontWeight: 800, color: totalReduction > 5 ? "#22c55e" : "var(--foreground)" }}>
+                    {totalReduction > 0 ? `${totalReduction.toFixed(1)}%` : "0%"}
+                  </span>
+                  <span style={{ fontSize: "0.9rem", color: "var(--muted)", marginLeft: "0.5rem" }}>
+                    total reduction
+                  </span>
+                </div>
+                <div style={{ fontSize: "0.85rem", color: "var(--muted)", textAlign: "right" }}>
+                  {formatSize(totalOriginal)} → {formatSize(totalCompressed)}
+                  {totalSaved > 0 && <span style={{ color: "#22c55e", marginLeft: "0.5rem" }}>({formatSize(totalSaved)} saved)</span>}
+                </div>
+              </div>
+            );
+          })()}
+
           {results.map((r, i) => {
             const reduction = ((1 - r.compressedSize / r.originalSize) * 100);
             const saved = r.originalSize - r.compressedSize;
@@ -338,6 +443,7 @@ export default function CompressPDF() {
         </p>
       </section>
     </ToolLayout>
+    </ErrorBoundary>
   );
 }
 

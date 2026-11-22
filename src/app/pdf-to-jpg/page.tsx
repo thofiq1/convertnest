@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { validateFileSize } from "@/utils/fileValidation";
 
 interface ConvertedPage {
   pageNum: number;
@@ -32,10 +34,29 @@ export default function PDFtoJPG() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Warn before leaving page with active work
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (file || processing) { e.preventDefault(); }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [file, processing]);
+
+  const [sizeWarning, setSizeWarning] = useState("");
+
   const handleFile = useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return;
     const f = files[0];
     if (f.type !== "application/pdf") return;
+
+    const sizeCheck = validateFileSize(f, "pdf");
+    if (!sizeCheck.valid) {
+      alert(sizeCheck.error);
+      return;
+    }
+    setSizeWarning(sizeCheck.warning || "");
+
     setFile(f);
     setConvertedPages([]);
     // Count pages
@@ -45,7 +66,15 @@ export default function PDFtoJPG() {
       const ab = await f.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
       setTotalPages(pdf.numPages);
-    })();
+    })().catch((err) => {
+      const msg = err instanceof Error ? err.message.toLowerCase() : "";
+      if (msg.includes("encrypt") || msg.includes("password")) {
+        alert("This PDF is password-protected. Please remove the password and try again.");
+      } else {
+        alert("Error reading PDF file. Please try another file.");
+      }
+      setFile(null);
+    });
   }, []);
 
   const parseRange = (input: string, total: number): number[] => {
@@ -112,7 +141,12 @@ export default function PDFtoJPG() {
       setProgress("");
     } catch (err) {
       console.error("Conversion error:", err);
-      alert("Error converting PDF. Please try again.");
+      const msg = err instanceof Error ? err.message.toLowerCase() : "";
+      if (msg.includes("encrypt") || msg.includes("password")) {
+        alert("This PDF is password-protected. Please remove the password and try again.");
+      } else {
+        alert("Error converting PDF. Please try again.");
+      }
     }
     setProcessing(false);
   };
@@ -155,10 +189,20 @@ export default function PDFtoJPG() {
   };
 
   return (
+    <ErrorBoundary>
     <ToolLayout
       title="PDF to JPG / PNG"
       description="Convert PDF pages to high-quality JPG or PNG images. Choose resolution, quality, and page range."
     >
+      {sizeWarning && (
+        <div style={{
+          padding: "0.75rem 1rem", marginBottom: "1rem",
+          background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.3)",
+          borderRadius: "0.5rem", fontSize: "0.85rem", color: "#b45309",
+        }}>
+          ⚠ {sizeWarning}
+        </div>
+      )}
       {!file ? (
         <div
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -337,5 +381,6 @@ export default function PDFtoJPG() {
         </p>
       </section>
     </ToolLayout>
+    </ErrorBoundary>
   );
 }

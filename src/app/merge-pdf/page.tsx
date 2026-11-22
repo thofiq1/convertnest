@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { validateFileSize, isDuplicateFile } from "@/utils/fileValidation";
 
 interface PdfFileEntry {
   file: File;
@@ -40,23 +42,42 @@ export default function MergePDF() {
     }
   };
 
+  // Warn before leaving with unsaved work
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (entries.length > 0 || processing) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [entries, processing]);
+
   const handleFiles = useCallback(async (newFiles: FileList | null) => {
     if (!newFiles) return;
     const pdfFiles = Array.from(newFiles).filter((f) => f.type === "application/pdf");
     setResultUrl(null);
 
-    const newEntries: PdfFileEntry[] = pdfFiles.map((file) => ({
-      file,
-      thumbnailUrl: null,
-      pageCount: 0,
-    }));
+    // Validate file sizes and filter duplicates
+    const accepted: File[] = [];
+    for (const f of pdfFiles) {
+      const validation = validateFileSize(f, "pdf");
+      if (!validation.valid) { alert(validation.error); continue; }
+      if (validation.warning) alert(validation.warning);
+      accepted.push(f);
+    }
+
+    const newEntries: PdfFileEntry[] = accepted
+      .filter((f) => !isDuplicateFile(f, entries.map((e) => e.file)))
+      .map((file) => ({ file, thumbnailUrl: null, pageCount: 0 }));
     setEntries((prev) => [...prev, ...newEntries]);
 
-    for (let i = 0; i < pdfFiles.length; i++) {
-      const { url, pages } = await generateThumbnail(pdfFiles[i]);
+    const addedFiles = newEntries.map((e) => e.file);
+    for (let i = 0; i < addedFiles.length; i++) {
+      const { url, pages } = await generateThumbnail(addedFiles[i]);
       setEntries((prev) => {
         const updated = [...prev];
-        const idx = updated.findIndex((e) => e.file === pdfFiles[i]);
+        const idx = updated.findIndex((e) => e.file === addedFiles[i]);
         if (idx >= 0) {
           updated[idx] = { ...updated[idx], thumbnailUrl: url, pageCount: pages };
         }
@@ -105,9 +126,14 @@ export default function MergePDF() {
       const mergedBytes = await mergedPdf.save();
       const blob = new Blob([mergedBytes as BlobPart], { type: "application/pdf" });
       setResultUrl(URL.createObjectURL(blob));
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Merge error:", err);
-      alert("Error merging PDFs. Please check your files and try again.");
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
+        alert("One or more PDFs are password-protected. Please remove passwords before merging.");
+      } else {
+        alert("Error merging PDFs. Please check your files and try again.");
+      }
     }
     setProcessing(false);
   };
@@ -133,6 +159,7 @@ export default function MergePDF() {
     : "merged.pdf";
 
   return (
+    <ErrorBoundary fallbackMessage="The PDF merger encountered an error. Please refresh and try again.">
     <ToolLayout
       title="Merge PDF"
       description="Combine multiple PDF files into one. Drag to reorder pages before merging — completely free."
@@ -165,18 +192,30 @@ export default function MergePDF() {
               {totalPages > 0 && ` · ${totalPages} pages`}
               {" · "}{formatSize(totalSize)} total
             </p>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                const input = document.createElement("input");
-                input.type = "file"; input.accept = ".pdf"; input.multiple = true;
-                input.onchange = () => handleFiles(input.files); input.click();
-              }}
-              className="btn-secondary"
-              style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}
-            >
-              + Add More
-            </button>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const input = document.createElement("input");
+                  input.type = "file"; input.accept = ".pdf"; input.multiple = true;
+                  input.onchange = () => handleFiles(input.files); input.click();
+                }}
+                className="btn-secondary"
+                style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}
+              >
+                + Add More
+              </button>
+              <button
+                onClick={() => {
+                  entries.forEach((e) => { if (e.thumbnailUrl) URL.revokeObjectURL(e.thumbnailUrl); });
+                  setEntries([]);
+                }}
+                className="btn-secondary"
+                style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem", color: "#ef4444" }}
+              >
+                Clear All
+              </button>
+            </div>
           </div>
 
           <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginBottom: "0.5rem" }}>
@@ -262,5 +301,6 @@ export default function MergePDF() {
         </p>
       </section>
     </ToolLayout>
+    </ErrorBoundary>
   );
 }

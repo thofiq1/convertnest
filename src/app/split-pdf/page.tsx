@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { validateFileSize } from "@/utils/fileValidation";
 
 interface PageInfo {
   pageNum: number;
@@ -45,17 +47,34 @@ export default function SplitPDF() {
         pageInfos.push({ pageNum: i, thumbnailUrl: url, selected: false });
       }
       setPages(pageInfos);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error loading PDF:", err);
-      alert("Error loading PDF. Please try another file.");
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
+        alert("This PDF is password-protected. Please remove the password first.");
+      } else {
+        alert("Error loading PDF. Please try another file.");
+      }
     }
     setLoading(false);
   }, []);
+
+  // Warn before leaving with unsaved work
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (file || processing) { e.preventDefault(); }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [file, processing]);
 
   const handleFile = useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return;
     const f = files[0];
     if (f.type !== "application/pdf") return;
+    const validation = validateFileSize(f, "pdf");
+    if (!validation.valid) { alert(validation.error); return; }
+    if (validation.warning) alert(validation.warning);
     setFile(f);
     loadPages(f);
   }, [loadPages]);
@@ -127,9 +146,14 @@ export default function SplitPDF() {
       const pdfBytes = await newPdf.save();
       const blob = new Blob([pdfBytes as BlobPart], { type: "application/pdf" });
       setResultUrl(URL.createObjectURL(blob));
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Split error:", err);
-      alert("Error splitting PDF. Please try again.");
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
+        alert("This PDF is password-protected. Please remove the password first.");
+      } else {
+        alert("Error splitting PDF. Please try again.");
+      }
     }
     setProcessing(false);
   };
@@ -156,9 +180,14 @@ export default function SplitPDF() {
 
       const zipBlob = await zip.generateAsync({ type: "blob" });
       setResultUrl(URL.createObjectURL(zipBlob));
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Split all error:", err);
-      alert("Error splitting pages. Please try again.");
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
+        alert("This PDF is password-protected. Please remove the password first.");
+      } else {
+        alert("Error splitting pages. Please try again.");
+      }
     }
     setProcessing(false);
   };
@@ -176,6 +205,7 @@ export default function SplitPDF() {
   }, []);
 
   return (
+    <ErrorBoundary fallbackMessage="The PDF splitter encountered an error. Please refresh and try again.">
     <ToolLayout
       title="Split PDF"
       description="Extract specific pages or split every page into a separate PDF. Visual page selector included."
@@ -344,5 +374,6 @@ export default function SplitPDF() {
         </p>
       </section>
     </ToolLayout>
+    </ErrorBoundary>
   );
 }

@@ -88,6 +88,9 @@ export default function Header() {
           <Link href="/about" style={{ color: "var(--muted)", textDecoration: "none", fontWeight: 500, transition: "color 0.2s" }}>
             About
           </Link>
+          <Link href="/contact" style={{ color: "var(--muted)", textDecoration: "none", fontWeight: 500, transition: "color 0.2s" }}>
+            Contact
+          </Link>
         </nav>
 
         {/* Mobile hamburger */}
@@ -139,6 +142,9 @@ export default function Header() {
           </Link>
           <Link href="/about" onClick={() => setMenuOpen(false)} style={{ display: "block", padding: "0.5rem 0", color: "var(--muted)", textDecoration: "none", fontSize: "0.9rem" }}>
             About
+          </Link>
+          <Link href="/contact" onClick={() => setMenuOpen(false)} style={{ display: "block", padding: "0.5rem 0", color: "var(--muted)", textDecoration: "none", fontSize: "0.9rem" }}>
+            Contact
           </Link>
         </div>
       )}

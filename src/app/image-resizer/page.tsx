@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { validateFileSize, isDuplicateFile } from "@/utils/fileValidation";
 
 interface ResizedImage {
   file: File;
@@ -36,6 +38,8 @@ export default function ImageResizer() {
   const [quality, setQuality] = useState(92);
   const [dragOver, setDragOver] = useState(false);
 
+  const [sizeWarnings, setSizeWarnings] = useState<string[]>([]);
+
   // Cleanup Object URLs on unmount
   useEffect(() => {
     return () => {
@@ -46,6 +50,15 @@ export default function ImageResizer() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Warn before leaving page with active work
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (images.length > 0 || images.some((img) => img.processing)) { e.preventDefault(); }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [images]);
 
   const resizeImage = async (
     file: File, targetW: number, targetH: number, fmt: string, q: number
@@ -126,8 +139,27 @@ export default function ImageResizer() {
     if (!files) return;
     const imgFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
 
+    const warnings: string[] = [];
+    const accepted: File[] = [];
+    for (const f of imgFiles) {
+      const sizeCheck = validateFileSize(f, "image");
+      if (!sizeCheck.valid) {
+        warnings.push(`${f.name}: ${sizeCheck.error}`);
+        continue;
+      }
+      if (sizeCheck.warning) warnings.push(`${f.name}: ${sizeCheck.warning}`);
+      accepted.push(f);
+    }
+
+    const existingFiles = images.map((img) => img.file);
+    const unique = accepted.filter((f) => !isDuplicateFile(f, existingFiles));
+    if (unique.length < accepted.length) {
+      warnings.push(`${accepted.length - unique.length} duplicate file(s) skipped.`);
+    }
+    if (warnings.length > 0) setSizeWarnings(warnings);
+
     const newImages: ResizedImage[] = [];
-    for (const file of imgFiles) {
+    for (const file of unique) {
       const url = URL.createObjectURL(file);
       const dims = await new Promise<{ w: number; h: number }>((resolve, reject) => {
         const img = new Image();
@@ -210,10 +242,20 @@ export default function ImageResizer() {
   const completedCount = images.filter((img) => img.resizedBlob).length;
 
   return (
+    <ErrorBoundary>
     <ToolLayout
       title="Image Resizer"
       description="Resize images to exact dimensions, by percentage, or social media presets. Batch resize supported."
     >
+      {sizeWarnings.length > 0 && (
+        <div style={{
+          padding: "0.75rem 1rem", marginBottom: "1rem",
+          background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.3)",
+          borderRadius: "0.5rem", fontSize: "0.85rem", color: "#b45309",
+        }}>
+          {sizeWarnings.map((w, i) => <div key={i}>⚠ {w}</div>)}
+        </div>
+      )}
       <div
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
@@ -260,7 +302,7 @@ export default function ImageResizer() {
             borderRadius: "0.5rem", marginBottom: "1rem",
           }}>
             {mode === "exact" && (
-              <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end" }}>
+              <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end", flexWrap: "wrap" }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.3rem" }}>Width (px)</label>
                   <input type="number" value={width} onChange={(e) => {
@@ -353,6 +395,35 @@ export default function ImageResizer() {
             </div>
           </div>
 
+          {/* Action buttons */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              <button
+                onClick={() => {
+                  const input = document.createElement("input");
+                  input.type = "file"; input.accept = "image/*"; input.multiple = true;
+                  input.onchange = () => handleFiles(input.files); input.click();
+                }}
+                className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
+                + Add More
+              </button>
+              <button
+                onClick={() => {
+                  images.forEach((img) => {
+                    if (img.previewUrl) URL.revokeObjectURL(img.previewUrl);
+                    if (img.resizedUrl) URL.revokeObjectURL(img.resizedUrl);
+                  });
+                  setImages([]);
+                }}
+                className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem", color: "#ef4444" }}>
+                Clear All
+              </button>
+            </div>
+            <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
+              {images.length} image{images.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+
           {/* File list */}
           <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "1rem" }}>
             {images.map((img, i) => {
@@ -424,5 +495,6 @@ export default function ImageResizer() {
         </p>
       </section>
     </ToolLayout>
+    </ErrorBoundary>
   );
 }

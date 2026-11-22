@@ -51,8 +51,12 @@ export default function AboutPage() {
         </h2>
         <p>
           Have a suggestion for a new tool? Found a bug? We&apos;d love to hear from you at{" "}
-          <a href="mailto:hello@convertnest.com" style={{ color: "var(--primary)" }}>
-            hello@convertnest.com
+          <a href="mailto:thofiq57@gmail.com" style={{ color: "var(--primary)" }}>
+            thofiq57@gmail.com
+          </a>{" "}
+          or visit our{" "}
+          <a href="/contact" style={{ color: "var(--primary)" }}>
+            Contact page
           </a>
           .
         </p>
