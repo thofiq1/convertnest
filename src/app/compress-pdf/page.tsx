@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 
 type QualityPreset = "maximum" | "high" | "medium" | "low";
@@ -26,6 +26,14 @@ export default function CompressPDF() {
   const [progress, setProgress] = useState({ current: 0, total: 0, stage: "" });
   const [preset, setPreset] = useState<QualityPreset>("medium");
   const [dragOver, setDragOver] = useState(false);
+
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      results.forEach((r) => URL.revokeObjectURL(r.url));
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFiles = useCallback((newFiles: FileList | null) => {
     if (!newFiles) return;
@@ -370,7 +378,8 @@ async function compressPdfFile(
     const canvas = document.createElement("canvas");
     canvas.width = scaledViewport.width;
     canvas.height = scaledViewport.height;
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) { throw new Error("Canvas not supported by your browser"); }
 
     await page.render({
       canvasContext: ctx,
@@ -379,8 +388,8 @@ async function compressPdfFile(
     }).promise;
 
     // Convert canvas to JPEG blob at target quality
-    const blob = await new Promise<Blob>((resolve) =>
-      canvas.toBlob((b) => resolve(b!), "image/jpeg", quality)
+    const blob = await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob((b) => { if (!b) { reject(new Error("Failed to compress page image")); return; } resolve(b); }, "image/jpeg", quality)
     );
     const jpegBytes = new Uint8Array(await blob.arrayBuffer());
 

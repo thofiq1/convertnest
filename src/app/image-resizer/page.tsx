@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 
 interface ResizedImage {
@@ -36,17 +36,37 @@ export default function ImageResizer() {
   const [quality, setQuality] = useState(92);
   const [dragOver, setDragOver] = useState(false);
 
+  // Cleanup Object URLs on unmount
+  useEffect(() => {
+    return () => {
+      images.forEach((img) => {
+        if (img.previewUrl) URL.revokeObjectURL(img.previewUrl);
+        if (img.resizedUrl) URL.revokeObjectURL(img.resizedUrl);
+      });
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const resizeImage = async (
     file: File, targetW: number, targetH: number, fmt: string, q: number
   ): Promise<{ blob: Blob; url: string }> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error(`Failed to load image: ${file.name}`));
+      };
       img.onload = () => {
         const canvas = document.createElement("canvas");
         canvas.width = targetW;
         canvas.height = targetH;
-        const ctx = canvas.getContext("2d")!;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          URL.revokeObjectURL(url);
+          reject(new Error("Canvas not supported by your browser"));
+          return;
+        }
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
 
@@ -67,11 +87,16 @@ export default function ImageResizer() {
         const qualityParam = mimeType === "image/png" ? undefined : q / 100;
         canvas.toBlob(
           (blob) => {
-            const resUrl = URL.createObjectURL(blob!);
+            if (!blob) {
+              URL.revokeObjectURL(url);
+              reject(new Error("Failed to resize image"));
+              return;
+            }
+            const resUrl = URL.createObjectURL(blob);
             canvas.width = 0;
             canvas.height = 0;
             URL.revokeObjectURL(url);
-            resolve({ blob: blob!, url: resUrl });
+            resolve({ blob, url: resUrl });
           },
           mimeType,
           qualityParam
@@ -104,9 +129,10 @@ export default function ImageResizer() {
     const newImages: ResizedImage[] = [];
     for (const file of imgFiles) {
       const url = URL.createObjectURL(file);
-      const dims = await new Promise<{ w: number; h: number }>((resolve) => {
+      const dims = await new Promise<{ w: number; h: number }>((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve({ w: img.width, h: img.height });
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`Failed to load image: ${file.name}`)); };
         img.src = url;
       });
       newImages.push({
@@ -174,9 +200,11 @@ export default function ImageResizer() {
     });
     const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
+    const zipUrl = URL.createObjectURL(blob);
+    a.href = zipUrl;
     a.download = "resized-images.zip";
     a.click();
+    URL.revokeObjectURL(zipUrl);
   };
 
   const completedCount = images.filter((img) => img.resizedBlob).length;

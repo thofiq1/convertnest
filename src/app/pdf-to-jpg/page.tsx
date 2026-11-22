@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 
 interface ConvertedPage {
   pageNum: number;
-  dataUrl: string;
+  url: string;
   blob: Blob;
 }
 
@@ -21,6 +21,16 @@ export default function PDFtoJPG() {
   const [rangeMode, setRangeMode] = useState<"all" | "range">("all");
   const [rangeInput, setRangeInput] = useState("");
   const [dragOver, setDragOver] = useState(false);
+
+  // Cleanup Object URLs on unmount
+  useEffect(() => {
+    return () => {
+      convertedPages.forEach((cp) => {
+        if (cp.url) URL.revokeObjectURL(cp.url);
+      });
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFile = useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -82,16 +92,20 @@ export default function PDFtoJPG() {
         const canvas = document.createElement("canvas");
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-        const ctx = canvas.getContext("2d")!;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Canvas not supported by your browser");
         await page.render({ canvasContext: ctx, viewport, canvas }).promise;
 
-        const blob = await new Promise<Blob>((resolve) =>
-          canvas.toBlob((b) => resolve(b!), mimeType, format === "jpeg" ? quality : undefined)
+        const blob = await new Promise<Blob>((resolve, reject) =>
+          canvas.toBlob((b) => {
+            if (!b) { reject(new Error(`Failed to convert page ${pageNum}`)); return; }
+            resolve(b);
+          }, mimeType, format === "jpeg" ? quality : undefined)
         );
-        const dataUrl = canvas.toDataURL(mimeType, format === "jpeg" ? quality : undefined);
+        const url = URL.createObjectURL(blob);
         canvas.width = 0;
         canvas.height = 0;
-        results.push({ pageNum, dataUrl, blob });
+        results.push({ pageNum, url, blob });
       }
 
       setConvertedPages(results);
@@ -106,7 +120,7 @@ export default function PDFtoJPG() {
   const downloadAll = async () => {
     if (convertedPages.length === 1) {
       const a = document.createElement("a");
-      a.href = convertedPages[0].dataUrl;
+      a.href = convertedPages[0].url;
       a.download = `${file!.name.replace(/\.pdf$/i, "")}_page_${convertedPages[0].pageNum}.${format === "png" ? "png" : "jpg"}`;
       a.click();
       return;
@@ -120,14 +134,16 @@ export default function PDFtoJPG() {
     });
     const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
+    const zipUrl = URL.createObjectURL(blob);
+    a.href = zipUrl;
     a.download = `${baseName}-images.zip`;
     a.click();
+    URL.revokeObjectURL(zipUrl);
   };
 
   const downloadSingle = (cp: ConvertedPage) => {
     const a = document.createElement("a");
-    a.href = cp.dataUrl;
+    a.href = cp.url;
     a.download = `${file!.name.replace(/\.pdf$/i, "")}_page_${cp.pageNum}.${format === "png" ? "png" : "jpg"}`;
     a.click();
   };
@@ -289,7 +305,7 @@ export default function PDFtoJPG() {
                     border: "1px solid var(--card-border)", background: "var(--card-bg)",
                   }}>
                     <div style={{ width: "100%", aspectRatio: "3/4", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8f8f8" }}>
-                      <img src={cp.dataUrl} alt={`Page ${cp.pageNum}`} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                      <img src={cp.url} alt={`Page ${cp.pageNum}`} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                     </div>
                     <div style={{ padding: "0.4rem 0.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div>

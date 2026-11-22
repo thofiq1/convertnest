@@ -36,7 +36,8 @@ export default function SplitPDF() {
         const canvas = document.createElement("canvas");
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-        const ctx = canvas.getContext("2d")!;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) continue;
         await page.render({ canvasContext: ctx, viewport, canvas }).promise;
         const url = canvas.toDataURL("image/jpeg", 0.6);
         canvas.width = 0;
@@ -166,7 +167,13 @@ export default function SplitPDF() {
   const downloadName = file
     ? file.name.replace(/\.pdf$/i, "") + (mode === "visual" ? "-extracted.pdf" : "-split.pdf")
     : "split.pdf";
-  const isZipDownload = mode === "visual" ? false : false;
+  // Result URL cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (resultUrl) URL.revokeObjectURL(resultUrl);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <ToolLayout

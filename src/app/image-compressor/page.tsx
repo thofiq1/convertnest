@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 
 interface ImageResult {
@@ -20,10 +20,22 @@ export default function ImageCompressor() {
   const [outputFormat, setOutputFormat] = useState<"original" | "jpeg" | "webp">("original");
   const [dragOver, setDragOver] = useState(false);
 
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      images.forEach((img) => {
+        if (img.previewUrl) URL.revokeObjectURL(img.previewUrl);
+        if (img.compressedUrl) URL.revokeObjectURL(img.compressedUrl);
+      });
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const compressImage = async (file: File, q: number, mw: number, fmt: string): Promise<{ blob: Blob; url: string }> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`Failed to load image: ${file.name}`)); };
       img.onload = () => {
         let w = img.width;
         let h = img.height;
@@ -34,7 +46,8 @@ export default function ImageCompressor() {
         const canvas = document.createElement("canvas");
         canvas.width = w;
         canvas.height = h;
-        const ctx = canvas.getContext("2d")!;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { URL.revokeObjectURL(url); reject(new Error("Canvas not supported")); return; }
         ctx.drawImage(img, 0, 0, w, h);
 
         let mimeType: string;
@@ -48,11 +61,12 @@ export default function ImageCompressor() {
 
         canvas.toBlob(
           (blob) => {
-            const compUrl = URL.createObjectURL(blob!);
+            if (!blob) { URL.revokeObjectURL(url); reject(new Error("Failed to compress image")); return; }
+            const compUrl = URL.createObjectURL(blob);
             canvas.width = 0;
             canvas.height = 0;
             URL.revokeObjectURL(url);
-            resolve({ blob: blob!, url: compUrl });
+            resolve({ blob, url: compUrl });
           },
           mimeType,
           qualityParam

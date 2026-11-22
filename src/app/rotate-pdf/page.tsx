@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 
 interface PageInfo {
@@ -34,7 +34,8 @@ export default function RotatePDF() {
         const canvas = document.createElement("canvas");
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-        const ctx = canvas.getContext("2d")!;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) continue;
         await page.render({ canvasContext: ctx, viewport, canvas }).promise;
         const url = canvas.toDataURL("image/jpeg", 0.6);
         canvas.width = 0;
@@ -105,6 +106,14 @@ export default function RotatePDF() {
     }
     setProcessing(false);
   };
+
+  // Cleanup result URL on unmount
+  useEffect(() => {
+    return () => {
+      if (resultUrl) URL.revokeObjectURL(resultUrl);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const hasChanges = pages.some((p) => p.rotation !== 0);
   const changedCount = pages.filter((p) => p.rotation !== 0).length;

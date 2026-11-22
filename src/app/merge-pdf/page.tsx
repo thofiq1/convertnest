@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 
 interface PdfFileEntry {
@@ -28,7 +28,8 @@ export default function MergePDF() {
       const canvas = document.createElement("canvas");
       canvas.width = viewport.width;
       canvas.height = viewport.height;
-      const ctx = canvas.getContext("2d")!;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return { url: "", pages: 0 };
       await page.render({ canvasContext: ctx, viewport, canvas }).promise;
       const url = canvas.toDataURL("image/jpeg", 0.7);
       canvas.width = 0;
@@ -116,6 +117,14 @@ export default function MergePDF() {
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
     return (bytes / (1024 * 1024)).toFixed(2) + " MB";
   };
+
+  // Cleanup result URL on unmount
+  useEffect(() => {
+    return () => {
+      if (resultUrl) URL.revokeObjectURL(resultUrl);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const totalSize = entries.reduce((sum, e) => sum + e.file.size, 0);
   const totalPages = entries.reduce((sum, e) => sum + e.pageCount, 0);

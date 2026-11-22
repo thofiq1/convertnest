@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 
 interface ConvertedImage {
@@ -19,15 +19,28 @@ export default function ImageConverter() {
   const [quality, setQuality] = useState(92);
   const [dragOver, setDragOver] = useState(false);
 
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      images.forEach((img) => {
+        if (img.previewUrl) URL.revokeObjectURL(img.previewUrl);
+        if (img.convertedUrl) URL.revokeObjectURL(img.convertedUrl);
+      });
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const convertImage = async (file: File, fmt: string, q: number): Promise<{ blob: Blob; url: string }> => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`Failed to load image: ${file.name}`)); };
       img.onload = () => {
         const canvas = document.createElement("canvas");
         canvas.width = img.width;
         canvas.height = img.height;
-        const ctx = canvas.getContext("2d")!;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { URL.revokeObjectURL(url); reject(new Error("Canvas not supported")); return; }
         // For non-transparent formats, fill white background
         if (fmt === "jpeg" || fmt === "bmp") {
           ctx.fillStyle = "#ffffff";
@@ -43,11 +56,12 @@ export default function ImageConverter() {
 
         canvas.toBlob(
           (blob) => {
-            const convUrl = URL.createObjectURL(blob!);
+            if (!blob) { URL.revokeObjectURL(url); reject(new Error("Failed to convert image")); return; }
+            const convUrl = URL.createObjectURL(blob);
             canvas.width = 0;
             canvas.height = 0;
             URL.revokeObjectURL(url);
-            resolve({ blob: blob!, url: convUrl });
+            resolve({ blob, url: convUrl });
           },
           mimeType,
           qualityParam

@@ -16,7 +16,7 @@ export default function WordToPDF() {
   const handleFile = useCallback(async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const f = files[0];
-    if (!f.name.match(/\.docx?$/i)) {
+    if (!f.name.match(/\.docx$/i)) {
       alert("Please select a .docx file");
       return;
     }
@@ -109,7 +109,7 @@ export default function WordToPDF() {
           onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files); }}
           onClick={() => {
             const input = document.createElement("input");
-            input.type = "file"; input.accept = ".docx,.doc";
+            input.type = "file"; input.accept = ".docx";
             input.onchange = () => handleFile(input.files); input.click();
           }}
           style={{
@@ -120,7 +120,7 @@ export default function WordToPDF() {
         >
           <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📝</div>
           <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>Drop a Word document here or click to browse</p>
-          <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>Supports .docx files</p>
+          <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>Supports .docx files (Word 2007+)</p>
         </div>
       ) : (
         <div>

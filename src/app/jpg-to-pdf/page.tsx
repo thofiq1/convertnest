@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 
 interface ImageEntry {
@@ -20,6 +20,15 @@ export default function JPGtoPDF() {
   const [dragOver, setDragOver] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  // Cleanup URLs on unmount
+  useEffect(() => {
+    return () => {
+      images.forEach((img) => { if (img.previewUrl) URL.revokeObjectURL(img.previewUrl); });
+      if (resultUrl) URL.revokeObjectURL(resultUrl);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadImage = (file: File): Promise<ImageEntry> => {
     return new Promise((resolve) => {
@@ -93,10 +102,14 @@ export default function JPGtoPDF() {
             });
             canvas.width = img.width;
             canvas.height = img.height;
-            const ctx = canvas.getContext("2d")!;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) throw new Error("Canvas not supported by your browser");
             ctx.drawImage(img, 0, 0);
-            const blob = await new Promise<Blob>((resolve) =>
-              canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.92)
+            const blob = await new Promise<Blob>((resolve, reject) =>
+              canvas.toBlob((b) => {
+                if (!b) { reject(new Error("Failed to convert image")); return; }
+                resolve(b);
+              }, "image/jpeg", 0.92)
             );
             const jpegBytes = new Uint8Array(await blob.arrayBuffer());
             pdfImage = await pdfDoc.embedJpg(jpegBytes);
