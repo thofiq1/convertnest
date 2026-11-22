@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -24,6 +25,9 @@ export const metadata: Metadata = {
     "webp to jpg",
     "word to pdf",
   ],
+  verification: {
+    google: "-30b_GIZaX7vrEBAUvG9wZKwFuu4bg-M9wi5l6K3qr0",
+  },
   openGraph: {
     title: "ConvertNest — Free Online File Converter & PDF Tools",
     description:
@@ -35,6 +39,20 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full antialiased">
+      <head>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-HYG2KD68KP"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-HYG2KD68KP');
+          `}
+        </Script>
+      </head>
       <body
         className="min-h-full flex flex-col"
         style={{
