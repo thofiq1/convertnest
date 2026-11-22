@@ -3,164 +3,134 @@
 import { useState, useCallback } from "react";
 import ToolLayout from "@/components/ToolLayout";
 
-type OutputFormat = "jpeg" | "png" | "webp" | "bmp" | "ico";
-
 interface ConvertedImage {
-  name: string;
+  file: File;
+  previewUrl: string;
+  convertedBlob: Blob | null;
+  convertedUrl: string | null;
   originalSize: number;
   convertedSize: number;
-  url: string;
-  preview: string;
-  format: OutputFormat;
+  processing: boolean;
 }
 
-const FORMAT_INFO: Record<OutputFormat, { label: string; ext: string; desc: string }> = {
-  jpeg: { label: "JPEG", ext: "jpg", desc: "Best for photos. Small file size with adjustable quality." },
-  png: { label: "PNG", ext: "png", desc: "Lossless with transparency support. Larger files." },
-  webp: { label: "WebP", ext: "webp", desc: "Modern format — smallest files with great quality." },
-  bmp: { label: "BMP", ext: "bmp", desc: "Uncompressed bitmap. Very large files, universal support." },
-  ico: { label: "ICO", ext: "ico", desc: "Favicon format for websites. Best at small sizes." },
-};
-
 export default function ImageConverter() {
-  const [files, setFiles] = useState<File[]>([]);
-  const [outputFormat, setOutputFormat] = useState<OutputFormat>("webp");
-  const [quality, setQuality] = useState(85);
-  const [resizeEnabled, setResizeEnabled] = useState(false);
-  const [maxWidth, setMaxWidth] = useState(1920);
-  const [maxHeight, setMaxHeight] = useState(1080);
-  const [results, setResults] = useState<ConvertedImage[]>([]);
-  const [processing, setProcessing] = useState(false);
-  const [progressIdx, setProgressIdx] = useState(0);
+  const [images, setImages] = useState<ConvertedImage[]>([]);
+  const [outputFormat, setOutputFormat] = useState<"jpeg" | "png" | "webp" | "bmp">("png");
+  const [quality, setQuality] = useState(92);
   const [dragOver, setDragOver] = useState(false);
-  const [tooltipFormat, setTooltipFormat] = useState<OutputFormat | null>(null);
 
-  const handleFiles = useCallback((newFiles: FileList | null) => {
-    if (!newFiles) return;
-    const imageFiles = Array.from(newFiles).filter((f) => f.type.startsWith("image/"));
-    setFiles((prev) => [...prev, ...imageFiles]);
-    setResults([]);
-  }, []);
-
-  const removeFile = (index: number) => setFiles((prev) => prev.filter((_, i) => i !== index));
-
-  const addMore = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.multiple = true;
-    input.onchange = () => handleFiles(input.files);
-    input.click();
-  };
-
-  const createThumbnail = (img: HTMLImageElement, maxSize = 80): string => {
-    const canvas = document.createElement("canvas");
-    const ratio = Math.min(maxSize / img.naturalWidth, maxSize / img.naturalHeight, 1);
-    canvas.width = img.naturalWidth * ratio;
-    canvas.height = img.naturalHeight * ratio;
-    canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/jpeg", 0.6);
-  };
-
-  const convert = async () => {
-    if (files.length === 0) return;
-    setProcessing(true);
-    setResults([]);
-    setProgressIdx(0);
-
-    const converted: ConvertedImage[] = [];
-
-    for (let idx = 0; idx < files.length; idx++) {
-      const file = files[idx];
-      setProgressIdx(idx + 1);
-
-      try {
-        const img = new Image();
-        const url = URL.createObjectURL(file);
-        await new Promise<void>((resolve, reject) => {
-          img.onload = () => resolve();
-          img.onerror = reject;
-          img.src = url;
-        });
-
-        let w = img.naturalWidth;
-        let h = img.naturalHeight;
-
-        if (resizeEnabled) {
-          const scale = Math.min(maxWidth / w, maxHeight / h, 1);
-          w = Math.round(w * scale);
-          h = Math.round(h * scale);
-        }
-
-        // ICO: clamp to 256×256
-        if (outputFormat === "ico") {
-          const icoMax = 256;
-          const scale = Math.min(icoMax / w, icoMax / h, 1);
-          w = Math.round(w * scale);
-          h = Math.round(h * scale);
-        }
-
+  const convertImage = async (file: File, fmt: string, q: number): Promise<{ blob: Blob; url: string }> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
         const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
+        canvas.width = img.width;
+        canvas.height = img.height;
         const ctx = canvas.getContext("2d")!;
-
-        // For JPEG/BMP, fill white background (no transparency)
-        if (outputFormat === "jpeg" || outputFormat === "bmp") {
+        // For non-transparent formats, fill white background
+        if (fmt === "jpeg" || fmt === "bmp") {
           ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, w, h);
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
-        ctx.drawImage(img, 0, 0, w, h);
+        ctx.drawImage(img, 0, 0);
 
-        const info = FORMAT_INFO[outputFormat];
-        let mimeType: string;
-        if (outputFormat === "bmp") mimeType = "image/bmp";
-        else if (outputFormat === "ico") mimeType = "image/png"; // ICO fallback as PNG
-        else mimeType = `image/${outputFormat}`;
+        const mimeMap: Record<string, string> = {
+          jpeg: "image/jpeg", png: "image/png", webp: "image/webp", bmp: "image/bmp",
+        };
+        const mimeType = mimeMap[fmt] || "image/png";
+        const qualityParam = (fmt === "png" || fmt === "bmp") ? undefined : q / 100;
 
-        const qualityVal = (outputFormat === "png" || outputFormat === "bmp" || outputFormat === "ico") ? undefined : quality / 100;
-
-        const blob = await new Promise<Blob>((resolve) =>
-          canvas.toBlob((b) => resolve(b!), mimeType, qualityVal)
+        canvas.toBlob(
+          (blob) => {
+            const convUrl = URL.createObjectURL(blob!);
+            canvas.width = 0;
+            canvas.height = 0;
+            URL.revokeObjectURL(url);
+            resolve({ blob: blob!, url: convUrl });
+          },
+          mimeType,
+          qualityParam
         );
+      };
+      img.src = url;
+    });
+  };
 
-        const preview = createThumbnail(img);
-        URL.revokeObjectURL(url);
+  const handleFiles = useCallback(async (files: FileList | null) => {
+    if (!files) return;
+    const imgFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
 
-        const baseName = file.name.replace(/\.[^.]+$/, "");
+    const newImages: ConvertedImage[] = imgFiles.map((file) => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+      convertedBlob: null,
+      convertedUrl: null,
+      originalSize: file.size,
+      convertedSize: 0,
+      processing: true,
+    }));
 
-        converted.push({
-          name: `${baseName}.${info.ext}`,
-          originalSize: file.size,
-          convertedSize: blob.size,
-          url: URL.createObjectURL(blob),
-          preview,
-          format: outputFormat,
-        });
-      } catch (err) {
-        console.error(`Error converting ${file.name}:`, err);
-      }
+    setImages((prev) => [...prev, ...newImages]);
+
+    for (const imgFile of imgFiles) {
+      const { blob, url } = await convertImage(imgFile, outputFormat, quality);
+      setImages((prev) => {
+        const updated = [...prev];
+        const idx = updated.findIndex((r) => r.file === imgFile);
+        if (idx >= 0) {
+          updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, processing: false };
+        }
+        return updated;
+      });
     }
+  }, [outputFormat, quality]);
 
-    setResults(converted);
-    setProcessing(false);
+  const reconvertAll = async () => {
+    const currentImages = [...images];
+    setImages(currentImages.map((img) => ({ ...img, processing: true, convertedBlob: null, convertedUrl: null, convertedSize: 0 })));
+
+    for (const img of currentImages) {
+      const { blob, url } = await convertImage(img.file, outputFormat, quality);
+      setImages((prev) => {
+        const updated = [...prev];
+        const idx = updated.findIndex((r) => r.file === img.file);
+        if (idx >= 0) {
+          updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, processing: false };
+        }
+        return updated;
+      });
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const extMap: Record<string, string> = { jpeg: "jpg", png: "png", webp: "webp", bmp: "bmp" };
+
+  const downloadSingle = (img: ConvertedImage) => {
+    if (!img.convertedUrl) return;
+    const a = document.createElement("a");
+    a.href = img.convertedUrl;
+    a.download = img.file.name.replace(/\.[^.]+$/, "") + `.${extMap[outputFormat]}`;
+    a.click();
   };
 
   const downloadAll = async () => {
-    if (results.length <= 1) return;
+    const completed = images.filter((img) => img.convertedBlob);
+    if (completed.length === 0) return;
+    if (completed.length === 1) { downloadSingle(completed[0]); return; }
+
     const JSZip = (await import("jszip")).default;
     const zip = new JSZip();
-
-    for (const r of results) {
-      const resp = await fetch(r.url);
-      const blob = await resp.blob();
-      zip.file(r.name, blob);
-    }
-
-    const content = await zip.generateAsync({ type: "blob" });
+    completed.forEach((img) => {
+      zip.file(img.file.name.replace(/\.[^.]+$/, "") + `.${extMap[outputFormat]}`, img.convertedBlob!);
+    });
+    const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(content);
-    a.download = `converted-images.zip`;
+    a.href = URL.createObjectURL(blob);
+    a.download = `converted-images-${outputFormat}.zip`;
     a.click();
   };
 
@@ -170,246 +140,151 @@ export default function ImageConverter() {
     return (bytes / (1024 * 1024)).toFixed(2) + " MB";
   };
 
-  const showQuality = outputFormat === "jpeg" || outputFormat === "webp";
+  const completedCount = images.filter((img) => img.convertedBlob).length;
 
   return (
     <ToolLayout
       title="Image Converter"
-      description="Convert images between JPEG, PNG, WebP, BMP and ICO formats. Batch convert with optional resizing — 100% private, runs in your browser."
+      description="Convert images between JPG, PNG, WebP, and BMP formats. Batch convert with quality control."
     >
-      {/* Drop Zone */}
       <div
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
         onClick={() => {
           const input = document.createElement("input");
-          input.type = "file";
-          input.accept = "image/*";
-          input.multiple = true;
-          input.onchange = () => handleFiles(input.files);
-          input.click();
+          input.type = "file"; input.accept = "image/*"; input.multiple = true;
+          input.onchange = () => handleFiles(input.files); input.click();
         }}
         style={{
           border: `2px dashed ${dragOver ? "var(--primary)" : "var(--card-border)"}`,
-          borderRadius: "1rem",
-          padding: "3rem 2rem",
-          textAlign: "center",
-          cursor: "pointer",
-          background: dragOver ? "rgba(37, 99, 235, 0.04)" : "var(--card-bg)",
-          transition: "all 0.2s",
+          borderRadius: "1rem", padding: "3rem 2rem", textAlign: "center",
+          cursor: "pointer", background: dragOver ? "rgba(37,99,235,0.04)" : "var(--card-bg)", transition: "all 0.2s",
         }}
       >
         <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🔄</div>
         <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>Drop images here or click to browse</p>
-        <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>
-          JPG, PNG, WebP, BMP, TIFF and more — batch convert any image format
-        </p>
+        <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>Supports JPG, PNG, WebP, BMP, GIF</p>
       </div>
 
-      {/* Controls */}
-      {files.length > 0 && (
+      {images.length > 0 && (
         <div style={{ marginTop: "1.5rem" }}>
-          {/* Output format selector */}
-          <div style={{ marginBottom: "1.25rem" }}>
-            <label style={{ fontSize: "0.9rem", fontWeight: 700, display: "block", marginBottom: "0.5rem" }}>
-              Convert to:
-            </label>
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              {(Object.keys(FORMAT_INFO) as OutputFormat[]).map((fmt) => (
-                <div key={fmt} style={{ position: "relative" }}>
-                  <button
-                    onClick={() => setOutputFormat(fmt)}
-                    onMouseEnter={() => setTooltipFormat(fmt)}
-                    onMouseLeave={() => setTooltipFormat(null)}
-                    style={{
-                      padding: "0.5rem 1rem",
-                      borderRadius: "0.5rem",
-                      border: outputFormat === fmt ? "2px solid var(--primary)" : "1px solid var(--card-border)",
-                      background: outputFormat === fmt ? "rgba(37, 99, 235, 0.08)" : "var(--card-bg)",
-                      color: outputFormat === fmt ? "var(--primary)" : "var(--foreground)",
-                      cursor: "pointer",
-                      fontWeight: outputFormat === fmt ? 700 : 500,
-                      fontSize: "0.85rem",
-                    }}
-                  >
-                    {FORMAT_INFO[fmt].label}
-                  </button>
-                  {tooltipFormat === fmt && (
-                    <div style={{
-                      position: "absolute", bottom: "calc(100% + 6px)", left: "50%", transform: "translateX(-50%)",
-                      background: "var(--foreground)", color: "var(--background)", padding: "0.4rem 0.6rem",
-                      borderRadius: "0.375rem", fontSize: "0.7rem", whiteSpace: "nowrap", zIndex: 10,
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                    }}>
-                      {FORMAT_INFO[fmt].desc}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Quality slider */}
-          {showQuality && (
-            <div style={{ marginBottom: "1.25rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <label style={{ fontSize: "0.9rem", fontWeight: 700 }}>Quality: {quality}%</label>
-                <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
-                  {quality <= 50 ? "Smallest file" : quality <= 75 ? "Balanced" : "High quality"}
-                </span>
-              </div>
-              <input type="range" min="10" max="100" value={quality}
-                onChange={(e) => setQuality(Number(e.target.value))}
-                style={{ width: "100%", marginTop: "0.3rem" }}
-              />
-            </div>
-          )}
-
-          {/* Resize option */}
           <div style={{
-            padding: "0.75rem 1rem",
-            background: "var(--card-bg)",
-            border: "1px solid var(--card-border)",
-            borderRadius: "0.5rem",
-            marginBottom: "1.25rem",
+            display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1rem",
+            padding: "1rem", background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.5rem",
           }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600 }}>
-              <input type="checkbox" checked={resizeEnabled} onChange={(e) => setResizeEnabled(e.target.checked)} />
-              Resize during conversion
-            </label>
-            {resizeEnabled && (
-              <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem", alignItems: "center" }}>
-                <div>
-                  <label style={{ fontSize: "0.7rem", color: "var(--muted)" }}>Max Width</label>
-                  <input type="number" value={maxWidth} onChange={(e) => setMaxWidth(Number(e.target.value))}
-                    style={{ width: "80px", padding: "0.3rem", borderRadius: "0.25rem", border: "1px solid var(--card-border)", fontSize: "0.8rem" }}
-                  />
+            <div>
+              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.3rem" }}>Convert To</label>
+              <div style={{ display: "flex", gap: "0.4rem" }}>
+                {(["jpeg", "png", "webp", "bmp"] as const).map((fmt) => (
+                  <button key={fmt} onClick={() => setOutputFormat(fmt)}
+                    style={{
+                      flex: 1, padding: "0.5rem", border: "1px solid var(--card-border)", borderRadius: "0.3rem",
+                      background: outputFormat === fmt ? "var(--primary)" : "var(--card-bg)",
+                      color: outputFormat === fmt ? "#fff" : "var(--foreground)",
+                      cursor: "pointer", fontWeight: 600, fontSize: "0.8rem", transition: "all 0.15s",
+                    }}>
+                    {fmt.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {(outputFormat === "jpeg" || outputFormat === "webp") && (
+              <div>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.3rem" }}>
+                  Quality: {quality}%
+                </label>
+                <input type="range" min="10" max="100" step="5" value={quality}
+                  onChange={(e) => setQuality(parseInt(e.target.value))}
+                  style={{ width: "100%" }}
+                />
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.65rem", color: "var(--muted)" }}>
+                  <span>Smaller</span><span>Better</span>
                 </div>
-                <span style={{ marginTop: "1rem", color: "var(--muted)" }}>×</span>
-                <div>
-                  <label style={{ fontSize: "0.7rem", color: "var(--muted)" }}>Max Height</label>
-                  <input type="number" value={maxHeight} onChange={(e) => setMaxHeight(Number(e.target.value))}
-                    style={{ width: "80px", padding: "0.3rem", borderRadius: "0.25rem", border: "1px solid var(--card-border)", fontSize: "0.8rem" }}
-                  />
-                </div>
-                <span style={{ fontSize: "0.7rem", color: "var(--muted)", marginTop: "1rem" }}>px (scales proportionally)</span>
               </div>
             )}
           </div>
 
-          {/* File list */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-            <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
-              {files.length} file{files.length > 1 ? "s" : ""} · {formatSize(files.reduce((s, f) => s + f.size, 0))}
-            </p>
-            <button onClick={addMore} style={{
-              background: "none", border: "1px solid var(--card-border)", borderRadius: "0.375rem",
-              padding: "0.3rem 0.75rem", fontSize: "0.75rem", cursor: "pointer", color: "var(--primary)",
-            }}>
-              + Add more
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+            <button onClick={reconvertAll} className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
+              Re-convert with new settings
+            </button>
+            <button onClick={() => {
+              const input = document.createElement("input");
+              input.type = "file"; input.accept = "image/*"; input.multiple = true;
+              input.onchange = () => handleFiles(input.files); input.click();
+            }} className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
+              + Add More
             </button>
           </div>
 
-          {files.map((file, i) => (
-            <div key={i} style={{
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-              padding: "0.5rem 0.75rem", background: "var(--card-bg)",
-              border: "1px solid var(--card-border)", borderRadius: "0.5rem", marginBottom: "0.35rem",
-            }}>
-              <span style={{ fontSize: "0.8rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "75%" }}>
-                🖼️ {file.name}
-                <span style={{ color: "var(--muted)", marginLeft: "0.5rem" }}>({formatSize(file.size)})</span>
-              </span>
-              <button onClick={() => removeFile(i)}
-                style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: "1rem" }}>✕</button>
-            </div>
-          ))}
-
-          <button onClick={convert} disabled={processing} className="btn-primary"
-            style={{ marginTop: "1rem", width: "100%", padding: "0.85rem", fontSize: "1rem", fontWeight: 700 }}>
-            {processing ? `Converting ${progressIdx} of ${files.length}...` : `Convert to ${FORMAT_INFO[outputFormat].label}`}
-          </button>
-
-          {processing && (
-            <div style={{ marginTop: "0.5rem" }}>
-              <div style={{ height: "4px", background: "var(--card-border)", borderRadius: "2px", overflow: "hidden" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "1rem" }}>
+            {images.map((img, i) => (
+              <div key={i} style={{
+                display: "flex", alignItems: "center", gap: "0.75rem",
+                padding: "0.6rem 0.75rem", background: "var(--card-bg)",
+                border: "1px solid var(--card-border)", borderRadius: "0.5rem",
+              }}>
                 <div style={{
-                  height: "100%", background: "var(--primary)", borderRadius: "2px",
-                  width: `${(progressIdx / files.length) * 100}%`, transition: "width 0.3s",
-                }} />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Results */}
-      {results.length > 0 && (
-        <div style={{ marginTop: "2rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-            <h3 style={{ fontSize: "1rem", fontWeight: 700 }}>
-              Converted {results.length} image{results.length > 1 ? "s" : ""}
-            </h3>
-            {results.length > 1 && (
-              <button onClick={downloadAll} className="btn-primary"
-                style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}>
-                📦 Download All as ZIP
-              </button>
-            )}
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "0.75rem" }}>
-            {results.map((r, i) => {
-              const diff = r.convertedSize - r.originalSize;
-              const pct = ((diff / r.originalSize) * 100);
-              return (
-                <div key={i} style={{
-                  background: "var(--card-bg)", border: "1px solid var(--card-border)",
-                  borderRadius: "0.75rem", padding: "0.75rem", textAlign: "center",
+                  width: "48px", height: "48px", borderRadius: "0.25rem", overflow: "hidden",
+                  flexShrink: 0, background: "#f8f8f8",
                 }}>
-                  <img src={r.preview} alt={r.name} style={{
-                    width: "64px", height: "64px", objectFit: "contain",
-                    borderRadius: "0.25rem", margin: "0 auto 0.5rem",
-                    display: "block", border: "1px solid var(--card-border)",
-                  }} />
-                  <p style={{ fontSize: "0.75rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {r.name}
-                  </p>
-                  <p style={{ fontSize: "0.7rem", color: "var(--muted)", margin: "0.25rem 0" }}>
-                    {formatSize(r.originalSize)} → {formatSize(r.convertedSize)}
-                    <span style={{ color: diff < 0 ? "#22c55e" : diff > 0 ? "#ef4444" : "var(--muted)", marginLeft: "0.25rem" }}>
-                      ({diff <= 0 ? "" : "+"}{pct.toFixed(0)}%)
-                    </span>
-                  </p>
-                  <a href={r.url} download={r.name} className="btn-primary"
-                    style={{ padding: "0.35rem 0.75rem", fontSize: "0.75rem", textDecoration: "none", display: "inline-block", marginTop: "0.25rem" }}>
-                    Download
-                  </a>
+                  <img src={img.previewUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
-              );
-            })}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: "0.85rem", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {img.file.name}
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                    {img.processing ? (
+                      <span>Converting...</span>
+                    ) : (
+                      <>
+                        {formatSize(img.originalSize)} → {formatSize(img.convertedSize)}
+                        <span style={{
+                          marginLeft: "0.4rem",
+                          color: img.convertedSize <= img.originalSize ? "#22c55e" : "#f59e0b",
+                          fontWeight: 600,
+                        }}>
+                          .{extMap[outputFormat]}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {img.convertedUrl && (
+                  <button onClick={() => downloadSingle(img)}
+                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: "1rem", padding: "0.25rem", flexShrink: 0 }}>
+                    ⬇
+                  </button>
+                )}
+                <button onClick={() => removeImage(i)}
+                  style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: "1rem", padding: "0.25rem", flexShrink: 0 }}>
+                  ✕
+                </button>
+              </div>
+            ))}
           </div>
 
-          <button onClick={() => { setFiles([]); setResults([]); }} style={{
-            width: "100%", padding: "0.6rem", marginTop: "1rem",
-            background: "none", border: "1px solid var(--card-border)", borderRadius: "0.5rem",
-            cursor: "pointer", color: "var(--primary)", fontSize: "0.85rem", fontWeight: 600,
-          }}>
-            Convert More Images
-          </button>
+          {completedCount > 0 && (
+            <button onClick={downloadAll} className="btn-primary"
+              style={{ width: "100%", padding: "0.85rem", fontSize: "1rem", fontWeight: 700 }}>
+              {completedCount > 1 ? `Download All ${completedCount} Images (ZIP)` : "Download Converted Image"}
+            </button>
+          )}
         </div>
       )}
 
       <section style={{ marginTop: "3rem", color: "var(--muted)", fontSize: "0.9rem", lineHeight: 1.7 }}>
         <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--foreground)", marginBottom: "0.5rem" }}>
-          Free Online Image Format Converter
+          How to Convert Image Formats Online
         </h2>
         <p>
-          Convert between JPEG, PNG, WebP, BMP and ICO formats instantly. WebP offers the
-          best balance of quality and file size for web use. Use JPEG for photos, PNG for
-          graphics with transparency, and ICO for website favicons. Optionally resize images
-          during conversion. All processing runs in your browser — your files are never uploaded.
+          Upload images in any format and convert them to JPG, PNG, WebP, or BMP. For JPG and WebP,
+          adjust the quality slider to balance file size and image quality. Batch convert multiple images
+          at once and download them individually or as a ZIP file. All processing happens in your
+          browser — your images are never uploaded to any server.
         </p>
       </section>
     </ToolLayout>

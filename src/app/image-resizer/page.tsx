@@ -1,250 +1,147 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import ToolLayout from "@/components/ToolLayout";
 
-type FitMode = "stretch" | "contain" | "cover";
-type OutputFormat = "original" | "jpeg" | "png" | "webp";
-
 interface ResizedImage {
-  name: string;
-  originalSize: number;
-  resizedSize: number;
-  originalDims: string;
-  resizedDims: string;
-  url: string;
-  preview: string;
+  file: File;
+  previewUrl: string;
+  originalWidth: number;
+  originalHeight: number;
+  resizedBlob: Blob | null;
+  resizedUrl: string | null;
+  processing: boolean;
 }
 
-interface PresetGroup {
-  label: string;
-  presets: { name: string; w: number; h: number }[];
-}
-
-const PRESET_GROUPS: PresetGroup[] = [
-  {
-    label: "Common Sizes",
-    presets: [
-      { name: "HD 1920×1080", w: 1920, h: 1080 },
-      { name: "2K 2560×1440", w: 2560, h: 1440 },
-      { name: "4K 3840×2160", w: 3840, h: 2160 },
-      { name: "Square 1080", w: 1080, h: 1080 },
-      { name: "800×600", w: 800, h: 600 },
-    ],
-  },
-  {
-    label: "Instagram",
-    presets: [
-      { name: "Post 1080×1080", w: 1080, h: 1080 },
-      { name: "Portrait 1080×1350", w: 1080, h: 1350 },
-      { name: "Story 1080×1920", w: 1080, h: 1920 },
-      { name: "Landscape 1080×566", w: 1080, h: 566 },
-    ],
-  },
-  {
-    label: "Facebook",
-    presets: [
-      { name: "Post 1200×630", w: 1200, h: 630 },
-      { name: "Cover 820×312", w: 820, h: 312 },
-      { name: "Profile 170×170", w: 170, h: 170 },
-      { name: "Story 1080×1920", w: 1080, h: 1920 },
-    ],
-  },
-  {
-    label: "Twitter / X",
-    presets: [
-      { name: "Post 1600×900", w: 1600, h: 900 },
-      { name: "Header 1500×500", w: 1500, h: 500 },
-      { name: "Profile 400×400", w: 400, h: 400 },
-    ],
-  },
-  {
-    label: "LinkedIn",
-    presets: [
-      { name: "Post 1200×627", w: 1200, h: 627 },
-      { name: "Cover 1584×396", w: 1584, h: 396 },
-      { name: "Profile 400×400", w: 400, h: 400 },
-    ],
-  },
-  {
-    label: "YouTube",
-    presets: [
-      { name: "Thumbnail 1280×720", w: 1280, h: 720 },
-      { name: "Banner 2560×1440", w: 2560, h: 1440 },
-      { name: "Channel Art 2048×1152", w: 2048, h: 1152 },
-    ],
-  },
+const socialPresets = [
+  { label: "Instagram Post", w: 1080, h: 1080 },
+  { label: "Instagram Story", w: 1080, h: 1920 },
+  { label: "Facebook Cover", w: 820, h: 312 },
+  { label: "Twitter Header", w: 1500, h: 500 },
+  { label: "YouTube Thumbnail", w: 1280, h: 720 },
+  { label: "LinkedIn Banner", w: 1584, h: 396 },
+  { label: "Full HD", w: 1920, h: 1080 },
+  { label: "4K", w: 3840, h: 2160 },
 ];
 
 export default function ImageResizer() {
-  const [files, setFiles] = useState<File[]>([]);
-  const [width, setWidth] = useState(1920);
-  const [height, setHeight] = useState(1080);
+  const [images, setImages] = useState<ResizedImage[]>([]);
+  const [mode, setMode] = useState<"exact" | "percentage" | "preset">("exact");
+  const [width, setWidth] = useState(800);
+  const [height, setHeight] = useState(600);
   const [lockAspect, setLockAspect] = useState(true);
-  const [fitMode, setFitMode] = useState<FitMode>("contain");
-  const [outputFormat, setOutputFormat] = useState<OutputFormat>("original");
-  const [quality, setQuality] = useState(90);
-  const [scalePercent, setScalePercent] = useState<number | null>(null);
-  const [results, setResults] = useState<ResizedImage[]>([]);
-  const [processing, setProcessing] = useState(false);
-  const [progressIdx, setProgressIdx] = useState(0);
+  const [percentage, setPercentage] = useState(50);
+  const [selectedPreset, setSelectedPreset] = useState(0);
+  const [outputFormat, setOutputFormat] = useState<"original" | "jpeg" | "png" | "webp">("original");
+  const [quality, setQuality] = useState(92);
   const [dragOver, setDragOver] = useState(false);
-  const [activeGroup, setActiveGroup] = useState<string | null>(null);
-  const [naturalW, setNaturalW] = useState(0);
-  const [naturalH, setNaturalH] = useState(0);
 
-  const handleFiles = useCallback((newFiles: FileList | null) => {
-    if (!newFiles) return;
-    const imageFiles = Array.from(newFiles).filter((f) => f.type.startsWith("image/"));
-    setFiles((prev) => [...prev, ...imageFiles]);
-    setResults([]);
-    setScalePercent(null);
-  }, []);
-
-  // Read dimensions of first file for aspect-ratio lock
-  useEffect(() => {
-    if (files.length === 0) return;
-    const img = new Image();
-    img.onload = () => {
-      setNaturalW(img.naturalWidth);
-      setNaturalH(img.naturalHeight);
-      setWidth(img.naturalWidth);
-      setHeight(img.naturalHeight);
-    };
-    img.src = URL.createObjectURL(files[0]);
-  }, [files]);
-
-  const handleWidthChange = (w: number) => {
-    setWidth(w);
-    setScalePercent(null);
-    if (lockAspect && naturalW > 0) {
-      setHeight(Math.round((w / naturalW) * naturalH));
-    }
-  };
-
-  const handleHeightChange = (h: number) => {
-    setHeight(h);
-    setScalePercent(null);
-    if (lockAspect && naturalH > 0) {
-      setWidth(Math.round((h / naturalH) * naturalW));
-    }
-  };
-
-  const applyScale = (pct: number) => {
-    setScalePercent(pct);
-    if (naturalW > 0) {
-      setWidth(Math.round(naturalW * pct / 100));
-      setHeight(Math.round(naturalH * pct / 100));
-    }
-  };
-
-  const applyPreset = (w: number, h: number) => {
-    setWidth(w);
-    setHeight(h);
-    setScalePercent(null);
-    setLockAspect(false);
-  };
-
-  const removeFile = (index: number) => setFiles((prev) => prev.filter((_, i) => i !== index));
-
-  const resize = async () => {
-    if (files.length === 0) return;
-    setProcessing(true);
-    setResults([]);
-    setProgressIdx(0);
-
-    const resized: ResizedImage[] = [];
-
-    for (let idx = 0; idx < files.length; idx++) {
-      const file = files[idx];
-      setProgressIdx(idx + 1);
-
-      try {
-        const img = new Image();
-        const url = URL.createObjectURL(file);
-        await new Promise<void>((resolve, reject) => {
-          img.onload = () => resolve();
-          img.onerror = reject;
-          img.src = url;
-        });
-
-        const targetW = scalePercent ? Math.round(img.naturalWidth * scalePercent / 100) : width;
-        const targetH = scalePercent ? Math.round(img.naturalHeight * scalePercent / 100) : height;
-
+  const resizeImage = async (
+    file: File, targetW: number, targetH: number, fmt: string, q: number
+  ): Promise<{ blob: Blob; url: string }> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
         const canvas = document.createElement("canvas");
         canvas.width = targetW;
         canvas.height = targetH;
         const ctx = canvas.getContext("2d")!;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
 
-        if (fitMode === "stretch") {
-          ctx.drawImage(img, 0, 0, targetW, targetH);
-        } else if (fitMode === "contain") {
-          const scale = Math.min(targetW / img.naturalWidth, targetH / img.naturalHeight);
-          const dw = img.naturalWidth * scale;
-          const dh = img.naturalHeight * scale;
-          const dx = (targetW - dw) / 2;
-          const dy = (targetH - dh) / 2;
-          // Transparent / white background
-          if (outputFormat === "jpeg") {
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(0, 0, targetW, targetH);
-          }
-          ctx.drawImage(img, dx, dy, dw, dh);
-        } else {
-          // Cover
-          const scale = Math.max(targetW / img.naturalWidth, targetH / img.naturalHeight);
-          const dw = img.naturalWidth * scale;
-          const dh = img.naturalHeight * scale;
-          const dx = (targetW - dw) / 2;
-          const dy = (targetH - dh) / 2;
-          ctx.drawImage(img, dx, dy, dw, dh);
-        }
-
-        // Determine output MIME and extension
         let mimeType: string;
-        let ext: string;
-        if (outputFormat === "original") {
-          if (file.type === "image/png") { mimeType = "image/png"; ext = "png"; }
-          else if (file.type === "image/webp") { mimeType = "image/webp"; ext = "webp"; }
-          else { mimeType = "image/jpeg"; ext = "jpg"; }
+        if (fmt === "original") {
+          mimeType = file.type === "image/png" ? "image/png" : file.type === "image/webp" ? "image/webp" : "image/jpeg";
         } else {
-          mimeType = `image/${outputFormat}`;
-          ext = outputFormat === "jpeg" ? "jpg" : outputFormat;
+          const mimeMap: Record<string, string> = { jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+          mimeType = mimeMap[fmt] || "image/jpeg";
         }
 
-        const qualityVal = (mimeType === "image/png") ? undefined : quality / 100;
-        const blob = await new Promise<Blob>((resolve) =>
-          canvas.toBlob((b) => resolve(b!), mimeType, qualityVal)
+        if (mimeType === "image/jpeg") {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        ctx.drawImage(img, 0, 0, targetW, targetH);
+
+        const qualityParam = mimeType === "image/png" ? undefined : q / 100;
+        canvas.toBlob(
+          (blob) => {
+            const resUrl = URL.createObjectURL(blob!);
+            canvas.width = 0;
+            canvas.height = 0;
+            URL.revokeObjectURL(url);
+            resolve({ blob: blob!, url: resUrl });
+          },
+          mimeType,
+          qualityParam
         );
+      };
+      img.src = url;
+    });
+  };
 
-        // Build preview
-        const prevCanvas = document.createElement("canvas");
-        const pRatio = Math.min(80 / targetW, 80 / targetH, 1);
-        prevCanvas.width = targetW * pRatio;
-        prevCanvas.height = targetH * pRatio;
-        prevCanvas.getContext("2d")!.drawImage(canvas, 0, 0, prevCanvas.width, prevCanvas.height);
-        const preview = prevCanvas.toDataURL("image/jpeg", 0.6);
+  const getTargetDimensions = (origW: number, origH: number): [number, number] => {
+    if (mode === "percentage") {
+      return [Math.round(origW * percentage / 100), Math.round(origH * percentage / 100)];
+    }
+    if (mode === "preset") {
+      const preset = socialPresets[selectedPreset];
+      return [preset.w, preset.h];
+    }
+    // exact
+    if (lockAspect) {
+      const aspect = origW / origH;
+      return [width, Math.round(width / aspect)];
+    }
+    return [width, height];
+  };
 
-        URL.revokeObjectURL(url);
+  const handleFiles = useCallback(async (files: FileList | null) => {
+    if (!files) return;
+    const imgFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
 
-        const baseName = file.name.replace(/\.[^.]+$/, "");
-
-        resized.push({
-          name: `${baseName}-${targetW}x${targetH}.${ext}`,
-          originalSize: file.size,
-          resizedSize: blob.size,
-          originalDims: `${img.naturalWidth}×${img.naturalHeight}`,
-          resizedDims: `${targetW}×${targetH}`,
-          url: URL.createObjectURL(blob),
-          preview,
-        });
-      } catch (err) {
-        console.error(`Error resizing ${file.name}:`, err);
-      }
+    const newImages: ResizedImage[] = [];
+    for (const file of imgFiles) {
+      const url = URL.createObjectURL(file);
+      const dims = await new Promise<{ w: number; h: number }>((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve({ w: img.width, h: img.height });
+        img.src = url;
+      });
+      newImages.push({
+        file, previewUrl: url,
+        originalWidth: dims.w, originalHeight: dims.h,
+        resizedBlob: null, resizedUrl: null, processing: false,
+      });
     }
 
-    setResults(resized);
-    setProcessing(false);
+    setImages((prev) => [...prev, ...newImages]);
+    if (newImages.length > 0 && mode === "exact") {
+      setWidth(newImages[0].originalWidth);
+      setHeight(newImages[0].originalHeight);
+    }
+  }, [mode]);
+
+  const resizeAll = async () => {
+    setImages((prev) => prev.map((img) => ({ ...img, processing: true, resizedBlob: null, resizedUrl: null })));
+
+    for (const img of images) {
+      const [tw, th] = getTargetDimensions(img.originalWidth, img.originalHeight);
+      const { blob, url } = await resizeImage(img.file, tw, th, outputFormat, quality);
+      setImages((prev) => {
+        const updated = [...prev];
+        const idx = updated.findIndex((r) => r.file === img.file);
+        if (idx >= 0) {
+          updated[idx] = { ...updated[idx], resizedBlob: blob, resizedUrl: url, processing: false };
+        }
+        return updated;
+      });
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const formatSize = (bytes: number) => {
@@ -253,326 +150,249 @@ export default function ImageResizer() {
     return (bytes / (1024 * 1024)).toFixed(2) + " MB";
   };
 
+  const downloadSingle = (img: ResizedImage) => {
+    if (!img.resizedUrl) return;
+    const extMap: Record<string, string> = { jpeg: "jpg", png: "png", webp: "webp" };
+    const ext = outputFormat === "original" ? img.file.name.split(".").pop() : extMap[outputFormat];
+    const a = document.createElement("a");
+    a.href = img.resizedUrl;
+    a.download = img.file.name.replace(/\.[^.]+$/, "") + `-resized.${ext}`;
+    a.click();
+  };
+
+  const downloadAll = async () => {
+    const completed = images.filter((img) => img.resizedBlob);
+    if (completed.length === 0) return;
+    if (completed.length === 1) { downloadSingle(completed[0]); return; }
+
+    const JSZip = (await import("jszip")).default;
+    const zip = new JSZip();
+    const extMap: Record<string, string> = { jpeg: "jpg", png: "png", webp: "webp" };
+    completed.forEach((img) => {
+      const ext = outputFormat === "original" ? img.file.name.split(".").pop() || "jpg" : extMap[outputFormat];
+      zip.file(img.file.name.replace(/\.[^.]+$/, "") + `-resized.${ext}`, img.resizedBlob!);
+    });
+    const blob = await zip.generateAsync({ type: "blob" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "resized-images.zip";
+    a.click();
+  };
+
+  const completedCount = images.filter((img) => img.resizedBlob).length;
+
   return (
     <ToolLayout
       title="Image Resizer"
-      description="Resize images to exact dimensions, scale by percentage, or use social media presets. Batch resize with fit modes — 100% private, runs in your browser."
+      description="Resize images to exact dimensions, by percentage, or social media presets. Batch resize supported."
     >
-      {/* Drop Zone */}
       <div
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
         onClick={() => {
           const input = document.createElement("input");
-          input.type = "file";
-          input.accept = "image/*";
-          input.multiple = true;
-          input.onchange = () => handleFiles(input.files);
-          input.click();
+          input.type = "file"; input.accept = "image/*"; input.multiple = true;
+          input.onchange = () => handleFiles(input.files); input.click();
         }}
         style={{
           border: `2px dashed ${dragOver ? "var(--primary)" : "var(--card-border)"}`,
-          borderRadius: "1rem",
-          padding: "3rem 2rem",
-          textAlign: "center",
-          cursor: "pointer",
-          background: dragOver ? "rgba(37, 99, 235, 0.04)" : "var(--card-bg)",
-          transition: "all 0.2s",
+          borderRadius: "1rem", padding: "3rem 2rem", textAlign: "center",
+          cursor: "pointer", background: dragOver ? "rgba(37,99,235,0.04)" : "var(--card-bg)", transition: "all 0.2s",
         }}
       >
         <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📐</div>
         <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>Drop images here or click to browse</p>
-        <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>
-          JPG, PNG, WebP — batch resize with presets for every social platform
-        </p>
+        <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>Resize to any dimension or social media size</p>
       </div>
 
-      {files.length > 0 && (
+      {images.length > 0 && (
         <div style={{ marginTop: "1.5rem" }}>
-          {/* Dimension inputs */}
-          <div style={{ marginBottom: "1.25rem" }}>
-            <label style={{ fontSize: "0.9rem", fontWeight: 700, display: "block", marginBottom: "0.5rem" }}>Dimensions (px)</label>
-            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-              <div>
-                <label style={{ fontSize: "0.65rem", color: "var(--muted)" }}>Width</label>
-                <input type="number" value={width} onChange={(e) => handleWidthChange(Number(e.target.value))}
-                  style={{ width: "90px", padding: "0.4rem", borderRadius: "0.25rem", border: "1px solid var(--card-border)", fontSize: "0.85rem", display: "block" }}
-                />
-              </div>
-              <button
-                onClick={() => setLockAspect(!lockAspect)}
-                title={lockAspect ? "Aspect ratio locked" : "Aspect ratio unlocked"}
+          {/* Mode tabs */}
+          <div style={{ display: "flex", gap: "0", marginBottom: "1rem", borderRadius: "0.5rem", overflow: "hidden", border: "1px solid var(--card-border)" }}>
+            {([
+              { key: "exact" as const, label: "Exact Size" },
+              { key: "percentage" as const, label: "Percentage" },
+              { key: "preset" as const, label: "Social Media" },
+            ]).map((m) => (
+              <button key={m.key} onClick={() => setMode(m.key)}
                 style={{
-                  background: "none", border: "none", cursor: "pointer", fontSize: "1.2rem",
-                  marginTop: "0.75rem", color: lockAspect ? "var(--primary)" : "var(--muted)",
-                }}
-              >
-                {lockAspect ? "🔗" : "🔓"}
+                  flex: 1, padding: "0.6rem", border: "none", cursor: "pointer", fontWeight: 600, fontSize: "0.85rem",
+                  background: mode === m.key ? "var(--primary)" : "var(--card-bg)",
+                  color: mode === m.key ? "#fff" : "var(--foreground)", transition: "all 0.15s",
+                }}>
+                {m.label}
               </button>
-              <div>
-                <label style={{ fontSize: "0.65rem", color: "var(--muted)" }}>Height</label>
-                <input type="number" value={height} onChange={(e) => handleHeightChange(Number(e.target.value))}
-                  style={{ width: "90px", padding: "0.4rem", borderRadius: "0.25rem", border: "1px solid var(--card-border)", fontSize: "0.85rem", display: "block" }}
-                />
+            ))}
+          </div>
+
+          {/* Settings */}
+          <div style={{
+            padding: "1rem", background: "var(--card-bg)", border: "1px solid var(--card-border)",
+            borderRadius: "0.5rem", marginBottom: "1rem",
+          }}>
+            {mode === "exact" && (
+              <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end" }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.3rem" }}>Width (px)</label>
+                  <input type="number" value={width} onChange={(e) => {
+                    const w = parseInt(e.target.value) || 0;
+                    setWidth(w);
+                    if (lockAspect && images.length > 0) {
+                      const aspect = images[0].originalWidth / images[0].originalHeight;
+                      setHeight(Math.round(w / aspect));
+                    }
+                  }}
+                    style={{ width: "100%", padding: "0.5rem", border: "1px solid var(--card-border)", borderRadius: "0.3rem", background: "var(--card-bg)", fontSize: "0.9rem" }}
+                  />
+                </div>
+                <button onClick={() => setLockAspect(!lockAspect)}
+                  style={{
+                    padding: "0.5rem", border: "1px solid var(--card-border)", borderRadius: "0.3rem",
+                    background: lockAspect ? "var(--primary)" : "var(--card-bg)",
+                    color: lockAspect ? "#fff" : "var(--foreground)",
+                    cursor: "pointer", fontSize: "1rem", marginBottom: "1px",
+                  }}>
+                  {lockAspect ? "🔗" : "🔓"}
+                </button>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.3rem" }}>Height (px)</label>
+                  <input type="number" value={height} onChange={(e) => setHeight(parseInt(e.target.value) || 0)}
+                    disabled={lockAspect}
+                    style={{
+                      width: "100%", padding: "0.5rem", border: "1px solid var(--card-border)",
+                      borderRadius: "0.3rem", background: "var(--card-bg)", fontSize: "0.9rem",
+                      opacity: lockAspect ? 0.5 : 1,
+                    }}
+                  />
+                </div>
               </div>
-              {naturalW > 0 && (
-                <span style={{ fontSize: "0.7rem", color: "var(--muted)", marginTop: "0.75rem" }}>
-                  Original: {naturalW}×{naturalH}
-                </span>
+            )}
+
+            {mode === "percentage" && (
+              <div>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.3rem" }}>
+                  Scale: {percentage}%
+                </label>
+                <input type="range" min="10" max="200" step="5" value={percentage}
+                  onChange={(e) => setPercentage(parseInt(e.target.value))}
+                  style={{ width: "100%" }}
+                />
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.65rem", color: "var(--muted)" }}>
+                  <span>10%</span><span>100%</span><span>200%</span>
+                </div>
+              </div>
+            )}
+
+            {mode === "preset" && (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "0.5rem" }}>
+                {socialPresets.map((preset, i) => (
+                  <button key={i} onClick={() => setSelectedPreset(i)}
+                    style={{
+                      padding: "0.6rem", border: selectedPreset === i ? "2px solid var(--primary)" : "1px solid var(--card-border)",
+                      borderRadius: "0.3rem", background: selectedPreset === i ? "rgba(37,99,235,0.06)" : "var(--card-bg)",
+                      cursor: "pointer", textAlign: "left", transition: "all 0.15s",
+                    }}>
+                    <div style={{ fontSize: "0.8rem", fontWeight: 600 }}>{preset.label}</div>
+                    <div style={{ fontSize: "0.7rem", color: "var(--muted)" }}>{preset.w} × {preset.h}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.3rem" }}>Output Format</label>
+                <select value={outputFormat} onChange={(e) => setOutputFormat(e.target.value as "original" | "jpeg" | "png" | "webp")}
+                  style={{ width: "100%", padding: "0.5rem", borderRadius: "0.3rem", border: "1px solid var(--card-border)", background: "var(--card-bg)", fontSize: "0.85rem" }}>
+                  <option value="original">Keep Original</option>
+                  <option value="jpeg">JPEG</option>
+                  <option value="png">PNG</option>
+                  <option value="webp">WebP</option>
+                </select>
+              </div>
+              {(outputFormat === "jpeg" || outputFormat === "webp") && (
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.3rem" }}>
+                    Quality: {quality}%
+                  </label>
+                  <input type="range" min="10" max="100" step="5" value={quality}
+                    onChange={(e) => setQuality(parseInt(e.target.value))}
+                    style={{ width: "100%" }}
+                  />
+                </div>
               )}
             </div>
           </div>
 
-          {/* Scale by percentage */}
-          <div style={{ marginBottom: "1.25rem" }}>
-            <label style={{ fontSize: "0.9rem", fontWeight: 700, display: "block", marginBottom: "0.5rem" }}>Scale by Percentage</label>
-            <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-              {[25, 50, 75, 100, 150, 200].map((pct) => (
-                <button
-                  key={pct}
-                  onClick={() => applyScale(pct)}
-                  style={{
-                    padding: "0.3rem 0.6rem",
-                    borderRadius: "0.375rem",
-                    border: scalePercent === pct ? "1.5px solid var(--primary)" : "1px solid var(--card-border)",
-                    background: scalePercent === pct ? "rgba(37, 99, 235, 0.08)" : "var(--card-bg)",
-                    color: scalePercent === pct ? "var(--primary)" : "var(--foreground)",
-                    cursor: "pointer",
-                    fontSize: "0.75rem",
-                    fontWeight: scalePercent === pct ? 600 : 400,
-                  }}
-                >
-                  {pct}%
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Social media presets */}
-          <div style={{ marginBottom: "1.25rem" }}>
-            <label style={{ fontSize: "0.9rem", fontWeight: 700, display: "block", marginBottom: "0.5rem" }}>Social Media Presets</label>
-            <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
-              {PRESET_GROUPS.map((group) => (
-                <button
-                  key={group.label}
-                  onClick={() => setActiveGroup(activeGroup === group.label ? null : group.label)}
-                  style={{
-                    padding: "0.3rem 0.65rem",
-                    borderRadius: "0.375rem",
-                    border: activeGroup === group.label ? "1.5px solid var(--primary)" : "1px solid var(--card-border)",
-                    background: activeGroup === group.label ? "rgba(37, 99, 235, 0.08)" : "var(--card-bg)",
-                    color: activeGroup === group.label ? "var(--primary)" : "var(--foreground)",
-                    cursor: "pointer",
-                    fontSize: "0.75rem",
-                    fontWeight: activeGroup === group.label ? 600 : 400,
-                  }}
-                >
-                  {group.label}
-                </button>
-              ))}
-            </div>
-            {activeGroup && (
-              <div style={{
-                display: "flex", gap: "0.35rem", flexWrap: "wrap",
-                padding: "0.5rem 0.75rem",
-                background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.5rem",
-              }}>
-                {PRESET_GROUPS.find((g) => g.label === activeGroup)?.presets.map((p) => (
-                  <button
-                    key={p.name}
-                    onClick={() => applyPreset(p.w, p.h)}
-                    style={{
-                      padding: "0.25rem 0.5rem",
-                      borderRadius: "0.25rem",
-                      border: (width === p.w && height === p.h) ? "1.5px solid var(--primary)" : "1px solid var(--card-border)",
-                      background: (width === p.w && height === p.h) ? "rgba(37, 99, 235, 0.08)" : "transparent",
-                      cursor: "pointer",
-                      fontSize: "0.7rem",
-                      color: "var(--foreground)",
-                    }}
-                  >
-                    {p.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Fit mode */}
-          <div style={{ marginBottom: "1.25rem" }}>
-            <label style={{ fontSize: "0.9rem", fontWeight: 700, display: "block", marginBottom: "0.5rem" }}>Fit Mode</label>
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              {([
-                ["contain", "Contain", "Fit inside, no cropping (may add padding)"],
-                ["cover", "Cover", "Fill dimensions, crop overflow"],
-                ["stretch", "Stretch", "Exact size, may distort"],
-              ] as const).map(([val, label, desc]) => (
-                <button
-                  key={val}
-                  onClick={() => setFitMode(val)}
-                  title={desc}
-                  style={{
-                    padding: "0.4rem 0.8rem",
-                    borderRadius: "0.375rem",
-                    border: fitMode === val ? "1.5px solid var(--primary)" : "1px solid var(--card-border)",
-                    background: fitMode === val ? "rgba(37, 99, 235, 0.08)" : "var(--card-bg)",
-                    color: fitMode === val ? "var(--primary)" : "var(--foreground)",
-                    cursor: "pointer",
-                    fontSize: "0.8rem",
-                    fontWeight: fitMode === val ? 600 : 400,
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Output format & quality */}
-          <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
-            <div>
-              <label style={{ fontSize: "0.9rem", fontWeight: 700, display: "block", marginBottom: "0.5rem" }}>Output Format</label>
-              <div style={{ display: "flex", gap: "0.4rem" }}>
-                {([
-                  ["original", "Original"],
-                  ["jpeg", "JPEG"],
-                  ["png", "PNG"],
-                  ["webp", "WebP"],
-                ] as const).map(([val, label]) => (
-                  <button
-                    key={val}
-                    onClick={() => setOutputFormat(val)}
-                    style={{
-                      padding: "0.3rem 0.6rem",
-                      borderRadius: "0.375rem",
-                      border: outputFormat === val ? "1.5px solid var(--primary)" : "1px solid var(--card-border)",
-                      background: outputFormat === val ? "rgba(37, 99, 235, 0.08)" : "var(--card-bg)",
-                      color: outputFormat === val ? "var(--primary)" : "var(--foreground)",
-                      cursor: "pointer",
-                      fontSize: "0.75rem",
-                      fontWeight: outputFormat === val ? 600 : 400,
-                    }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {(outputFormat === "jpeg" || outputFormat === "webp" || (outputFormat === "original")) && (
-              <div style={{ flex: 1, minWidth: "150px" }}>
-                <label style={{ fontSize: "0.9rem", fontWeight: 700, display: "block", marginBottom: "0.5rem" }}>
-                  Quality: {quality}%
-                </label>
-                <input type="range" min="10" max="100" value={quality}
-                  onChange={(e) => setQuality(Number(e.target.value))}
-                  style={{ width: "100%" }}
-                />
-              </div>
-            )}
-          </div>
-
           {/* File list */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-            <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
-              {files.length} file{files.length > 1 ? "s" : ""}
-            </p>
-            <button onClick={() => {
-              const input = document.createElement("input");
-              input.type = "file"; input.accept = "image/*"; input.multiple = true;
-              input.onchange = () => handleFiles(input.files); input.click();
-            }} style={{
-              background: "none", border: "1px solid var(--card-border)", borderRadius: "0.375rem",
-              padding: "0.3rem 0.75rem", fontSize: "0.75rem", cursor: "pointer", color: "var(--primary)",
-            }}>
-              + Add more
-            </button>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginBottom: "1rem" }}>
+            {images.map((img, i) => {
+              const [tw, th] = getTargetDimensions(img.originalWidth, img.originalHeight);
+              return (
+                <div key={i} style={{
+                  display: "flex", alignItems: "center", gap: "0.75rem",
+                  padding: "0.6rem 0.75rem", background: "var(--card-bg)",
+                  border: "1px solid var(--card-border)", borderRadius: "0.5rem",
+                }}>
+                  <div style={{
+                    width: "48px", height: "48px", borderRadius: "0.25rem", overflow: "hidden",
+                    flexShrink: 0, background: "#f8f8f8",
+                  }}>
+                    <img src={img.previewUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: "0.85rem", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {img.file.name}
+                    </div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                      {img.processing ? "Resizing..." : (
+                        <>
+                          {img.originalWidth}×{img.originalHeight} → {tw}×{th}
+                          {img.resizedBlob && <span style={{ marginLeft: "0.4rem" }}>({formatSize(img.resizedBlob.size)})</span>}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {img.resizedUrl && (
+                    <button onClick={() => downloadSingle(img)}
+                      style={{ background: "none", border: "none", cursor: "pointer", fontSize: "1rem", padding: "0.25rem", flexShrink: 0 }}>
+                      ⬇
+                    </button>
+                  )}
+                  <button onClick={() => removeImage(i)}
+                    style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: "1rem", padding: "0.25rem", flexShrink: 0 }}>
+                    ✕
+                  </button>
+                </div>
+              );
+            })}
           </div>
 
-          {files.map((file, i) => (
-            <div key={i} style={{
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-              padding: "0.5rem 0.75rem", background: "var(--card-bg)",
-              border: "1px solid var(--card-border)", borderRadius: "0.5rem", marginBottom: "0.35rem",
-            }}>
-              <span style={{ fontSize: "0.8rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "75%" }}>
-                🖼️ {file.name}
-                <span style={{ color: "var(--muted)", marginLeft: "0.5rem" }}>({formatSize(file.size)})</span>
-              </span>
-              <button onClick={() => removeFile(i)}
-                style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: "1rem" }}>✕</button>
-            </div>
-          ))}
-
-          <button onClick={resize} disabled={processing} className="btn-primary"
-            style={{ marginTop: "1rem", width: "100%", padding: "0.85rem", fontSize: "1rem", fontWeight: 700 }}>
-            {processing ? `Resizing ${progressIdx} of ${files.length}...` : `Resize ${files.length} Image${files.length > 1 ? "s" : ""} to ${width}×${height}`}
+          <button onClick={resizeAll} disabled={images.some((img) => img.processing)} className="btn-primary"
+            style={{ width: "100%", padding: "0.85rem", fontSize: "1rem", fontWeight: 700, marginBottom: "0.75rem" }}>
+            {images.some((img) => img.processing) ? "Resizing..." : `Resize ${images.length} Image${images.length !== 1 ? "s" : ""}`}
           </button>
 
-          {processing && (
-            <div style={{ marginTop: "0.5rem" }}>
-              <div style={{ height: "4px", background: "var(--card-border)", borderRadius: "2px", overflow: "hidden" }}>
-                <div style={{
-                  height: "100%", background: "var(--primary)", borderRadius: "2px",
-                  width: `${(progressIdx / files.length) * 100}%`, transition: "width 0.3s",
-                }} />
-              </div>
-            </div>
+          {completedCount > 0 && (
+            <button onClick={downloadAll} className="btn-secondary"
+              style={{ width: "100%", padding: "0.75rem", fontSize: "0.9rem", fontWeight: 600 }}>
+              {completedCount > 1 ? `Download All ${completedCount} (ZIP)` : "Download Resized Image"}
+            </button>
           )}
-        </div>
-      )}
-
-      {/* Results */}
-      {results.length > 0 && (
-        <div style={{ marginTop: "2rem" }}>
-          <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem" }}>
-            Resized {results.length} image{results.length > 1 ? "s" : ""}
-          </h3>
-
-          {results.map((r, i) => (
-            <div key={i} style={{
-              display: "flex", gap: "1rem", alignItems: "flex-start",
-              background: "var(--card-bg)", border: "1px solid var(--card-border)",
-              borderRadius: "0.75rem", padding: "1rem", marginBottom: "0.75rem",
-            }}>
-              <img src={r.preview} alt={r.name} style={{
-                width: "64px", height: "64px", objectFit: "contain",
-                borderRadius: "0.25rem", border: "1px solid var(--card-border)", flexShrink: 0,
-              }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontWeight: 600, fontSize: "0.85rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {r.name}
-                </p>
-                <p style={{ fontSize: "0.7rem", color: "var(--muted)", margin: "0.2rem 0" }}>
-                  {r.originalDims} → {r.resizedDims} · {formatSize(r.originalSize)} → {formatSize(r.resizedSize)}
-                </p>
-                <a href={r.url} download={r.name} className="btn-primary"
-                  style={{ padding: "0.35rem 0.75rem", fontSize: "0.75rem", textDecoration: "none", display: "inline-block", marginTop: "0.3rem" }}>
-                  Download
-                </a>
-              </div>
-            </div>
-          ))}
-
-          <button onClick={() => { setFiles([]); setResults([]); }} style={{
-            width: "100%", padding: "0.6rem", marginTop: "0.5rem",
-            background: "none", border: "1px solid var(--card-border)", borderRadius: "0.5rem",
-            cursor: "pointer", color: "var(--primary)", fontSize: "0.85rem", fontWeight: 600,
-          }}>
-            Resize More Images
-          </button>
         </div>
       )}
 
       <section style={{ marginTop: "3rem", color: "var(--muted)", fontSize: "0.9rem", lineHeight: 1.7 }}>
         <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--foreground)", marginBottom: "0.5rem" }}>
-          Resize Images for Any Platform
+          How to Resize Images Online
         </h2>
         <p>
-          Quickly resize images to exact pixel dimensions, scale by percentage, or use built-in
-          presets for Instagram, Facebook, Twitter, LinkedIn and YouTube. Choose between Contain
-          (fit inside without cropping), Cover (fill and crop edges), or Stretch (distort to
-          exact size). All processing happens in your browser — no uploads required.
+          Upload images and choose your resize method: exact pixel dimensions with aspect ratio lock,
+          percentage scaling, or preset social media sizes (Instagram, Facebook, Twitter, YouTube, LinkedIn).
+          Optionally convert to a different format and adjust quality. Batch resize multiple images and
+          download them individually or as a ZIP. All processing happens in your browser — your images
+          are never uploaded.
         </p>
       </section>
     </ToolLayout>
