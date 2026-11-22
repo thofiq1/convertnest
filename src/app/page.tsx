@@ -238,7 +238,8 @@ export default function Home() {
 
       {/* ── Main content ── */}
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "2.5rem 1.5rem" }}>
-        <AdBanner format="horizontal" slot="home-top" />
+        {/* Ad slot placeholder — replace with real AdSense slot ID after approval */}
+        {/* <AdBanner format="horizontal" slot="REAL_SLOT_ID" /> */}
 
         {/* ── Category pills + tools grid ── */}
         <section id="tools" style={{ marginTop: "2rem" }}>
@@ -308,7 +309,8 @@ export default function Home() {
         </section>
 
         <div style={{ marginTop: "2.5rem" }}>
-          <AdBanner format="rectangle" slot="home-bottom" />
+          {/* Ad slot placeholder — replace with real AdSense slot ID after approval */}
+          {/* <AdBanner format="rectangle" slot="REAL_SLOT_ID" /> */}
         </div>
 
         {/* ── How it works ── */}
