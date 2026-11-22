@@ -3,96 +3,138 @@
 import { useState, useCallback } from "react";
 import ToolLayout from "@/components/ToolLayout";
 
-export default function JpgToPdf() {
-  const [files, setFiles] = useState<File[]>([]);
-  const [resultUrl, setResultUrl] = useState<string | null>(null);
+interface ImageEntry {
+  file: File;
+  previewUrl: string;
+  width: number;
+  height: number;
+}
+
+export default function JPGtoPDF() {
+  const [images, setImages] = useState<ImageEntry[]>([]);
+  const [pageSize, setPageSize] = useState<"a4" | "letter" | "fit">("a4");
+  const [orientation, setOrientation] = useState<"portrait" | "landscape" | "auto">("auto");
+  const [margin, setMargin] = useState(20);
   const [processing, setProcessing] = useState(false);
+  const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [pageSize, setPageSize] = useState<"fit" | "a4" | "letter">("a4");
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
-  const handleFiles = useCallback((newFiles: FileList | null) => {
-    if (!newFiles) return;
-    const imageFiles = Array.from(newFiles).filter((f) =>
-      f.type.startsWith("image/")
-    );
-    setFiles((prev) => [...prev, ...imageFiles]);
-    setResultUrl(null);
-  }, []);
-
-  const moveFile = (index: number, direction: -1 | 1) => {
-    const newFiles = [...files];
-    const target = index + direction;
-    if (target < 0 || target >= newFiles.length) return;
-    [newFiles[index], newFiles[target]] = [newFiles[target], newFiles[index]];
-    setFiles(newFiles);
+  const loadImage = (file: File): Promise<ImageEntry> => {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => resolve({ file, previewUrl: url, width: img.width, height: img.height });
+      img.onerror = () => resolve({ file, previewUrl: url, width: 0, height: 0 });
+      img.src = url;
+    });
   };
 
+  const handleFiles = useCallback(async (files: FileList | null) => {
+    if (!files) return;
+    const imgFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    setResultUrl(null);
+    const newEntries = await Promise.all(imgFiles.map(loadImage));
+    setImages((prev) => [...prev, ...newEntries]);
+  }, []);
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setResultUrl(null);
+  };
+
+  const handleDragStart = (index: number) => setDragIndex(index);
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (dragIndex !== null && dragIndex !== index) setDragOverIndex(index);
+  };
+  const handleDrop = (index: number) => {
+    if (dragIndex !== null && dragIndex !== index) {
+      setImages((prev) => {
+        const updated = [...prev];
+        const [moved] = updated.splice(dragIndex, 1);
+        updated.splice(index, 0, moved);
+        return updated;
+      });
+    }
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+  const handleDragEnd = () => { setDragIndex(null); setDragOverIndex(null); };
+
   const convert = async () => {
-    if (files.length === 0) return;
+    if (images.length === 0) return;
     setProcessing(true);
     setResultUrl(null);
-
     try {
       const { PDFDocument } = await import("pdf-lib");
       const pdfDoc = await PDFDocument.create();
 
-      for (const file of files) {
-        const arrayBuffer = await file.arrayBuffer();
-        const uint8 = new Uint8Array(arrayBuffer);
+      const pageSizes: Record<string, [number, number]> = {
+        a4: [595.28, 841.89],
+        letter: [612, 792],
+      };
 
-        let image;
-        if (file.type === "image/png") {
-          image = await pdfDoc.embedPng(uint8);
+      for (const entry of images) {
+        const imgBytes = new Uint8Array(await entry.file.arrayBuffer());
+        let pdfImage;
+        const type = entry.file.type.toLowerCase();
+        if (type === "image/png") {
+          pdfImage = await pdfDoc.embedPng(imgBytes);
         } else {
-          // Convert to JPEG via canvas for non-PNG formats
-          if (file.type !== "image/jpeg") {
-            const img = new Image();
-            const url = URL.createObjectURL(file);
-            await new Promise<void>((resolve) => { img.onload = () => resolve(); img.src = url; });
+          // Convert non-JPEG to JPEG via canvas
+          if (type !== "image/jpeg" && type !== "image/jpg") {
             const canvas = document.createElement("canvas");
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
-            canvas.getContext("2d")!.drawImage(img, 0, 0);
-            const blob = await new Promise<Blob>((r) => canvas.toBlob((b) => r(b!), "image/jpeg", 0.95));
-            const jpegBuffer = new Uint8Array(await blob.arrayBuffer());
-            URL.revokeObjectURL(url);
-            image = await pdfDoc.embedJpg(jpegBuffer);
+            const img = new Image();
+            await new Promise<void>((resolve) => {
+              img.onload = () => resolve();
+              img.src = entry.previewUrl;
+            });
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d")!;
+            ctx.drawImage(img, 0, 0);
+            const blob = await new Promise<Blob>((resolve) =>
+              canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.92)
+            );
+            const jpegBytes = new Uint8Array(await blob.arrayBuffer());
+            pdfImage = await pdfDoc.embedJpg(jpegBytes);
+            canvas.width = 0;
+            canvas.height = 0;
           } else {
-            image = await pdfDoc.embedJpg(uint8);
+            pdfImage = await pdfDoc.embedJpg(imgBytes);
           }
         }
 
-        const imgWidth = image.width;
-        const imgHeight = image.height;
+        const imgWidth = pdfImage.width;
+        const imgHeight = pdfImage.height;
+        const isLandscapeImg = imgWidth > imgHeight;
 
         let pageWidth: number, pageHeight: number;
+
         if (pageSize === "fit") {
-          pageWidth = imgWidth;
-          pageHeight = imgHeight;
-        } else if (pageSize === "letter") {
-          pageWidth = 612; pageHeight = 792;
+          pageWidth = imgWidth + margin * 2;
+          pageHeight = imgHeight + margin * 2;
         } else {
-          pageWidth = 595.28; pageHeight = 841.89; // A4
+          [pageWidth, pageHeight] = pageSizes[pageSize];
+          if (orientation === "landscape" || (orientation === "auto" && isLandscapeImg)) {
+            [pageWidth, pageHeight] = [pageHeight, pageWidth];
+          }
         }
 
         const page = pdfDoc.addPage([pageWidth, pageHeight]);
+        const drawableW = pageWidth - margin * 2;
+        const drawableH = pageHeight - margin * 2;
+        const scaleX = drawableW / imgWidth;
+        const scaleY = drawableH / imgHeight;
+        const s = Math.min(scaleX, scaleY, 1);
+        const finalW = imgWidth * s;
+        const finalH = imgHeight * s;
+        const x = margin + (drawableW - finalW) / 2;
+        const y = margin + (drawableH - finalH) / 2;
 
-        if (pageSize === "fit") {
-          page.drawImage(image, { x: 0, y: 0, width: imgWidth, height: imgHeight });
-        } else {
-          const scale = Math.min(
-            (pageWidth - 40) / imgWidth,
-            (pageHeight - 40) / imgHeight
-          );
-          const w = imgWidth * scale;
-          const h = imgHeight * scale;
-          page.drawImage(image, {
-            x: (pageWidth - w) / 2,
-            y: (pageHeight - h) / 2,
-            width: w,
-            height: h,
-          });
-        }
+        page.drawImage(pdfImage, { x, y, width: finalW, height: finalH });
       }
 
       const pdfBytes = await pdfDoc.save();
@@ -100,91 +142,146 @@ export default function JpgToPdf() {
       setResultUrl(URL.createObjectURL(blob));
     } catch (err) {
       console.error("Conversion error:", err);
-      alert("Error converting images to PDF. Please try different images.");
+      alert("Error creating PDF. Please try again.");
     }
-
     setProcessing(false);
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
   };
 
   return (
     <ToolLayout
       title="JPG to PDF"
-      description="Convert images to PDF for free. Combine multiple photos into a single PDF document."
+      description="Convert images to PDF. Supports JPG, PNG, WebP, and BMP. Reorder, set page size, orientation, and margins."
     >
       <div
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+        onDragOver={(e) => { e.preventDefault(); if (dragIndex === null) setDragOver(true); }}
+        onDragLeave={() => { if (dragIndex === null) setDragOver(false); }}
+        onDrop={(e) => { e.preventDefault(); if (dragIndex === null) { setDragOver(false); handleFiles(e.dataTransfer.files); } }}
         onClick={() => {
           const input = document.createElement("input");
-          input.type = "file";
-          input.accept = "image/*";
-          input.multiple = true;
-          input.onchange = () => handleFiles(input.files);
-          input.click();
+          input.type = "file"; input.accept = "image/*"; input.multiple = true;
+          input.onchange = () => handleFiles(input.files); input.click();
         }}
         style={{
           border: `2px dashed ${dragOver ? "var(--primary)" : "var(--card-border)"}`,
           borderRadius: "1rem", padding: "3rem 2rem", textAlign: "center",
-          cursor: "pointer", background: dragOver ? "var(--accent)" : "var(--card-bg)", transition: "all 0.2s",
+          cursor: "pointer", background: dragOver ? "rgba(37,99,235,0.04)" : "var(--card-bg)", transition: "all 0.2s",
         }}
       >
-        <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🖼️</div>
+        <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📸</div>
         <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>Drop images here or click to browse</p>
-        <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>
-          JPG, PNG, WebP, BMP — combine multiple images into one PDF
-        </p>
+        <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>Supports JPG, PNG, WebP, BMP</p>
       </div>
 
-      {files.length > 0 && (
+      {images.length > 0 && (
         <div style={{ marginTop: "1.5rem" }}>
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: "0.5rem", display: "block" }}>
-              Page Size
-            </label>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              {([["a4", "A4"], ["letter", "Letter"], ["fit", "Fit to Image"]] as const).map(([value, label]) => (
-                <button key={value} onClick={() => setPageSize(value)}
-                  style={{
-                    padding: "0.5rem 1rem", borderRadius: "0.5rem", border: "1px solid var(--card-border)",
-                    background: pageSize === value ? "var(--primary)" : "var(--card-bg)",
-                    color: pageSize === value ? "white" : "var(--foreground)",
-                    cursor: "pointer", fontSize: "0.85rem",
-                  }}>
-                  {label}
-                </button>
-              ))}
+          {/* Settings */}
+          <div style={{
+            display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.75rem", marginBottom: "1rem",
+            padding: "1rem", background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.5rem",
+          }}>
+            <div>
+              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.3rem" }}>Page Size</label>
+              <select value={pageSize} onChange={(e) => { setPageSize(e.target.value as "a4" | "letter" | "fit"); setResultUrl(null); }}
+                style={{ width: "100%", padding: "0.5rem", borderRadius: "0.3rem", border: "1px solid var(--card-border)", background: "var(--card-bg)", fontSize: "0.85rem" }}>
+                <option value="a4">A4</option>
+                <option value="letter">US Letter</option>
+                <option value="fit">Fit to Image</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.3rem" }}>Orientation</label>
+              <select value={orientation} onChange={(e) => { setOrientation(e.target.value as "portrait" | "landscape" | "auto"); setResultUrl(null); }}
+                style={{ width: "100%", padding: "0.5rem", borderRadius: "0.3rem", border: "1px solid var(--card-border)", background: "var(--card-bg)", fontSize: "0.85rem" }}
+                disabled={pageSize === "fit"}>
+                <option value="auto">Auto</option>
+                <option value="portrait">Portrait</option>
+                <option value="landscape">Landscape</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.3rem" }}>
+                Margin: {margin}pt
+              </label>
+              <input type="range" min="0" max="72" step="4" value={margin}
+                onChange={(e) => { setMargin(parseInt(e.target.value)); setResultUrl(null); }}
+                style={{ width: "100%" }}
+              />
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.65rem", color: "var(--muted)" }}>
+                <span>None</span><span>1 inch</span>
+              </div>
             </div>
           </div>
 
-          {files.map((file, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem 1rem", background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.5rem", marginBottom: "0.5rem" }}>
-              <span style={{ fontSize: "0.9rem" }}>
-                <span style={{ color: "var(--muted)", marginRight: "0.5rem" }}>{i + 1}.</span>
-                🖼️ {file.name}
-              </span>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <button onClick={() => moveFile(i, -1)} disabled={i === 0}
-                  style={{ background: "none", border: "1px solid var(--card-border)", borderRadius: "0.25rem", padding: "0.2rem 0.5rem", cursor: "pointer", color: "var(--foreground)" }}>↑</button>
-                <button onClick={() => moveFile(i, 1)} disabled={i === files.length - 1}
-                  style={{ background: "none", border: "1px solid var(--card-border)", borderRadius: "0.25rem", padding: "0.2rem 0.5rem", cursor: "pointer", color: "var(--foreground)" }}>↓</button>
-                <button onClick={() => { setFiles((p) => p.filter((_, j) => j !== i)); }}
-                  style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: "1.2rem" }}>✕</button>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+            <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
+              {images.length} image{images.length !== 1 ? "s" : ""} · Drag to reorder
+            </p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const input = document.createElement("input");
+                input.type = "file"; input.accept = "image/*"; input.multiple = true;
+                input.onchange = () => handleFiles(input.files); input.click();
+              }}
+              className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
+              + Add More
+            </button>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: "0.75rem", marginBottom: "1rem" }}>
+            {images.map((entry, i) => (
+              <div key={i} draggable
+                onDragStart={() => handleDragStart(i)}
+                onDragOver={(e) => handleDragOver(e, i)}
+                onDrop={() => handleDrop(i)}
+                onDragEnd={handleDragEnd}
+                style={{
+                  borderRadius: "0.5rem", overflow: "hidden",
+                  border: dragOverIndex === i ? "2px dashed var(--primary)" : "1px solid var(--card-border)",
+                  background: "var(--card-bg)", cursor: "grab",
+                  opacity: dragIndex === i ? 0.5 : 1, transition: "all 0.15s", position: "relative",
+                }}>
+                <button onClick={(e) => { e.stopPropagation(); removeImage(i); }}
+                  style={{
+                    position: "absolute", top: "2px", right: "2px", width: "20px", height: "20px",
+                    background: "rgba(0,0,0,0.5)", color: "#fff", border: "none", borderRadius: "50%",
+                    cursor: "pointer", fontSize: "0.65rem", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1,
+                  }}>✕</button>
+                <div style={{ width: "100%", aspectRatio: "1", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8f8f8" }}>
+                  <img src={entry.previewUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+                <div style={{ padding: "0.3rem", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.65rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {entry.file.name}
+                  </div>
+                  <div style={{ fontSize: "0.6rem", color: "var(--muted)" }}>
+                    {entry.width}×{entry.height} · {formatSize(entry.file.size)}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
 
           <button onClick={convert} disabled={processing} className="btn-primary"
-            style={{ marginTop: "1rem", width: "100%", padding: "0.75rem", fontSize: "1rem", fontWeight: 600 }}>
-            {processing ? "Converting..." : `Convert ${files.length} Image${files.length > 1 ? "s" : ""} to PDF`}
+            style={{ width: "100%", padding: "0.85rem", fontSize: "1rem", fontWeight: 700 }}>
+            {processing ? "Creating PDF..." : `Convert ${images.length} Image${images.length !== 1 ? "s" : ""} to PDF`}
           </button>
         </div>
       )}
 
       {resultUrl && (
-        <div className="result-box" style={{ marginTop: "1.5rem", padding: "1.5rem", textAlign: "center" }}>
-          <p style={{ fontWeight: 600, marginBottom: "1rem", color: "#22c55e" }}>PDF created successfully!</p>
-          <a href={resultUrl} download="images.pdf" className="btn-primary"
+        <div style={{ marginTop: "1.5rem", padding: "1.5rem", textAlign: "center", background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.75rem" }}>
+          <p style={{ fontWeight: 600, marginBottom: "1rem", color: "#22c55e", fontSize: "1.1rem" }}>✓ PDF created successfully!</p>
+          <a href={resultUrl} download={images.length > 0 ? images[0].file.name.replace(/\.[^.]+$/, "") + ".pdf" : "images.pdf"}
+            className="btn-primary"
             style={{ padding: "0.75rem 2rem", fontSize: "1rem", textDecoration: "none", display: "inline-block" }}>
             Download PDF
           </a>
@@ -193,12 +290,13 @@ export default function JpgToPdf() {
 
       <section style={{ marginTop: "3rem", color: "var(--muted)", fontSize: "0.9rem", lineHeight: 1.7 }}>
         <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--foreground)", marginBottom: "0.5rem" }}>
-          How to Convert JPG to PDF
+          How to Convert Images to PDF
         </h2>
         <p>
-          Upload your images, choose a page size, reorder if needed, and click convert.
-          Your images will be converted into a single PDF document that you can download instantly.
-          Perfect for creating PDF portfolios, scanning documents, or combining photos.
+          Select or drag and drop your images (JPG, PNG, WebP, or BMP). Drag to reorder them — images
+          convert top to bottom. Choose your page size (A4, US Letter, or fit to image), orientation,
+          and margins. Click Convert and download your PDF. All processing happens in your browser —
+          your images are never uploaded anywhere.
         </p>
       </section>
     </ToolLayout>

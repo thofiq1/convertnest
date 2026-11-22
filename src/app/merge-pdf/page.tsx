@@ -3,49 +3,104 @@
 import { useState, useCallback } from "react";
 import ToolLayout from "@/components/ToolLayout";
 
+interface PdfFileEntry {
+  file: File;
+  thumbnailUrl: string | null;
+  pageCount: number;
+}
+
 export default function MergePDF() {
-  const [files, setFiles] = useState<File[]>([]);
+  const [entries, setEntries] = useState<PdfFileEntry[]>([]);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
-  const handleFiles = useCallback((newFiles: FileList | null) => {
+  const generateThumbnail = async (file: File): Promise<{ url: string; pages: number }> => {
+    try {
+      const pdfjsLib = await import("pdfjs-dist");
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 0.3 });
+      const canvas = document.createElement("canvas");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext("2d")!;
+      await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+      const url = canvas.toDataURL("image/jpeg", 0.7);
+      canvas.width = 0;
+      canvas.height = 0;
+      return { url, pages: pdf.numPages };
+    } catch {
+      return { url: "", pages: 0 };
+    }
+  };
+
+  const handleFiles = useCallback(async (newFiles: FileList | null) => {
     if (!newFiles) return;
-    const pdfFiles = Array.from(newFiles).filter(
-      (f) => f.type === "application/pdf"
-    );
-    setFiles((prev) => [...prev, ...pdfFiles]);
+    const pdfFiles = Array.from(newFiles).filter((f) => f.type === "application/pdf");
     setResultUrl(null);
+
+    const newEntries: PdfFileEntry[] = pdfFiles.map((file) => ({
+      file,
+      thumbnailUrl: null,
+      pageCount: 0,
+    }));
+    setEntries((prev) => [...prev, ...newEntries]);
+
+    for (let i = 0; i < pdfFiles.length; i++) {
+      const { url, pages } = await generateThumbnail(pdfFiles[i]);
+      setEntries((prev) => {
+        const updated = [...prev];
+        const idx = updated.findIndex((e) => e.file === pdfFiles[i]);
+        if (idx >= 0) {
+          updated[idx] = { ...updated[idx], thumbnailUrl: url, pageCount: pages };
+        }
+        return updated;
+      });
+    }
   }, []);
 
-  const moveFile = (index: number, direction: -1 | 1) => {
-    const newFiles = [...files];
-    const target = index + direction;
-    if (target < 0 || target >= newFiles.length) return;
-    [newFiles[index], newFiles[target]] = [newFiles[target], newFiles[index]];
-    setFiles(newFiles);
+  const removeFile = (index: number) => {
+    setEntries((prev) => prev.filter((_, i) => i !== index));
+    setResultUrl(null);
   };
 
-  const removeFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+  const handleDragStart = (index: number) => setDragIndex(index);
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (dragIndex !== null && dragIndex !== index) setDragOverIndex(index);
   };
+  const handleDrop = (index: number) => {
+    if (dragIndex !== null && dragIndex !== index) {
+      setEntries((prev) => {
+        const updated = [...prev];
+        const [moved] = updated.splice(dragIndex, 1);
+        updated.splice(index, 0, moved);
+        return updated;
+      });
+    }
+    setDragIndex(null);
+    setDragOverIndex(null);
+  };
+  const handleDragEnd = () => { setDragIndex(null); setDragOverIndex(null); };
 
   const merge = async () => {
-    if (files.length < 2) return;
+    if (entries.length < 2) return;
     setProcessing(true);
     setResultUrl(null);
-
     try {
       const { PDFDocument } = await import("pdf-lib");
       const mergedPdf = await PDFDocument.create();
-
-      for (const file of files) {
-        const arrayBuffer = await file.arrayBuffer();
+      for (const entry of entries) {
+        const arrayBuffer = await entry.file.arrayBuffer();
         const pdf = await PDFDocument.load(arrayBuffer);
         const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
         copiedPages.forEach((page) => mergedPdf.addPage(page));
       }
-
       const mergedBytes = await mergedPdf.save();
       const blob = new Blob([mergedBytes as BlobPart], { type: "application/pdf" });
       setResultUrl(URL.createObjectURL(blob));
@@ -53,7 +108,6 @@ export default function MergePDF() {
       console.error("Merge error:", err);
       alert("Error merging PDFs. Please check your files and try again.");
     }
-
     setProcessing(false);
   };
 
@@ -63,89 +117,124 @@ export default function MergePDF() {
     return (bytes / (1024 * 1024)).toFixed(2) + " MB";
   };
 
+  const totalSize = entries.reduce((sum, e) => sum + e.file.size, 0);
+  const totalPages = entries.reduce((sum, e) => sum + e.pageCount, 0);
+  const downloadName = entries.length > 0
+    ? entries[0].file.name.replace(/\.pdf$/i, "") + "-merged.pdf"
+    : "merged.pdf";
+
   return (
     <ToolLayout
       title="Merge PDF"
-      description="Combine multiple PDF files into one. Reorder pages before merging — completely free."
+      description="Combine multiple PDF files into one. Drag to reorder pages before merging — completely free."
     >
       <div
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+        onDragOver={(e) => { e.preventDefault(); if (dragIndex === null) setDragOver(true); }}
+        onDragLeave={() => { if (dragIndex === null) setDragOver(false); }}
+        onDrop={(e) => { e.preventDefault(); if (dragIndex === null) { setDragOver(false); handleFiles(e.dataTransfer.files); } }}
         onClick={() => {
           const input = document.createElement("input");
-          input.type = "file";
-          input.accept = ".pdf";
-          input.multiple = true;
-          input.onchange = () => handleFiles(input.files);
-          input.click();
+          input.type = "file"; input.accept = ".pdf"; input.multiple = true;
+          input.onchange = () => handleFiles(input.files); input.click();
         }}
         style={{
           border: `2px dashed ${dragOver ? "var(--primary)" : "var(--card-border)"}`,
-          borderRadius: "1rem",
-          padding: "3rem 2rem",
-          textAlign: "center",
-          cursor: "pointer",
-          background: dragOver ? "var(--accent)" : "var(--card-bg)",
-          transition: "all 0.2s",
+          borderRadius: "1rem", padding: "3rem 2rem", textAlign: "center",
+          cursor: "pointer", background: dragOver ? "rgba(37,99,235,0.04)" : "var(--card-bg)", transition: "all 0.2s",
         }}
       >
         <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📎</div>
         <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>Drop PDF files here or click to browse</p>
-        <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>
-          Select two or more PDFs to combine
-        </p>
+        <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>Select two or more PDFs to combine</p>
       </div>
 
-      {files.length > 0 && (
+      {entries.length > 0 && (
         <div style={{ marginTop: "1.5rem" }}>
-          <p style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: "0.75rem" }}>
-            Drag buttons to reorder. Files merge top to bottom.
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+            <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
+              {entries.length} file{entries.length !== 1 ? "s" : ""}
+              {totalPages > 0 && ` · ${totalPages} pages`}
+              {" · "}{formatSize(totalSize)} total
+            </p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const input = document.createElement("input");
+                input.type = "file"; input.accept = ".pdf"; input.multiple = true;
+                input.onchange = () => handleFiles(input.files); input.click();
+              }}
+              className="btn-secondary"
+              style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}
+            >
+              + Add More
+            </button>
+          </div>
+
+          <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginBottom: "0.5rem" }}>
+            Drag files to reorder. Files merge top to bottom.
           </p>
-          {files.map((file, i) => (
+
+          {entries.map((entry, i) => (
             <div
               key={i}
+              draggable
+              onDragStart={() => handleDragStart(i)}
+              onDragOver={(e) => handleDragOver(e, i)}
+              onDrop={() => handleDrop(i)}
+              onDragEnd={handleDragEnd}
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "0.75rem 1rem",
-                background: "var(--card-bg)",
-                border: "1px solid var(--card-border)",
-                borderRadius: "0.5rem",
-                marginBottom: "0.5rem",
+                display: "flex", alignItems: "center", gap: "0.75rem",
+                padding: "0.6rem 0.75rem",
+                background: dragOverIndex === i ? "rgba(37,99,235,0.06)" : "var(--card-bg)",
+                border: dragOverIndex === i ? "2px dashed var(--primary)" : "1px solid var(--card-border)",
+                borderRadius: "0.5rem", marginBottom: "0.5rem",
+                cursor: "grab", opacity: dragIndex === i ? 0.5 : 1, transition: "all 0.15s",
               }}
             >
-              <span style={{ fontSize: "0.9rem" }}>
-                <span style={{ color: "var(--muted)", marginRight: "0.5rem" }}>{i + 1}.</span>
-                📄 {file.name}{" "}
-                <span style={{ color: "var(--muted)" }}>({formatSize(file.size)})</span>
-              </span>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <button onClick={(e) => { e.stopPropagation(); moveFile(i, -1); }}
-                  style={{ background: "none", border: "1px solid var(--card-border)", borderRadius: "0.25rem", padding: "0.2rem 0.5rem", cursor: "pointer", color: "var(--foreground)" }}
-                  disabled={i === 0}>↑</button>
-                <button onClick={(e) => { e.stopPropagation(); moveFile(i, 1); }}
-                  style={{ background: "none", border: "1px solid var(--card-border)", borderRadius: "0.25rem", padding: "0.2rem 0.5rem", cursor: "pointer", color: "var(--foreground)" }}
-                  disabled={i === files.length - 1}>↓</button>
-                <button onClick={(e) => { e.stopPropagation(); removeFile(i); }}
-                  style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: "1.2rem" }}>✕</button>
+              <span style={{ color: "var(--muted)", fontSize: "1rem", cursor: "grab", userSelect: "none" }}>⠿</span>
+              <div style={{
+                width: "40px", height: "52px", borderRadius: "0.25rem", overflow: "hidden",
+                border: "1px solid var(--card-border)", background: "#f8f8f8", flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                {entry.thumbnailUrl ? (
+                  <img src={entry.thumbnailUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <span style={{ fontSize: "1.2rem" }}>📄</span>
+                )}
               </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: "0.85rem", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {entry.file.name}
+                </div>
+                <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                  {formatSize(entry.file.size)}
+                  {entry.pageCount > 0 && ` · ${entry.pageCount} page${entry.pageCount !== 1 ? "s" : ""}`}
+                </div>
+              </div>
+              <span style={{
+                fontSize: "0.75rem", fontWeight: 600, color: "var(--muted)", background: "var(--accent)",
+                borderRadius: "50%", width: "24px", height: "24px",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              }}>{i + 1}</span>
+              <button onClick={(e) => { e.stopPropagation(); removeFile(i); }}
+                style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: "1.1rem", padding: "0.25rem", flexShrink: 0 }}>
+                ✕
+              </button>
             </div>
           ))}
 
-          <button onClick={merge} disabled={processing || files.length < 2}
-            className="btn-primary"
-            style={{ marginTop: "1rem", width: "100%", padding: "0.75rem", fontSize: "1rem", fontWeight: 600 }}>
-            {processing ? "Merging..." : `Merge ${files.length} PDFs`}
+          <button onClick={merge} disabled={processing || entries.length < 2} className="btn-primary"
+            style={{ marginTop: "1rem", width: "100%", padding: "0.85rem", fontSize: "1rem", fontWeight: 700 }}>
+            {processing ? "Merging..." : `Merge ${entries.length} PDFs`}
           </button>
         </div>
       )}
 
       {resultUrl && (
-        <div className="result-box" style={{ marginTop: "1.5rem", padding: "1.5rem", textAlign: "center" }}>
-          <p style={{ fontWeight: 600, marginBottom: "1rem", color: "#22c55e" }}>PDFs merged successfully!</p>
-          <a href={resultUrl} download="merged.pdf" className="btn-primary"
+        <div style={{ marginTop: "1.5rem", padding: "1.5rem", textAlign: "center", background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.75rem" }}>
+          <p style={{ fontWeight: 600, marginBottom: "1rem", color: "#22c55e", fontSize: "1.1rem" }}>✓ PDFs merged successfully!</p>
+          <a href={resultUrl} download={downloadName} className="btn-primary"
             style={{ padding: "0.75rem 2rem", fontSize: "1rem", textDecoration: "none", display: "inline-block" }}>
             Download Merged PDF
           </a>
@@ -157,7 +246,8 @@ export default function MergePDF() {
           How to Merge PDF Files Online
         </h2>
         <p>
-          Select or drag and drop the PDF files you want to combine. Use the arrow buttons to reorder them.
+          Select or drag and drop the PDF files you want to combine. Drag them to reorder — files merge from
+          top to bottom. Each file shows a thumbnail preview so you can verify the right documents are included.
           Click Merge and download your combined PDF. All processing happens in your browser — your files
           never leave your device.
         </p>

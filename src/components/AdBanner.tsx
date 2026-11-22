@@ -15,15 +15,20 @@ export default function AdBanner({ slot = "placeholder", format = "horizontal" }
   return (
     <div
       className="ad-placeholder"
+      data-ad-slot={slot}
+      data-ad-format={format}
       style={{
         minHeight: heightMap[format],
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        borderRadius: "0.75rem",
       }}
     >
       {/* Replace with actual AdSense code after approval */}
-      <span>Ad Space — {format} ({slot})</span>
+      <span style={{ opacity: 0.5, fontSize: "0.7rem" }}>
+        Ad Space — {format} ({slot})
+      </span>
     </div>
   );
 }
