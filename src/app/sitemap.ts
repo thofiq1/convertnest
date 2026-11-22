@@ -2,7 +2,7 @@ import { tools } from "@/lib/tools";
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://convertnest.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://convertnest-app.vercel.app";
 
   const toolPages = tools.map((tool) => ({
     url: `${baseUrl}/${tool.slug}`,
@@ -26,9 +26,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/privacy`,
-      lastModified: new Date("2026-11-21"),
+      lastModified: new Date("2026-11-22"),
       changeFrequency: "monthly",
       priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/contact`,
+      lastModified: new Date("2026-11-22"),
+      changeFrequency: "monthly",
+      priority: 0.4,
     },
     ...toolPages,
   ];
