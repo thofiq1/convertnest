@@ -244,6 +244,7 @@ export default function ImageResizer() {
   return (
     <ErrorBoundary>
     <ToolLayout
+      slug="image-resizer"
       title="Image Resizer"
       description="Resize images to exact dimensions, by percentage, or social media presets. Batch resize supported."
     >

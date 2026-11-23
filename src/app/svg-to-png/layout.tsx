@@ -1,7 +1,22 @@
 import type { Metadata } from "next";
+
 export const metadata: Metadata = {
-  title: "SVG to PNG Converter — Convert SVG to PNG Free Online | ConvertNest",
-  description: "Convert SVG vector files to PNG or JPG images at any resolution. Free online SVG converter — no upload needed.",
-  keywords: ["svg to png", "svg to jpg", "svg converter", "vector to raster", "convert svg", "svg to image"],
+  title: "SVG to PNG Converter Free — Vector to Raster | ConvertNest",
+  description:
+    "Convert SVG vector files to PNG or JPG at any resolution online for free. Scale up to 4x for high-res output. No signup. Browser-based.",
+  keywords: ["svg to png", "convert svg to png", "svg to jpg", "svg converter", "vector to image free"],
+  openGraph: {
+    title: "SVG to PNG Converter Free — Vector to Raster",
+    description: "Convert SVG vector files to PNG or JPG at any resolution online for free. No signup required.",
+    url: "https://convertnest-app.vercel.app/svg-to-png",
+    siteName: "ConvertNest",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://convertnest-app.vercel.app/svg-to-png",
+  },
 };
-export default function Layout({ children }: { children: React.ReactNode }) { return children; }
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return children;
+}

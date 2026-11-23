@@ -207,6 +207,7 @@ export default function SplitPDF() {
   return (
     <ErrorBoundary fallbackMessage="The PDF splitter encountered an error. Please refresh and try again.">
     <ToolLayout
+      slug="split-pdf"
       title="Split PDF"
       description="Extract specific pages or split every page into a separate PDF. Visual page selector included."
     >

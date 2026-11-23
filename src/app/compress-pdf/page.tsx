@@ -145,6 +145,7 @@ export default function CompressPDF() {
   return (
     <ErrorBoundary fallbackMessage="The PDF compressor encountered an error. Please refresh and try again.">
     <ToolLayout
+      slug="compress-pdf"
       title="Compress PDF"
       description="Reduce PDF file size by up to 70% while maintaining quality. Choose your compression level for the perfect balance."
     >

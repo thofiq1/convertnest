@@ -197,6 +197,7 @@ export default function PDFWatermark() {
 
   return (
     <ToolLayout
+      slug="pdf-watermark"
       title="Add Watermark to PDF"
       description="Add text watermarks to your PDF files. Customize font size, opacity, position, and color. Free online tool."
     >

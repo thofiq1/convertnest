@@ -145,6 +145,7 @@ export default function RotatePDF() {
 
   return (
     <ToolLayout
+      slug="rotate-pdf"
       title="Rotate PDF"
       description="Rotate individual pages or all pages at once. Preview rotations before applying."
     >

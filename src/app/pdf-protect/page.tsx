@@ -133,6 +133,7 @@ export default function PDFProtect() {
 
   return (
     <ToolLayout
+      slug="pdf-protect"
       title="Protect PDF with Password"
       description="Add password protection to your PDF files. Set user and owner passwords with permission controls. Free online tool."
     >

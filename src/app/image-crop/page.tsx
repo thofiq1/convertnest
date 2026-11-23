@@ -379,6 +379,7 @@ export default function ImageCrop() {
   return (
     <ErrorBoundary>
     <ToolLayout
+      slug="image-crop"
       title="Crop Image Online"
       description="Crop images to any size with an easy drag-and-drop interface. Aspect ratio presets for social media. Free online tool."
     >

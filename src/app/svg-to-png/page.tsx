@@ -285,6 +285,7 @@ export default function SvgToPng() {
   return (
     <ErrorBoundary>
     <ToolLayout
+      slug="svg-to-png"
       title="SVG to PNG Converter"
       description="Convert SVG vector files to PNG or JPG images at any resolution. Free online SVG converter."
     >

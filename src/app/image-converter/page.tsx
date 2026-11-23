@@ -191,6 +191,7 @@ export default function ImageConverter() {
   return (
     <ErrorBoundary>
     <ToolLayout
+      slug="image-converter"
       title="Image Converter"
       description="Convert images between JPG, PNG, WebP, and BMP formats. Batch convert with quality control."
     >

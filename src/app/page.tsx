@@ -198,6 +198,23 @@ export default function Home() {
 
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "ConvertNest",
+            url: "https://convertnest-app.vercel.app",
+            description: "Free online PDF tools and file converters. Compress, merge, split, and convert PDFs and images.",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: "https://convertnest-app.vercel.app/#tools",
+              "query-input": "required name=search_term_string",
+            },
+          }),
+        }}
+      />
       {/* ── Hero Section ── */}
       <section className="hero-gradient bg-dots" style={{ padding: "5rem 1.5rem 4rem", textAlign: "center", position: "relative", overflow: "hidden" }}>
         {/* Animated blobs */}

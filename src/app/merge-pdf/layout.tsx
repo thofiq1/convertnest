@@ -1,10 +1,20 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Merge PDF — Combine PDF Files Online Free",
+  title: "Merge PDF Files Online Free — Combine PDFs | ConvertNest",
   description:
-    "Combine multiple PDF files into one document online for free. Merge PDFs in seconds — no signup, no watermarks, no limits.",
-  keywords: ["merge pdf", "combine pdf", "join pdf", "pdf merger", "merge pdf files online free"],
+    "Combine multiple PDF files into one document online for free. Merge PDFs in seconds. No signup, no watermarks, no limits. Works in your browser.",
+  keywords: ["merge pdf", "combine pdf files", "join pdf", "pdf merger online", "merge pdf free"],
+  openGraph: {
+    title: "Merge PDF Files Online Free — Combine PDFs",
+    description: "Combine multiple PDF files into one document online for free. No signup, no watermarks.",
+    url: "https://convertnest-app.vercel.app/merge-pdf",
+    siteName: "ConvertNest",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://convertnest-app.vercel.app/merge-pdf",
+  },
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

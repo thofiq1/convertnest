@@ -197,6 +197,7 @@ export default function PDFPageNumbers() {
 
   return (
     <ToolLayout
+      slug="pdf-page-numbers"
       title="Add Page Numbers to PDF"
       description="Add page numbers to your PDF files. Choose position, format, and starting number. Free online tool."
     >

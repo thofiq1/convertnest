@@ -161,6 +161,7 @@ export default function MergePDF() {
   return (
     <ErrorBoundary fallbackMessage="The PDF merger encountered an error. Please refresh and try again.">
     <ToolLayout
+      slug="merge-pdf"
       title="Merge PDF"
       description="Combine multiple PDF files into one. Drag to reorder pages before merging — completely free."
     >

@@ -1,15 +1,42 @@
 import Link from "next/link";
 import AdBanner from "./AdBanner";
+import ToolJsonLd from "./ToolJsonLd";
+import { tools, getToolBySlug } from "@/lib/tools";
 
 interface ToolLayoutProps {
   title: string;
   description: string;
+  slug: string;
   children: React.ReactNode;
 }
 
-export default function ToolLayout({ title, description, children }: ToolLayoutProps) {
+function getRelatedTools(currentSlug: string) {
+  const currentTool = getToolBySlug(currentSlug);
+  if (!currentTool) return tools.filter((t) => t.slug !== currentSlug).slice(0, 3);
+
+  const sameCategory = tools.filter(
+    (t) => t.category === currentTool.category && t.slug !== currentSlug
+  );
+
+  if (sameCategory.length >= 3) return sameCategory.slice(0, 3);
+
+  const others = tools.filter(
+    (t) => t.category !== currentTool.category && t.slug !== currentSlug
+  );
+  return [...sameCategory, ...others].slice(0, 3);
+}
+
+export default function ToolLayout({ title, description, slug, children }: ToolLayoutProps) {
+  const relatedTools = getRelatedTools(slug);
+
   return (
     <div style={{ maxWidth: 920, margin: "0 auto", padding: "2rem 1.5rem" }}>
+      <ToolJsonLd
+        name={title}
+        description={description}
+        url={`https://convertnest-app.vercel.app/${slug}`}
+      />
+
       {/* Breadcrumb */}
       <nav
         style={{
@@ -100,6 +127,58 @@ export default function ToolLayout({ title, description, children }: ToolLayoutP
           </div>
         ))}
       </div>
+
+      {/* Related Tools section for internal linking */}
+      {relatedTools.length > 0 && (
+        <div style={{ marginTop: "2.5rem" }}>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1rem" }}>
+            You Might Also Like
+          </h2>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
+              gap: "1rem",
+            }}
+          >
+            {relatedTools.map((tool) => (
+              <Link
+                key={tool.slug}
+                href={`/${tool.slug}`}
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
+                <div
+                  className="tool-card"
+                  style={{ height: "100%" }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
+                    <span style={{ fontSize: "1.25rem" }}>{tool.icon}</span>
+                    <div>
+                      <h3 style={{ fontSize: "0.9rem", fontWeight: 700, lineHeight: 1.3 }}>
+                        {tool.name}
+                      </h3>
+                      <span
+                        style={{
+                          fontSize: "0.7rem",
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
+                          color: "var(--muted)",
+                        }}
+                      >
+                        {tool.category}
+                      </span>
+                    </div>
+                  </div>
+                  <p style={{ color: "var(--muted)", fontSize: "0.8rem", lineHeight: 1.5 }}>
+                    {tool.description}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div style={{ marginTop: "2rem" }}>
         <AdBanner format="rectangle" slot="tool-bottom" />

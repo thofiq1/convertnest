@@ -230,6 +230,7 @@ export default function HeicToJpg() {
   return (
     <ErrorBoundary>
     <ToolLayout
+      slug="heic-to-jpg"
       title="HEIC to JPG Converter"
       description="Convert iPhone HEIC photos to JPG or PNG format. Free online converter — no upload needed."
     >

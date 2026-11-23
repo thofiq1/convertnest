@@ -191,6 +191,7 @@ export default function PDFtoJPG() {
   return (
     <ErrorBoundary>
     <ToolLayout
+      slug="pdf-to-jpg"
       title="PDF to JPG / PNG"
       description="Convert PDF pages to high-quality JPG or PNG images. Choose resolution, quality, and page range."
     >

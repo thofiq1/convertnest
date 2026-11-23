@@ -202,6 +202,7 @@ export default function JPGtoPDF() {
   return (
     <ErrorBoundary>
     <ToolLayout
+      slug="jpg-to-pdf"
       title="JPG to PDF"
       description="Convert images to PDF. Supports JPG, PNG, WebP, and BMP. Reorder, set page size, orientation, and margins."
     >

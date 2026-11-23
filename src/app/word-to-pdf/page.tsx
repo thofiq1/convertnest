@@ -120,6 +120,7 @@ export default function WordToPDF() {
   return (
     <ErrorBoundary>
     <ToolLayout
+      slug="word-to-pdf"
       title="Word to PDF"
       description="Convert Word documents (.docx) to PDF. Preview your document before converting."
     >

@@ -1,10 +1,20 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Image Compressor — Compress JPG, PNG, WebP Online Free",
+  title: "Compress Images Online Free — Reduce Image Size | ConvertNest",
   description:
-    "Compress images online for free. Reduce JPEG, PNG, and WebP file sizes without losing quality. No signup required.",
-  keywords: ["compress image", "image compressor", "compress jpg", "compress png", "reduce image size", "image compression online"],
+    "Compress JPG, PNG, and WebP images online for free without losing quality. Reduce image file size instantly. No signup, browser-based.",
+  keywords: ["compress image", "image compressor", "reduce image size", "compress jpg", "compress png online free"],
+  openGraph: {
+    title: "Compress Images Online Free — Reduce Image Size",
+    description: "Compress JPG, PNG, and WebP images online for free without losing quality. No signup required.",
+    url: "https://convertnest-app.vercel.app/image-compressor",
+    siteName: "ConvertNest",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://convertnest-app.vercel.app/image-compressor",
+  },
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

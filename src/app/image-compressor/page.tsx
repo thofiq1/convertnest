@@ -207,6 +207,7 @@ export default function ImageCompressor() {
   return (
     <ErrorBoundary>
     <ToolLayout
+      slug="image-compressor"
       title="Image Compressor"
       description="Compress images to reduce file size. Adjust quality, resize, and convert formats — all in your browser."
     >
