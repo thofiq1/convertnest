@@ -5,8 +5,15 @@ import { tools, categories } from "@/lib/tools";
 import AdBanner from "@/components/AdBanner";
 import { useState } from "react";
 
+/* ── Category color system ── */
+const categoryColors: Record<string, { color: string; glow: string; bg: string }> = {
+  PDF: { color: "#ef4444", glow: "rgba(239, 68, 68, 0.12)", bg: "rgba(239, 68, 68, 0.08)" },
+  Image: { color: "#10b981", glow: "rgba(16, 185, 129, 0.12)", bg: "rgba(16, 185, 129, 0.08)" },
+  Document: { color: "#8b5cf6", glow: "rgba(139, 92, 246, 0.12)", bg: "rgba(139, 92, 246, 0.08)" },
+};
+
 /* ── SVG icon components for tool cards ── */
-const ToolIcon = ({ slug }: { slug: string }) => {
+const ToolIcon = ({ slug, category }: { slug: string; category?: string }) => {
   const iconMap: Record<string, React.ReactNode> = {
     "compress-pdf": (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -129,17 +136,21 @@ const ToolIcon = ({ slug }: { slug: string }) => {
     ),
   };
 
+  const catColor = category ? categoryColors[category] : null;
+
   return (
     <div
       style={{
         width: 44,
         height: 44,
         borderRadius: 12,
-        background: "linear-gradient(135deg, var(--primary-glow) 0%, transparent 100%)",
+        background: catColor
+          ? `linear-gradient(135deg, ${catColor.glow} 0%, transparent 100%)`
+          : "linear-gradient(135deg, var(--primary-glow) 0%, transparent 100%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: "var(--primary)",
+        color: catColor ? catColor.color : "var(--primary)",
         flexShrink: 0,
       }}
     >
@@ -321,6 +332,10 @@ export default function Home() {
                 key={cat}
                 className={`category-pill ${activeCategory === cat ? "active" : ""}`}
                 onClick={() => setActiveCategory(cat)}
+                style={activeCategory === cat && categoryColors[cat] ? {
+                  background: categoryColors[cat].color,
+                  boxShadow: `0 2px 10px ${categoryColors[cat].glow}`,
+                } : undefined}
               >
                 <CategoryIcon category={cat} />
                 {cat}
@@ -344,9 +359,15 @@ export default function Home() {
                 style={{ textDecoration: "none", color: "inherit" }}
                 className={`fade-up fade-up-delay-${(i % 3) + 1}`}
               >
-                <div className="tool-card" style={{ height: "100%" }}>
+                <div
+                  className="tool-card"
+                  style={{
+                    height: "100%",
+                    borderLeft: `3px solid ${(categoryColors[tool.category] || categoryColors.PDF).color}22`,
+                  }}
+                >
                   <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", marginBottom: "0.75rem" }}>
-                    <ToolIcon slug={tool.slug} />
+                    <ToolIcon slug={tool.slug} category={tool.category} />
                     <div>
                       <h3 style={{ fontSize: "0.95rem", fontWeight: 700, lineHeight: 1.3 }}>
                         {tool.name}
@@ -356,7 +377,7 @@ export default function Home() {
                           style={{
                             fontSize: "0.7rem",
                             fontWeight: 600,
-                            color: "var(--primary)",
+                            color: (categoryColors[tool.category] || categoryColors.PDF).color,
                             textTransform: "uppercase",
                             letterSpacing: "0.04em",
                           }}
