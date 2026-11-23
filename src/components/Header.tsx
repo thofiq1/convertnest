@@ -9,17 +9,35 @@ export default function Header() {
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
+    const html = document.documentElement;
     if (saved === "dark") {
-      document.documentElement.classList.add("dark-mode");
+      html.classList.add("dark-mode");
+      html.classList.remove("light-mode");
       setIsDark(true);
+    } else if (saved === "light") {
+      html.classList.add("light-mode");
+      html.classList.remove("dark-mode");
+      setIsDark(false);
+    } else {
+      // No saved preference — detect system
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setIsDark(prefersDark);
     }
   }, []);
 
   const toggleTheme = () => {
     const html = document.documentElement;
-    const dark = html.classList.toggle("dark-mode");
-    setIsDark(dark);
-    localStorage.setItem("theme", dark ? "dark" : "light");
+    const goingDark = !isDark;
+    setIsDark(goingDark);
+    if (goingDark) {
+      html.classList.add("dark-mode");
+      html.classList.remove("light-mode");
+      localStorage.setItem("theme", "dark");
+    } else {
+      html.classList.add("light-mode");
+      html.classList.remove("dark-mode");
+      localStorage.setItem("theme", "light");
+    }
   };
 
   return (

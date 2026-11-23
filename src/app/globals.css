@@ -295,24 +295,46 @@ textarea:focus, input:focus, select:focus {
 }
 
 /* ---- Responsive ---- */
-/* ---- Dark mode manual toggle ---- */
-html.dark-mode {
-  --background: #0b1120;
-  --foreground: #e2e8f0;
-  --primary: #3b82f6;
-  --primary-dark: #2563eb;
-  --primary-light: #60a5fa;
-  --primary-glow: rgba(59, 130, 246, 0.2);
-  --card-bg: #131c31;
-  --card-border: #1e3050;
-  --muted: #94a3b8;
-  --accent: #131c31;
-  --hero-bg: linear-gradient(135deg, #0b1120 0%, #0f1729 50%, #130f20 100%);
-  --dot-color: rgba(59, 130, 246, 0.06);
+/* ---- Manual theme overrides (must beat the media query) ---- */
+html.dark-mode, html.dark-mode * {
   color-scheme: dark;
+}
+html.dark-mode {
+  --background: #0b1120 !important;
+  --foreground: #e2e8f0 !important;
+  --primary: #3b82f6 !important;
+  --primary-dark: #2563eb !important;
+  --primary-light: #60a5fa !important;
+  --primary-glow: rgba(59, 130, 246, 0.2) !important;
+  --card-bg: #131c31 !important;
+  --card-border: #1e3050 !important;
+  --muted: #94a3b8 !important;
+  --accent: #131c31 !important;
+  --hero-bg: linear-gradient(135deg, #0b1120 0%, #0f1729 50%, #130f20 100%) !important;
+  --dot-color: rgba(59, 130, 246, 0.06) !important;
+}
+html.light-mode, html.light-mode * {
+  color-scheme: light;
+}
+html.light-mode {
+  --background: #f8fafc !important;
+  --foreground: #0f172a !important;
+  --primary: #2563eb !important;
+  --primary-dark: #1d4ed8 !important;
+  --primary-light: #3b82f6 !important;
+  --primary-glow: rgba(37, 99, 235, 0.15) !important;
+  --card-bg: #ffffff !important;
+  --card-border: #e2e8f0 !important;
+  --muted: #64748b !important;
+  --accent: #f1f5f9 !important;
+  --hero-bg: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 50%, #fdf2f8 100%) !important;
+  --dot-color: rgba(37, 99, 235, 0.07) !important;
 }
 html.dark-mode .glass-header {
   background: rgba(11, 17, 32, 0.8) !important;
+}
+html.light-mode .glass-header {
+  background: rgba(255, 255, 255, 0.8) !important;
 }
 
 /* ---- Glassmorphism header ---- */
