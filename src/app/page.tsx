@@ -86,6 +86,50 @@ const ToolIcon = ({ slug }: { slug: string }) => {
         <line x1="3" y1="21" x2="10" y2="14" />
       </svg>
     ),
+    "pdf-watermark": (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <path d="M9 15l2 2 4-4" opacity="0.5" />
+        <text x="7" y="19" fontSize="6" fill="currentColor" opacity="0.4">W</text>
+      </svg>
+    ),
+    "pdf-page-numbers": (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="10" y1="18" x2="14" y2="18" />
+        <text x="10.5" y="17" fontSize="7" fill="currentColor" fontWeight="bold">1</text>
+      </svg>
+    ),
+    "pdf-protect": (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        <circle cx="12" cy="16" r="1" />
+      </svg>
+    ),
+    "heic-to-jpg": (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+        <line x1="12" y1="18" x2="12" y2="18.01" />
+        <polyline points="9 10 12 7 15 10" />
+        <line x1="12" y1="7" x2="12" y2="14" />
+      </svg>
+    ),
+    "image-crop": (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6.13 1L6 16a2 2 0 0 0 2 2h15" />
+        <path d="M1 6.13L16 6a2 2 0 0 1 2 2v15" />
+      </svg>
+    ),
+    "svg-to-png": (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="12 2 2 7 12 12 22 7 12 2" />
+        <polyline points="2 17 12 22 22 17" />
+        <polyline points="2 12 12 17 22 12" />
+      </svg>
+    ),
   };
 
   return (

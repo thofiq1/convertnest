@@ -104,6 +104,60 @@ export const tools: Tool[] = [
     icon: "🔃",
     keywords: ["rotate pdf", "rotate pdf pages", "pdf rotation", "turn pdf"],
   },
+  {
+    name: "PDF Watermark",
+    slug: "pdf-watermark",
+    description:
+      "Add text watermarks to your PDF files. Customize font size, opacity, position, and color.",
+    category: "PDF",
+    icon: "💧",
+    keywords: ["pdf watermark", "add watermark to pdf", "watermark pdf", "stamp pdf"],
+  },
+  {
+    name: "PDF Page Numbers",
+    slug: "pdf-page-numbers",
+    description:
+      "Add page numbers to your PDF. Choose position, format, and starting number. Free and easy.",
+    category: "PDF",
+    icon: "🔢",
+    keywords: ["add page numbers pdf", "pdf page numbers", "number pdf pages", "pdf numbering"],
+  },
+  {
+    name: "Protect PDF",
+    slug: "pdf-protect",
+    description:
+      "Add password protection to your PDF files. Set passwords and control printing & copying permissions.",
+    category: "PDF",
+    icon: "🔐",
+    keywords: ["protect pdf", "password pdf", "encrypt pdf", "lock pdf", "secure pdf"],
+  },
+  {
+    name: "HEIC to JPG",
+    slug: "heic-to-jpg",
+    description:
+      "Convert iPhone HEIC photos to JPG or PNG format. Batch convert multiple files at once.",
+    category: "Image",
+    icon: "📱",
+    keywords: ["heic to jpg", "heic to png", "heic converter", "iphone photo converter"],
+  },
+  {
+    name: "Image Crop",
+    slug: "image-crop",
+    description:
+      "Crop images with an interactive drag-and-drop editor. Aspect ratio presets for social media.",
+    category: "Image",
+    icon: "✂️",
+    keywords: ["crop image", "image cropper", "crop photo online", "resize crop"],
+  },
+  {
+    name: "SVG to PNG",
+    slug: "svg-to-png",
+    description:
+      "Convert SVG vector files to PNG or JPG at any resolution. Scale up to 4x for high-res output.",
+    category: "Image",
+    icon: "🎨",
+    keywords: ["svg to png", "svg to jpg", "svg converter", "vector to raster"],
+  },
 ];
 
 export const categories = [...new Set(tools.map((t) => t.category))];
