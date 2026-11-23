@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+html { scroll-behavior: smooth; }
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
@@ -290,6 +292,100 @@ textarea:focus, input:focus, select:focus {
 .category-pill:not(.active):hover {
   color: var(--foreground);
   background: var(--card-border);
+}
+
+/* ---- Responsive ---- */
+/* ---- Dark mode manual toggle ---- */
+html.dark-mode {
+  --background: #0b1120;
+  --foreground: #e2e8f0;
+  --primary: #3b82f6;
+  --primary-dark: #2563eb;
+  --primary-light: #60a5fa;
+  --primary-glow: rgba(59, 130, 246, 0.2);
+  --card-bg: #131c31;
+  --card-border: #1e3050;
+  --muted: #94a3b8;
+  --accent: #131c31;
+  --hero-bg: linear-gradient(135deg, #0b1120 0%, #0f1729 50%, #130f20 100%);
+  --dot-color: rgba(59, 130, 246, 0.06);
+  color-scheme: dark;
+}
+html.dark-mode .glass-header {
+  background: rgba(11, 17, 32, 0.8) !important;
+}
+
+/* ---- Glassmorphism header ---- */
+.glass-header {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+}
+@media (prefers-color-scheme: dark) {
+  .glass-header {
+    background: rgba(11, 17, 32, 0.8) !important;
+  }
+}
+
+/* ---- Animated hero blobs ---- */
+@keyframes blobFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -30px) scale(1.05); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+.hero-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.5;
+  animation: blobFloat 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ---- New badge ---- */
+.new-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 2rem;
+  background: linear-gradient(135deg, #f97316, #ef4444);
+  color: white;
+  margin-left: 0.5rem;
+}
+
+/* ---- Tool count badge ---- */
+.tool-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.85rem;
+  background: var(--primary-glow);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 2rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* ---- Count up animation ---- */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Processing shimmer ---- */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.processing-shimmer {
+  background: linear-gradient(90deg, var(--accent) 25%, var(--card-border) 50%, var(--accent) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
 /* ---- Responsive ---- */

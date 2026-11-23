@@ -62,6 +62,9 @@ export default function Footer() {
               { href: "/rotate-pdf", label: "Rotate PDF" },
               { href: "/pdf-to-jpg", label: "PDF to JPG" },
               { href: "/jpg-to-pdf", label: "JPG to PDF" },
+              { href: "/pdf-watermark", label: "PDF Watermark" },
+              { href: "/pdf-page-numbers", label: "PDF Page Numbers" },
+              { href: "/pdf-protect", label: "Protect PDF" },
             ].map((link) => (
               <Link key={link.href} href={link.href} style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.8rem", transition: "color 0.2s" }}>
                 {link.label}
@@ -79,6 +82,9 @@ export default function Footer() {
               { href: "/image-converter", label: "Image Converter" },
               { href: "/image-resizer", label: "Image Resizer" },
               { href: "/word-to-pdf", label: "Word to PDF" },
+              { href: "/heic-to-jpg", label: "HEIC to JPG" },
+              { href: "/image-crop", label: "Image Crop" },
+              { href: "/svg-to-png", label: "SVG to PNG" },
             ].map((link) => (
               <Link key={link.href} href={link.href} style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.8rem", transition: "color 0.2s" }}>
                 {link.label}
