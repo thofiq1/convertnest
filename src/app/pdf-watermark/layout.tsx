@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "Add Watermark to PDF Online Free — PDF Stamper",
     description: "Add text watermarks to PDF files online for free. Customize font, opacity, and position.",
     url: "/pdf-watermark",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {

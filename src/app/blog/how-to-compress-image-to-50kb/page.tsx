@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: post.title,
     description: post.description,
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "article",
     publishedTime: post.date,
   },
@@ -34,7 +34,7 @@ const linkStyle = { color: "var(--primary)" };
 const faqs = [
   {
     q: "How do I reduce a photo to exactly 50KB?",
-    a: "Open ConvertNest's Compress Image to 50KB tool and drop in your photo. It finds the highest JPG quality that keeps the file under 50KB and only shrinks the dimensions if it has to. The result will be at or just under the limit rather than exactly 50KB, which is what upload forms want.",
+    a: "Open FitTheFile's Compress Image to 50KB tool and drop in your photo. It finds the highest JPG quality that keeps the file under 50KB and only shrinks the dimensions if it has to. The result will be at or just under the limit rather than exactly 50KB, which is what upload forms want.",
   },
   {
     q: "Can I get a photo down to 20KB without it looking bad?",
@@ -62,7 +62,7 @@ export default function CompressImageTo50kbPost() {
         />
         <ArticleBody>
           <P>
-            To compress a photo to 50KB, drop it into ConvertNest&rsquo;s free{" "}
+            To compress a photo to 50KB, drop it into FitTheFile&rsquo;s free{" "}
             <Link href="/compress-image-to-50kb" style={linkStyle}>Compress Image to 50KB</Link>{" "}
             tool and download the JPG it gives you &mdash; it picks the highest
             quality that fits under 50KB automatically. Need it even smaller?

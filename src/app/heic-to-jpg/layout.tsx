@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "HEIC to JPG Converter Free — iPhone Photos",
     description: "Convert iPhone HEIC photos to JPG or PNG format online for free. No signup required.",
     url: "/heic-to-jpg",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {

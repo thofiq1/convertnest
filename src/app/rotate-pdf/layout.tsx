@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "Rotate PDF Online Free — Fix Page Orientation",
     description: "Rotate PDF pages online for free. Turn pages 90, 180, or 270 degrees to fix orientation.",
     url: "/rotate-pdf",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {

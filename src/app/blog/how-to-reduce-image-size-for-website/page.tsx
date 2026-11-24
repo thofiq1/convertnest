@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: post.title,
     description: post.description,
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "article",
     publishedTime: post.date,
   },
@@ -97,7 +97,7 @@ export default function ReduceImageSizeBlogPost() {
           <H2>How to Compress Images Without Visible Quality Loss</H2>
           <P>
             The key is to use smart compression that targets redundant data
-            rather than visible detail. ConvertNest&rsquo;s{" "}
+            rather than visible detail. FitTheFile&rsquo;s{" "}
             <Link href="/image-compressor" style={{ color: "var(--primary)" }}>
               Image Compressor
             </Link>{" "}

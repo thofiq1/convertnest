@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: post.title,
     description: post.description,
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "article",
     publishedTime: post.date,
   },
@@ -65,7 +65,7 @@ export default function AddPageNumbersBlogPost() {
           <H2>Method 1: Use a Free Online Tool</H2>
           <P>
             The simplest way to add page numbers is with a browser-based tool
-            like ConvertNest. Upload your PDF, choose where you want the numbers
+            like FitTheFile. Upload your PDF, choose where you want the numbers
             (top or bottom of the page, left, center, or right), pick a starting
             number, and download the result. Everything runs in your browser, so
             your document stays private.
@@ -115,7 +115,7 @@ export default function AddPageNumbersBlogPost() {
           <P>
             If your PDF has a cover page, you probably want to start numbering
             from the second page. Most tools let you set a starting page — in
-            ConvertNest, just set &ldquo;Start from page&rdquo; to 2 and
+            FitTheFile, just set &ldquo;Start from page&rdquo; to 2 and
             optionally adjust the starting number.
           </P>
           <P>
@@ -128,15 +128,15 @@ export default function AddPageNumbersBlogPost() {
           <P>
             Adding page numbers takes just a few seconds with the right tool.
             For a quick, free solution that does not touch your formatting,
-            an online tool like ConvertNest is hard to beat.
+            an online tool like FitTheFile is hard to beat.
           </P>
         </ArticleBody>
       </article>
 
       <FaqSchema
         faqs={[
-          { question: "Can I add page numbers to a PDF without Adobe?", answer: "Yes. Free online tools like ConvertNest let you add page numbers with custom positioning, formatting, and starting numbers — no software download needed." },
-          { question: "How do I skip page numbers on the first page?", answer: "Most PDF page number tools offer a 'skip first page' option. In ConvertNest, simply toggle the 'Skip first page' switch before processing." },
+          { question: "Can I add page numbers to a PDF without Adobe?", answer: "Yes. Free online tools like FitTheFile let you add page numbers with custom positioning, formatting, and starting numbers — no software download needed." },
+          { question: "How do I skip page numbers on the first page?", answer: "Most PDF page number tools offer a 'skip first page' option. In FitTheFile, simply toggle the 'Skip first page' switch before processing." },
         ]}
       />
       <section style={{ marginTop: "2.5rem" }}>
@@ -145,8 +145,8 @@ export default function AddPageNumbersBlogPost() {
         </h2>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
           {[
-            { q: "Can I add page numbers to a PDF without Adobe?", a: "Yes. Free online tools like ConvertNest let you add page numbers with custom positioning, formatting, and starting numbers — no software download needed." },
-            { q: "How do I skip page numbers on the first page?", a: "Most PDF page number tools offer a 'skip first page' option. In ConvertNest, simply toggle the 'Skip first page' switch before processing." },
+            { q: "Can I add page numbers to a PDF without Adobe?", a: "Yes. Free online tools like FitTheFile let you add page numbers with custom positioning, formatting, and starting numbers — no software download needed." },
+            { q: "How do I skip page numbers on the first page?", a: "Most PDF page number tools offer a 'skip first page' option. In FitTheFile, simply toggle the 'Skip first page' switch before processing." },
           ].map((faq, i) => (
             <details key={i} style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.75rem", overflow: "hidden" }}>
               <summary style={{ padding: "1rem 1.25rem", fontWeight: 600, fontSize: "0.95rem", cursor: "pointer", listStyle: "none" }}>

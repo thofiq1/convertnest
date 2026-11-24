@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "SVG to PNG Converter Free — Vector to Raster",
     description: "Convert SVG vector files to PNG or JPG at any resolution online for free. No signup required.",
     url: "/svg-to-png",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {

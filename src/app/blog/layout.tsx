@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "Blog — Free PDF & Image Tool Guides",
     description:
       "Tips, tutorials, and guides for PDF and image conversion.",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
   },
 };
 

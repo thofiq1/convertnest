@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "Merge PDF Files Online Free — Combine PDFs",
     description: "Combine multiple PDF files into one document online for free. No signup, no watermarks.",
     url: "/merge-pdf",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {

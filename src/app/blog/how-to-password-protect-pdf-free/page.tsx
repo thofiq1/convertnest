@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: post.title,
     description: post.description,
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "article",
     publishedTime: post.date,
   },
@@ -97,7 +97,7 @@ export default function PasswordProtectPdfBlogPost() {
             protected is worse than one you know is unprotected.
           </P>
           <P>
-            ConvertNest&apos;s browser-based Protect PDF tool is being upgraded and
+            FitTheFile&apos;s browser-based Protect PDF tool is being upgraded and
             will return once encryption is verified end to end. In the
             meantime, if you need to shrink a file before encrypting it, our
             free compressor works entirely in your browser.

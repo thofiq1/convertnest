@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: post.title,
     description: post.description,
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "article",
     publishedTime: post.date,
   },
@@ -99,7 +99,7 @@ export default function ConvertImagesBlogPost() {
 
           <H2>How to Convert Images for Free</H2>
           <P>
-            ConvertNest&rsquo;s{" "}
+            FitTheFile&rsquo;s{" "}
             <Link href="/image-converter" style={{ color: "var(--primary)" }}>
               Image Converter
             </Link>{" "}
@@ -136,7 +136,7 @@ export default function ConvertImagesBlogPost() {
           <P>
             For batch conversions — say, converting a folder of PNG screenshots
             to JPG — look for a tool that handles multiple files at once.
-            ConvertNest lets you drop several images and convert them all in one
+            FitTheFile lets you drop several images and convert them all in one
             go, which saves a lot of repetitive clicking.
           </P>
         </ArticleBody>

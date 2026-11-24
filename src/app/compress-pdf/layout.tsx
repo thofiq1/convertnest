@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "Compress PDF Online Free — Reduce PDF Size",
     description: "Compress PDF files online for free without losing quality. No signup, no watermarks.",
     url: "/compress-pdf",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {

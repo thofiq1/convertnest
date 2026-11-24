@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "JPG to PDF Converter Free — Images to PDF",
     description: "Convert JPG, PNG, and other images to PDF for free. No signup, no watermarks.",
     url: "/jpg-to-pdf",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {

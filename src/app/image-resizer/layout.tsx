@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "Resize Image Online Free — Change Dimensions",
     description: "Resize images online for free. Set custom dimensions or scale by percentage. No signup required.",
     url: "/image-resizer",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {

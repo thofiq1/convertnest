@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "Word to PDF Converter Free — DOCX to PDF",
     description: "Convert Word documents to PDF online for free. No signup, no watermarks.",
     url: "/word-to-pdf",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {

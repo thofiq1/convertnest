@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: post.title,
     description: post.description,
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "article",
     publishedTime: post.date,
   },
@@ -60,9 +60,9 @@ export default function WordToPdfBlogPost() {
             into a single self-contained file.
           </P>
 
-          <H2>Method 1: Use ConvertNest (Free, Online)</H2>
+          <H2>Method 1: Use FitTheFile (Free, Online)</H2>
           <P>
-            ConvertNest&rsquo;s{" "}
+            FitTheFile&rsquo;s{" "}
             <Link href="/word-to-pdf" style={{ color: "var(--primary)" }}>
               Word to PDF
             </Link>{" "}
@@ -111,7 +111,7 @@ export default function WordToPdfBlogPost() {
             For the most accurate conversion of complex documents, Microsoft
             Word&rsquo;s built-in export is hard to beat. For everyday
             documents — letters, resumes, reports, essays — a free online
-            converter like ConvertNest produces excellent results. Google Docs
+            converter like FitTheFile produces excellent results. Google Docs
             works well as a fallback if you are already in the Google ecosystem,
             but check the output for formatting drift on anything beyond simple
             text.

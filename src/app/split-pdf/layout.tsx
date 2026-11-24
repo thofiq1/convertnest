@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "Split PDF Online Free — Extract Pages from PDF",
     description: "Split PDF files online for free. Extract specific pages or separate into individual files.",
     url: "/split-pdf",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {

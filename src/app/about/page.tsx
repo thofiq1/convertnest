@@ -4,17 +4,17 @@ import { tools } from "@/lib/tools";
 export const metadata: Metadata = {
   title: "About Us — Free, Private Browser-Based File Tools",
   alternates: { canonical: "/about" },
-  description: "ConvertNest provides free PDF tools and file converters. Compress, merge, split PDFs and convert images — all in your browser.",
+  description: "FitTheFile provides free PDF tools and file converters. Compress, merge, split PDFs and convert images — all in your browser.",
 };
 
 export default function AboutPage() {
   return (
     <div style={{ maxWidth: "800px", margin: "0 auto", padding: "2rem 1.5rem" }}>
-      <h1 style={{ fontSize: "2rem", fontWeight: 800, marginBottom: "1rem" }}>About ConvertNest</h1>
+      <h1 style={{ fontSize: "2rem", fontWeight: 800, marginBottom: "1rem" }}>About FitTheFile</h1>
 
       <div style={{ lineHeight: 1.8 }}>
         <p style={{ fontSize: "1.1rem", marginBottom: "1.5rem" }}>
-          ConvertNest is a collection of <strong>{tools.length} free online tools</strong> for
+          FitTheFile is a collection of <strong>{tools.length} free online tools</strong> for
           PDF conversion, image processing, and file management. Compress PDFs, merge documents,
           convert images — everything you need, right in your browser.
         </p>
@@ -24,7 +24,7 @@ export default function AboutPage() {
         </h2>
         <p>
           We believe essential file tools should be free, fast, and private. That&apos;s why every tool on
-          ConvertNest runs entirely in your browser. No sign-ups, no file uploads to servers, no limits.
+          FitTheFile runs entirely in your browser. No sign-ups, no file uploads to servers, no limits.
         </p>
 
         <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginTop: "2rem", marginBottom: "0.5rem" }}>

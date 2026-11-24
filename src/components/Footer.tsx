@@ -42,7 +42,7 @@ export default function Footer() {
               </svg>
             </div>
             <span style={{ fontWeight: 800, fontSize: "1.1rem", color: "var(--foreground)" }}>
-              Convert<span style={{ color: "var(--primary)" }}>Nest</span>
+              FitThe<span style={{ color: "var(--primary)" }}>File</span>
             </span>
           </div>
           <p style={{ color: "var(--muted)", lineHeight: 1.6, fontSize: "0.8rem" }}>
@@ -118,7 +118,7 @@ export default function Footer() {
           color: "var(--muted)",
         }}
       >
-        &copy; 2026 ConvertNest. All rights reserved. Free online file converter and PDF tools.
+        &copy; 2026 FitTheFile. All rights reserved. Free online file converter and PDF tools.
       </div>
     </footer>
   );

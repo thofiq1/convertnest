@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   applicationName: SITE_NAME,
   title: {
-    default: "Free Online PDF Tools & File Converter | ConvertNest",
-    template: "%s | ConvertNest",
+    default: "Free Online PDF Tools & File Converter | FitTheFile",
+    template: "%s | FitTheFile",
   },
   description:
     "Free online PDF tools and file converters. Compress PDF, merge PDF, convert images, JPG to PDF, and more. No signup required. 100% free.",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     google: "-30b_GIZaX7vrEBAUvG9wZKwFuu4bg-M9wi5l6K3qr0",
   },
   openGraph: {
-    title: "Free Online PDF Tools & File Converter | ConvertNest",
+    title: "Free Online PDF Tools & File Converter | FitTheFile",
     siteName: SITE_NAME,
     locale: "en_US",
     description:

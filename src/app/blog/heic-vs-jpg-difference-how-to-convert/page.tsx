@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: post.title,
     description: post.description,
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "article",
     publishedTime: post.date,
   },
@@ -106,7 +106,7 @@ export default function HeicVsJpgBlogPost() {
 
           <H2>How to Convert HEIC to JPG</H2>
           <P>
-            The easiest approach is a free online converter. With ConvertNest,
+            The easiest approach is a free online converter. With FitTheFile,
             you can drag and drop your HEIC files, and they are instantly
             converted to high-quality JPGs right in your browser. No upload to
             a server, no quality loss, and no signup required. You can convert

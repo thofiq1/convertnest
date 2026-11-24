@@ -18,7 +18,7 @@ export function pdfSizeMetadata(kb: number): Metadata {
       `pdf ${kb}kb converter`,
       `shrink pdf to ${kb}kb`,
     ],
-    openGraph: { title, description, url: `/${page.slug}`, siteName: "ConvertNest", type: "website" },
+    openGraph: { title, description, url: `/${page.slug}`, siteName: "FitTheFile", type: "website" },
     alternates: { canonical: `/${page.slug}` },
   };
 }
@@ -28,7 +28,7 @@ export default function PdfSizeLandingPage({ kb }: { kb: number }) {
   const faqs = [
     {
       question: `How do I compress a PDF to ${kb}KB?`,
-      answer: `Upload your PDF to ConvertNest's ${kb}KB compressor. It tries the sharpest settings first and lowers resolution and quality only as far as needed to get under ${kb}KB, then gives you the file to download.`,
+      answer: `Upload your PDF to FitTheFile's ${kb}KB compressor. It tries the sharpest settings first and lowers resolution and quality only as far as needed to get under ${kb}KB, then gives you the file to download.`,
     },
     {
       question: `Can every PDF be compressed to ${kb}KB?`,

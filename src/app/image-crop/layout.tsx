@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "Crop Image Online Free — Photo Cropper Tool",
     description: "Crop images online for free with an easy drag-and-drop editor. No signup required.",
     url: "/image-crop",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "Image Converter Online Free — JPG PNG WebP BMP",
     description: "Convert images between JPG, PNG, WebP, and BMP formats for free. No signup required.",
     url: "/image-converter",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {

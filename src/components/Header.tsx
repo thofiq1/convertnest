@@ -97,7 +97,7 @@ export default function Header() {
               color: "var(--foreground)",
             }}
           >
-            Convert<span style={{ color: "var(--primary)" }}>Nest</span>
+            FitThe<span style={{ color: "var(--primary)" }}>File</span>
           </span>
         </Link>
 

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "Add Page Numbers to PDF Online Free",
     description: "Add page numbers to PDF files online for free. Choose position, format, and starting number.",
     url: "/pdf-page-numbers",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {

@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: post.title,
     description: post.description,
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "article",
     publishedTime: post.date,
   },
@@ -51,7 +51,7 @@ export default function BestFreePdfToolsBlogPost() {
           <P>
             Large PDFs clog up email inboxes and slow down uploads. A good
             compressor lets you choose how aggressively to shrink the file so
-            you can balance quality against size. ConvertNest&rsquo;s{" "}
+            you can balance quality against size. FitTheFile&rsquo;s{" "}
             <Link href="/compress-pdf" style={{ color: "var(--primary)" }}>
               Compress PDF
             </Link>{" "}
@@ -105,7 +105,7 @@ export default function BestFreePdfToolsBlogPost() {
           <P>
             Watermarks protect drafts and confidential files. The best tools let
             you add text or image watermarks, control opacity and position, and
-            apply them across all pages in one step. ConvertNest&rsquo;s{" "}
+            apply them across all pages in one step. FitTheFile&rsquo;s{" "}
             <Link href="/pdf-watermark" style={{ color: "var(--primary)" }}>
               PDF Watermark
             </Link>{" "}
@@ -115,7 +115,7 @@ export default function BestFreePdfToolsBlogPost() {
           <H2>7. Add Page Numbers</H2>
           <P>
             Scanned documents and merged files often lack page numbers. Adding
-            them makes navigation and printing much easier. ConvertNest&rsquo;s{" "}
+            them makes navigation and printing much easier. FitTheFile&rsquo;s{" "}
             <Link href="/pdf-page-numbers" style={{ color: "var(--primary)" }}>
               PDF Page Numbers
             </Link>{" "}
@@ -153,7 +153,7 @@ export default function BestFreePdfToolsBlogPost() {
             Most online PDF tools upload your files to their servers for
             processing. That means your contracts, tax returns, medical records,
             and personal documents pass through someone else&rsquo;s
-            infrastructure. ConvertNest takes a different approach: every tool
+            infrastructure. FitTheFile takes a different approach: every tool
             runs entirely in your browser using client-side processing. Your
             files never leave your device. There is no upload, no server
             storage, and nothing to delete afterward. For anyone handling
@@ -167,7 +167,7 @@ export default function BestFreePdfToolsBlogPost() {
             You do not need to download software or pay for a subscription to
             manage PDFs effectively. Browser-based tools have matured to the
             point where they handle everything from basic compression to
-            encryption and page manipulation. ConvertNest covers all ten tasks
+            encryption and page manipulation. FitTheFile covers all ten tasks
             above, runs entirely in your browser, and costs nothing. Give it a
             try the next time a PDF stands between you and getting things done.
           </P>

@@ -18,7 +18,7 @@ export function sizeMetadata(kb: number): Metadata {
       `resize image to ${kb}kb`,
       `image ${kb}kb converter`,
     ],
-    openGraph: { title, description, url: `/${page.slug}`, siteName: "ConvertNest", type: "website" },
+    openGraph: { title, description, url: `/${page.slug}`, siteName: "FitTheFile", type: "website" },
     alternates: { canonical: `/${page.slug}` },
   };
 }
@@ -28,7 +28,7 @@ export default function SizeLandingPage({ kb }: { kb: number }) {
   const faqs = [
     {
       question: `How do I compress an image to ${kb}KB?`,
-      answer: `Upload your photo to ConvertNest's ${kb}KB compressor. It automatically finds the highest JPG quality that fits under ${kb}KB, shrinking the dimensions only if needed, and gives you a file to download.`,
+      answer: `Upload your photo to FitTheFile's ${kb}KB compressor. It automatically finds the highest JPG quality that fits under ${kb}KB, shrinking the dimensions only if needed, and gives you a file to download.`,
     },
     {
       question: `Will my photo lose quality at ${kb}KB?`,

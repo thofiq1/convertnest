@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: post.title,
     description: post.description,
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "article",
     publishedTime: post.date,
   },
@@ -34,7 +34,7 @@ const linkStyle = { color: "var(--primary)" };
 const faqs = [
   {
     q: "Can I compress any PDF to 100KB?",
-    a: "Not always. A one- or two-page scan usually fits under 100KB, but a long PDF with many pages may not, because every page still needs some space to stay readable. If the target can't be reached, ConvertNest tells you and shows the smallest size it managed, so you can try a larger target such as 200KB or 500KB, or split the PDF first.",
+    a: "Not always. A one- or two-page scan usually fits under 100KB, but a long PDF with many pages may not, because every page still needs some space to stay readable. If the target can't be reached, FitTheFile tells you and shows the smallest size it managed, so you can try a larger target such as 200KB or 500KB, or split the PDF first.",
   },
   {
     q: "Will I still be able to select or search the text?",
@@ -62,7 +62,7 @@ export default function CompressPdfTo100kbPost() {
         />
         <ArticleBody>
           <P>
-            To compress a PDF to 100KB, open ConvertNest&rsquo;s free{" "}
+            To compress a PDF to 100KB, open FitTheFile&rsquo;s free{" "}
             <Link href="/compress-pdf-to-100kb" style={linkStyle}>Compress PDF to 100KB</Link>{" "}
             tool, drop in your file, and download the result &mdash; it
             automatically finds the best quality that fits under the limit. If

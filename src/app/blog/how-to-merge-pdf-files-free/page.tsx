@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: post.title,
     description: post.description,
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "article",
     publishedTime: post.date,
   },
@@ -67,7 +67,7 @@ export default function MergePdfBlogPost() {
           <H2>Method 1: Use a Free Online Tool</H2>
           <P>
             The quickest way to merge PDFs is with a browser-based tool like
-            ConvertNest. Upload your files (or drag and drop them), rearrange
+            FitTheFile. Upload your files (or drag and drop them), rearrange
             them in the order you want, and click merge. The combined PDF
             downloads to your device in seconds. All processing happens locally
             in your browser, so your documents stay private.
@@ -126,7 +126,7 @@ export default function MergePdfBlogPost() {
           <P>
             Check the page orientation of each file too. If one document is
             landscape and the rest are portrait, the merged result can look
-            inconsistent. ConvertNest&rsquo;s Rotate PDF tool can fix
+            inconsistent. FitTheFile&rsquo;s Rotate PDF tool can fix
             orientation before you merge.
           </P>
           <P>
@@ -139,7 +139,7 @@ export default function MergePdfBlogPost() {
 
       <FaqSchema
         faqs={[
-          { question: "How many PDFs can I merge at once?", answer: "ConvertNest has no limit on the number of PDFs you can merge. Upload as many files as you need and drag them into your preferred order." },
+          { question: "How many PDFs can I merge at once?", answer: "FitTheFile has no limit on the number of PDFs you can merge. Upload as many files as you need and drag them into your preferred order." },
           { question: "Will merging PDFs reduce quality?", answer: "No. Merging PDFs combines the original pages without any recompression, so quality remains exactly the same as the source files." },
         ]}
       />
@@ -149,7 +149,7 @@ export default function MergePdfBlogPost() {
         </h2>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
           {[
-            { q: "How many PDFs can I merge at once?", a: "ConvertNest has no limit on the number of PDFs you can merge. Upload as many files as you need and drag them into your preferred order." },
+            { q: "How many PDFs can I merge at once?", a: "FitTheFile has no limit on the number of PDFs you can merge. Upload as many files as you need and drag them into your preferred order." },
             { q: "Will merging PDFs reduce quality?", a: "No. Merging PDFs combines the original pages without any recompression, so quality remains exactly the same as the source files." },
           ].map((faq, i) => (
             <details key={i} style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.75rem", overflow: "hidden" }}>

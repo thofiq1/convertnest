@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "Contact Us",
   alternates: { canonical: "/contact" },
   description:
-    "Get in touch with the ConvertNest team. Questions, feedback, or feature requests — we'd love to hear from you.",
+    "Get in touch with the FitTheFile team. Questions, feedback, or feature requests — we'd love to hear from you.",
 };
 
 export default function ContactPage() {
@@ -119,7 +119,7 @@ export default function ContactPage() {
               {
                 icon: "🤝",
                 title: "Partnership",
-                desc: "Interested in collaborating or integrating ConvertNest? Reach out and let's talk.",
+                desc: "Interested in collaborating or integrating FitTheFile? Reach out and let's talk.",
               },
               {
                 icon: "❓",

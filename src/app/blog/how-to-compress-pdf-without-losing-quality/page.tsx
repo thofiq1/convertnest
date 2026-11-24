@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: post.title,
     description: post.description,
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "article",
     publishedTime: post.date,
   },
@@ -65,13 +65,13 @@ export default function CompressPdfBlogPost() {
           <H2>Method 1: Use an Online Compressor (Easiest)</H2>
           <P>
             The fastest way to shrink a PDF is with a free online tool like
-            ConvertNest. You simply upload your file, choose a compression level,
+            FitTheFile. You simply upload your file, choose a compression level,
             and download the smaller version. No software to install, no account
             to create, and your file never leaves your browser — the compression
             happens entirely on your device.
           </P>
           <P>
-            ConvertNest offers four compression presets: Maximum Quality (keeps
+            FitTheFile offers four compression presets: Maximum Quality (keeps
             the file nearly identical), High, Recommended (a balanced option that
             works well for most documents), and Minimum Size for when you need
             the smallest file possible. For most use cases, the Recommended
@@ -120,7 +120,7 @@ export default function CompressPdfBlogPost() {
           </P>
           <P>
             Before compressing, remove any pages you do not need. Fewer pages
-            means a smaller file, and tools like ConvertNest&rsquo;s Split PDF
+            means a smaller file, and tools like FitTheFile&rsquo;s Split PDF
             can help you extract just the pages that matter.
           </P>
 
@@ -138,9 +138,9 @@ export default function CompressPdfBlogPost() {
 
       <FaqSchema
         faqs={[
-          { question: "Does compressing a PDF reduce quality?", answer: "It depends on the method. Lossless compression reduces size without any quality loss. Lossy compression sacrifices some image quality for smaller files. ConvertNest's compressor is lossy: it re-saves each page as an image at the level you choose, which shrinks files a lot but means text is no longer selectable." },
+          { question: "Does compressing a PDF reduce quality?", answer: "It depends on the method. Lossless compression reduces size without any quality loss. Lossy compression sacrifices some image quality for smaller files. FitTheFile's compressor is lossy: it re-saves each page as an image at the level you choose, which shrinks files a lot but means text is no longer selectable." },
           { question: "What is a good PDF file size?", answer: "For email attachments, under 10MB is ideal. For web uploads, under 5MB works best. Most PDFs can be compressed by 50-80% without noticeable quality loss." },
-          { question: "Is it safe to compress PDFs online?", answer: "With browser-based tools like ConvertNest, your files are never uploaded to a server. All processing happens locally in your browser, keeping your documents completely private." },
+          { question: "Is it safe to compress PDFs online?", answer: "With browser-based tools like FitTheFile, your files are never uploaded to a server. All processing happens locally in your browser, keeping your documents completely private." },
         ]}
       />
       <section style={{ marginTop: "2.5rem" }}>
@@ -149,9 +149,9 @@ export default function CompressPdfBlogPost() {
         </h2>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
           {[
-            { q: "Does compressing a PDF reduce quality?", a: "It depends on the method. Lossless compression reduces size without any quality loss. Lossy compression sacrifices some image quality for smaller files. ConvertNest's compressor is lossy: it re-saves each page as an image at the level you choose, which shrinks files a lot but means text is no longer selectable." },
+            { q: "Does compressing a PDF reduce quality?", a: "It depends on the method. Lossless compression reduces size without any quality loss. Lossy compression sacrifices some image quality for smaller files. FitTheFile's compressor is lossy: it re-saves each page as an image at the level you choose, which shrinks files a lot but means text is no longer selectable." },
             { q: "What is a good PDF file size?", a: "For email attachments, under 10MB is ideal. For web uploads, under 5MB works best. Most PDFs can be compressed by 50-80% without noticeable quality loss." },
-            { q: "Is it safe to compress PDFs online?", a: "With browser-based tools like ConvertNest, your files are never uploaded to a server. All processing happens locally in your browser, keeping your documents completely private." },
+            { q: "Is it safe to compress PDFs online?", a: "With browser-based tools like FitTheFile, your files are never uploaded to a server. All processing happens locally in your browser, keeping your documents completely private." },
           ].map((faq, i) => (
             <details key={i} style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.75rem", overflow: "hidden" }}>
               <summary style={{ padding: "1rem 1.25rem", fontWeight: 600, fontSize: "0.95rem", cursor: "pointer", listStyle: "none" }}>

@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "Privacy Policy",
   alternates: { canonical: "/privacy" },
   description:
-    "ConvertNest privacy policy. All tools run entirely in your browser. Learn how we handle data, cookies, and advertising.",
+    "FitTheFile privacy policy. All tools run entirely in your browser. Learn how we handle data, cookies, and advertising.",
 };
 
 export default function PrivacyPage() {
@@ -29,7 +29,7 @@ export default function PrivacyPage() {
           Your Privacy Matters
         </h2>
         <p>
-          At ConvertNest, we take your privacy seriously. All of our file
+          At FitTheFile, we take your privacy seriously. All of our file
           conversion and processing tools are designed to run entirely in your
           web browser using client-side JavaScript. This means your files never
           leave your device — they are never uploaded to any server.
@@ -51,7 +51,7 @@ export default function PrivacyPage() {
             tools.
           </strong>{" "}
           When you compress a PDF, convert an image, merge documents, or use any
-          other tool on ConvertNest, all processing happens locally in your
+          other tool on FitTheFile, all processing happens locally in your
           browser. Your files, text, and images are never sent to our servers or
           any third party.
         </p>
@@ -109,7 +109,7 @@ export default function PrivacyPage() {
           Advertising
         </h2>
         <p>
-          ConvertNest uses Google AdSense to display advertisements, which helps
+          FitTheFile uses Google AdSense to display advertisements, which helps
           us keep all tools free for everyone. Google AdSense and its partners
           may use cookies and web beacons to serve ads based on your prior
           visits to this website and other websites on the internet.
@@ -118,7 +118,7 @@ export default function PrivacyPage() {
           Specifically, third-party vendors including Google use cookies to serve
           ads based on your previous visits. Google&apos;s use of advertising
           cookies enables it and its partners to serve ads based on your visit
-          to ConvertNest and/or other sites on the internet.
+          to FitTheFile and/or other sites on the internet.
         </p>
         <p style={{ marginTop: "0.75rem" }}>
           <strong>You can opt out of personalized advertising</strong> by
@@ -155,7 +155,7 @@ export default function PrivacyPage() {
           Cookies
         </h2>
         <p>
-          ConvertNest itself does not set any first-party cookies. However,
+          FitTheFile itself does not set any first-party cookies. However,
           third-party services we use may set cookies on your device:
         </p>
         <ul
@@ -181,7 +181,7 @@ export default function PrivacyPage() {
         <p>
           You can control and delete cookies through your browser settings. Note
           that disabling cookies may affect the functionality of some third-party
-          features on our site, but all ConvertNest tools will continue to work
+          features on our site, but all FitTheFile tools will continue to work
           normally.
         </p>
 
@@ -213,7 +213,7 @@ export default function PrivacyPage() {
           Children&apos;s Privacy
         </h2>
         <p>
-          ConvertNest does not knowingly collect personal information from
+          FitTheFile does not knowingly collect personal information from
           children under the age of 13. If you believe a child has provided us
           with personal information, please contact us and we will take steps to
           remove that information.

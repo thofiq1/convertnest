@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "Unlock PDF Free — Remove PDF Password Online",
     description: "Remove password from PDF files online for free. Enter the password you know and download an unlocked copy.",
     url: "/pdf-unlock",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {

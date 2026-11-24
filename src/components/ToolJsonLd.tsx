@@ -22,7 +22,7 @@ export default function ToolJsonLd({ name, description, url }: ToolJsonLdProps) 
     },
     provider: {
       "@type": "Organization",
-      name: "ConvertNest",
+      name: "FitTheFile",
       url: SITE_URL,
     },
     browserRequirements: "Requires JavaScript. Works in Chrome, Firefox, Safari, Edge.",

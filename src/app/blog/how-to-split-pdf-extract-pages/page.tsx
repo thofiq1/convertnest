@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: post.title,
     description: post.description,
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "article",
     publishedTime: post.date,
   },
@@ -58,9 +58,9 @@ export default function SplitPdfBlogPost() {
             the ones you do not.
           </P>
 
-          <H2>Method 1: Use ConvertNest (Easiest)</H2>
+          <H2>Method 1: Use FitTheFile (Easiest)</H2>
           <P>
-            ConvertNest&rsquo;s{" "}
+            FitTheFile&rsquo;s{" "}
             <Link href="/split-pdf" style={{ color: "var(--primary)" }}>
               Split PDF
             </Link>{" "}

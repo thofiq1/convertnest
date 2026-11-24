@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: post.title,
     description: post.description,
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "article",
     publishedTime: post.date,
   },
@@ -38,7 +38,7 @@ const faqs = [
   },
   {
     q: "How do I make a PDF smaller for upload?",
-    a: "Use a tool that targets the exact limit, such as ConvertNest's Compress PDF to 200KB. It turns each page into an image and finds the best quality that fits, which works well for scans and forms. If the limit is generous, the regular Compress PDF tool lets you pick a quality preset instead. Both turn pages into images, so keep your original if you need selectable text.",
+    a: "Use a tool that targets the exact limit, such as FitTheFile's Compress PDF to 200KB. It turns each page into an image and finds the best quality that fits, which works well for scans and forms. If the limit is generous, the regular Compress PDF tool lets you pick a quality preset instead. Both turn pages into images, so keep your original if you need selectable text.",
   },
   {
     q: "The tool couldn't reach my target size. What now?",
@@ -46,7 +46,7 @@ const faqs = [
   },
   {
     q: "Are my documents safe?",
-    a: "Yes. ConvertNest runs in your browser, so your files are never uploaded to a server. They stay on your device the whole time.",
+    a: "Yes. FitTheFile runs in your browser, so your files are never uploaded to a server. They stay on your device the whole time.",
   },
 ];
 

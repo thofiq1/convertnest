@@ -217,7 +217,7 @@ export default function HomeContent() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebSite",
-            name: "ConvertNest",
+            name: "FitTheFile",
             url: `${SITE_URL}/`,
             description: "Free online PDF tools and file converters. Compress, merge, split, and convert PDFs and images.",
           }),
@@ -294,8 +294,8 @@ export default function HomeContent() {
               margin: "0 auto 2rem",
             }}
           >
-            Compress, merge, split, and convert PDFs and images — all for free.
-            No signup, no watermarks. Your files stay private in your browser.
+            Make any PDF or photo fit an upload limit — compress to 100KB, 50KB or any size.
+            Plus merge, split and convert. Free, private, in your browser.
           </p>
 
           <div className="fade-up fade-up-delay-3" style={{ display: "flex", justifyContent: "center", gap: "0.75rem", flexWrap: "wrap" }}>
@@ -344,6 +344,43 @@ export default function HomeContent() {
 
         {/* ── Category pills + tools grid ── */}
         <section id="tools" style={{ marginTop: "2rem" }}>
+          {/* ── Fit a file under a size limit ── */}
+          <div
+            style={{
+              marginBottom: "2rem",
+              padding: "1.25rem 1.5rem",
+              borderRadius: "1rem",
+              background: "linear-gradient(135deg, var(--primary-glow) 0%, transparent 100%)",
+              border: "1px solid var(--primary)",
+            }}
+          >
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.25rem" }}>
+              Fit a file under a size limit
+            </h2>
+            <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginBottom: "0.9rem" }}>
+              Upload form rejecting your file? Pick the limit and get a file that fits.
+            </p>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              {[
+                { href: "/compress-pdf-to-100kb", label: "PDF to 100KB" },
+                { href: "/compress-pdf-to-200kb", label: "PDF to 200KB" },
+                { href: "/compress-pdf-to-500kb", label: "PDF to 500KB" },
+                { href: "/compress-image-to-20kb", label: "Image to 20KB" },
+                { href: "/compress-image-to-50kb", label: "Image to 50KB" },
+                { href: "/compress-image-to-100kb", label: "Image to 100KB" },
+              ].map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="category-pill"
+                  style={{ textDecoration: "none" }}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
           {/* Category filter pills */}
           <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "2rem" }}>
             <button
@@ -523,7 +560,7 @@ export default function HomeContent() {
         {/* ── Why choose us ── */}
         <section style={{ marginTop: "4rem" }}>
           <h2 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "0.5rem", textAlign: "center" }}>
-            Why Choose ConvertNest?
+            Why Choose FitTheFile?
           </h2>
           <p style={{ color: "var(--muted)", marginBottom: "2.5rem", fontSize: "0.95rem", textAlign: "center" }}>
             Trusted by thousands of users worldwide
@@ -593,7 +630,7 @@ export default function HomeContent() {
             Online PDF Converter &amp; Image Tools
           </h2>
           <p>
-            ConvertNest is your go-to platform for free online file conversion. Whether you need to
+            FitTheFile is your go-to platform for free online file conversion. Whether you need to
             compress a PDF to reduce its file size, merge multiple PDFs into one document, split
             pages from a PDF, or convert between image formats like JPG, PNG, and WebP — we have
             you covered. All tools work directly in your browser for maximum speed and privacy.

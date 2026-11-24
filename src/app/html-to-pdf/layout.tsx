@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "HTML to PDF Converter Free — Webpage to PDF",
     description: "Convert HTML code or web content to PDF for free. Paste your HTML, preview it, and download a clean PDF document.",
     url: "/html-to-pdf",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {

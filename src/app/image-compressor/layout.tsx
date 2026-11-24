@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "Compress Images Online Free — Reduce Image Size",
     description: "Compress JPG, PNG, and WebP images online for free without losing quality. No signup required.",
     url: "/image-compressor",
-    siteName: "ConvertNest",
+    siteName: "FitTheFile",
     type: "website",
   },
   alternates: {
