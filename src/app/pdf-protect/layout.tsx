@@ -1,20 +1,11 @@
 import type { Metadata } from "next";
 
+// Tool is disabled (pdf-lib can't encrypt) — keep it out of search results
+// until real encryption ships, so nobody lands here expecting it to work.
 export const metadata: Metadata = {
-  title: "Password Protect PDF Online Free — Encrypt PDF | ConvertNest",
-  description:
-    "Password protect and encrypt PDF files online for free. Lock your PDFs with a password. No signup, no limits, works in your browser.",
-  keywords: ["password protect pdf", "encrypt pdf", "lock pdf", "secure pdf", "pdf password free", "protect pdf online"],
-  openGraph: {
-    title: "Password Protect PDF Online Free — Encrypt PDF",
-    description: "Password protect and encrypt PDF files online for free. Lock your PDFs with a password.",
-    url: "https://convertnest-app.vercel.app/pdf-protect",
-    siteName: "ConvertNest",
-    type: "website",
-  },
-  alternates: {
-    canonical: "https://convertnest-app.vercel.app/pdf-protect",
-  },
+  title: "Protect PDF — Temporarily Unavailable",
+  description: "Password protection is temporarily unavailable while we upgrade our encryption engine.",
+  robots: { index: false, follow: true },
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

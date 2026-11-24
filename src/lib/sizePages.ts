@@ -16,3 +16,14 @@ export const sizePages: SizePage[] = [
 export function getSizePage(kb: number): SizePage | undefined {
   return sizePages.find((p) => p.kb === kb);
 }
+
+// Landing pages for "compress PDF to X KB" searches.
+export const pdfSizePages: SizePage[] = [
+  { kb: 100, slug: "compress-pdf-to-100kb", useCase: "job applications, exam forms and university portals" },
+  { kb: 200, slug: "compress-pdf-to-200kb", useCase: "government forms, visa applications and certificates" },
+  { kb: 500, slug: "compress-pdf-to-500kb", useCase: "email attachments, resumes and multi-page documents" },
+];
+
+export function getPdfSizePage(kb: number): SizePage | undefined {
+  return pdfSizePages.find((p) => p.kb === kb);
+}

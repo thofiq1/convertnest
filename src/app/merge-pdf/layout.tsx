@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Merge PDF Files Online Free — Combine PDFs | ConvertNest",
+  title: "Merge PDF Files Online Free — Combine PDFs",
   description:
     "Combine multiple PDF files into one document online for free. Merge PDFs in seconds. No signup, no watermarks, no limits. Works in your browser.",
   keywords: ["merge pdf", "combine pdf files", "join pdf", "pdf merger online", "merge pdf free"],
   openGraph: {
     title: "Merge PDF Files Online Free — Combine PDFs",
     description: "Combine multiple PDF files into one document online for free. No signup, no watermarks.",
-    url: "https://convertnest-app.vercel.app/merge-pdf",
+    url: "/merge-pdf",
     siteName: "ConvertNest",
     type: "website",
   },
   alternates: {
-    canonical: "https://convertnest-app.vercel.app/merge-pdf",
+    canonical: "/merge-pdf",
   },
 };
 

@@ -2,7 +2,8 @@ import { Metadata } from "next";
 import { tools } from "@/lib/tools";
 
 export const metadata: Metadata = {
-  title: "About ConvertNest — Free Online PDF Tools & File Converter",
+  title: "About Us — Free, Private Browser-Based File Tools",
+  alternates: { canonical: "/about" },
   description: "ConvertNest provides free PDF tools and file converters. Compress, merge, split PDFs and convert images — all in your browser.",
 };
 

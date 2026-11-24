@@ -438,10 +438,17 @@ export default function CompressPDF() {
           How PDF Compression Works
         </h2>
         <p>
-          Our compressor analyzes your PDF and recompresses embedded images — the main source of large file sizes.
+          Our compressor re-saves each page as an optimized image at the resolution and quality you choose.
           Choose your compression level: <strong>Recommended</strong> typically reduces files by 40–70% with minimal
           visible quality loss. For print-quality documents, use <strong>Maximum</strong>. For email attachments
-          or web uploads, <strong>Minimum Size</strong> gets the smallest files possible.
+          or web uploads, <strong>Minimum Size</strong> gets the smallest files possible. Because pages become
+          images, text in the result can&apos;t be selected or searched, so keep your original if you need that.
+        </p>
+        <p style={{ marginTop: "0.5rem" }}>
+          Need to hit an exact upload limit? Compress to a target size:{" "}
+          <a href="/compress-pdf-to-100kb" style={{ color: "var(--primary)" }}>100KB</a> ·{" "}
+          <a href="/compress-pdf-to-200kb" style={{ color: "var(--primary)" }}>200KB</a> ·{" "}
+          <a href="/compress-pdf-to-500kb" style={{ color: "var(--primary)" }}>500KB</a>
         </p>
         <p style={{ marginTop: "0.5rem" }}>
           All processing happens entirely in your browser. Your files are never uploaded to any server —

@@ -1,10 +1,11 @@
+import { SITE_URL } from "@/lib/site";
 import { tools } from "@/lib/tools";
 import { blogPosts } from "@/lib/blog";
-import { sizePages } from "@/lib/sizePages";
+import { sizePages, pdfSizePages } from "@/lib/sizePages";
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://convertnest-app.vercel.app";
+  const baseUrl = SITE_URL;
 
   const toolPages = tools.map((tool) => ({
     url: `${baseUrl}/${tool.slug}`,
@@ -13,7 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  const sizeLandingPages = sizePages.map((p) => ({
+  const sizeLandingPages = [...pdfSizePages, ...sizePages].map((p) => ({
     url: `${baseUrl}/${p.slug}`,
     lastModified: new Date("2026-11-24"),
     changeFrequency: "monthly" as const,

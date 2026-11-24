@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Add Page Numbers to PDF Online Free | ConvertNest",
+  title: "Add Page Numbers to PDF Online Free",
   description:
     "Add page numbers to PDF files online for free. Choose position, format, and starting number. No signup, no limits, works in your browser.",
   keywords: ["add page numbers to pdf", "pdf page numbers", "number pdf pages", "page numbering pdf free"],
   openGraph: {
     title: "Add Page Numbers to PDF Online Free",
     description: "Add page numbers to PDF files online for free. Choose position, format, and starting number.",
-    url: "https://convertnest-app.vercel.app/pdf-page-numbers",
+    url: "/pdf-page-numbers",
     siteName: "ConvertNest",
     type: "website",
   },
   alternates: {
-    canonical: "https://convertnest-app.vercel.app/pdf-page-numbers",
+    canonical: "/pdf-page-numbers",
   },
 };
 

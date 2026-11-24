@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Contact Us — ConvertNest",
+  title: "Contact Us",
+  alternates: { canonical: "/contact" },
   description:
     "Get in touch with the ConvertNest team. Questions, feedback, or feature requests — we'd love to hear from you.",
 };

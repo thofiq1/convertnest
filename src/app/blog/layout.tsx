@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Blog — Free PDF & Image Tool Guides | ConvertNest",
+  title: "Blog — Free PDF & Image Tool Guides",
+  alternates: { canonical: "/blog" },
   description:
     "Learn how to compress, merge, convert, and edit PDFs and images for free. Tips, tutorials, and guides for all your file conversion needs.",
   openGraph: {

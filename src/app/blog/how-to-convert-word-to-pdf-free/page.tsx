@@ -15,7 +15,8 @@ import {
 const post = getBlogPost("how-to-convert-word-to-pdf-free")!;
 
 export const metadata: Metadata = {
-  title: `${post.title} | ConvertNest`,
+  title: post.title,
+  alternates: { canonical: `/blog/${post.slug}` },
   description: post.description,
   keywords: post.keywords,
   openGraph: {

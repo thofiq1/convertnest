@@ -57,6 +57,8 @@ export default function Footer() {
           <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             {[
               { href: "/compress-pdf", label: "Compress PDF" },
+              { href: "/compress-pdf-to-100kb", label: "Compress PDF to 100KB" },
+              { href: "/compress-pdf-to-200kb", label: "Compress PDF to 200KB" },
               { href: "/merge-pdf", label: "Merge PDF" },
               { href: "/split-pdf", label: "Split PDF" },
               { href: "/rotate-pdf", label: "Rotate PDF" },

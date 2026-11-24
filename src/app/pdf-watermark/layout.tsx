@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Add Watermark to PDF Online Free — PDF Stamper | ConvertNest",
+  title: "Add Watermark to PDF Online Free — PDF Stamper",
   description:
     "Add text watermarks to PDF files online for free. Customize font, opacity, and position. No signup, no watermarks on output, browser-based.",
   keywords: ["add watermark to pdf", "pdf watermark", "stamp pdf", "watermark pdf free", "text watermark pdf"],
   openGraph: {
     title: "Add Watermark to PDF Online Free — PDF Stamper",
     description: "Add text watermarks to PDF files online for free. Customize font, opacity, and position.",
-    url: "https://convertnest-app.vercel.app/pdf-watermark",
+    url: "/pdf-watermark",
     siteName: "ConvertNest",
     type: "website",
   },
   alternates: {
-    canonical: "https://convertnest-app.vercel.app/pdf-watermark",
+    canonical: "/pdf-watermark",
   },
 };
 

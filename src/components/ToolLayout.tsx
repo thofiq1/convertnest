@@ -4,6 +4,7 @@ import ToolJsonLd from "./ToolJsonLd";
 import BreadcrumbSchema from "./BreadcrumbSchema";
 import FaqSchema from "./FaqSchema";
 import { tools, getToolBySlug } from "@/lib/tools";
+import { SITE_URL } from "@/lib/site";
 
 interface FaqItem {
   question: string;
@@ -42,12 +43,12 @@ export default function ToolLayout({ title, description, slug, children, faqs }:
       <ToolJsonLd
         name={title}
         description={description}
-        url={`https://convertnest-app.vercel.app/${slug}`}
+        url={`${SITE_URL}/${slug}`}
       />
       <BreadcrumbSchema
         items={[
-          { name: "Home", url: "https://convertnest-app.vercel.app/" },
-          { name: title, url: `https://convertnest-app.vercel.app/${slug}` },
+          { name: "Home", url: `${SITE_URL}/` },
+          { name: title, url: `${SITE_URL}/${slug}` },
         ]}
       />
       {faqs && faqs.length > 0 && <FaqSchema faqs={faqs} />}

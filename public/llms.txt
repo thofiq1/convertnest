@@ -11,7 +11,7 @@
 - [Image Compressor](https://convertnest-app.vercel.app/image-compressor): Compress JPEG, PNG, and WebP images without losing quality. Reduce image file size instantly.
 - [Image Converter](https://convertnest-app.vercel.app/image-converter): Convert images between JPG, PNG, WebP, and BMP formats. Free and fast format conversion.
 - [Image Resizer](https://convertnest-app.vercel.app/image-resizer): Resize images to any dimension. Set custom width and height or choose from social media presets.
-- [Word to PDF](https://convertnest-app.vercel.app/word-to-pdf): Convert Word documents (.doc, .docx) to PDF format. Preserve formatting perfectly.
+- [Word to PDF](https://convertnest-app.vercel.app/word-to-pdf): Convert Word documents (.docx) to PDF. Text, headings, lists and tables carry over; complex layouts may shift.
 - [Rotate PDF](https://convertnest-app.vercel.app/rotate-pdf): Rotate PDF pages 90, 180, or 270 degrees. Fix scanned documents with wrong orientation.
 - [PDF Watermark](https://convertnest-app.vercel.app/pdf-watermark): Add text watermarks to your PDF files. Customize font size, opacity, position, and color.
 - [PDF Page Numbers](https://convertnest-app.vercel.app/pdf-page-numbers): Add page numbers to your PDF. Choose position, format, and starting number. Free and easy.
@@ -20,6 +20,9 @@
 - [SVG to PNG](https://convertnest-app.vercel.app/svg-to-png): Convert SVG vector files to PNG or JPG at any resolution. Scale up to 4x for high-res output.
 - [HTML to PDF](https://convertnest-app.vercel.app/html-to-pdf): Convert HTML code or web content to PDF. Paste your HTML and download a clean PDF document.
 - [PDF Unlock](https://convertnest-app.vercel.app/pdf-unlock): Remove password from PDF files. Enter the password you know and download an unlocked copy.
+- [Compress PDF to 100KB](https://convertnest-app.vercel.app/compress-pdf-to-100kb): Compress a PDF to under 100KB, for job applications, exam forms and university portals. Pages are saved as images.
+- [Compress PDF to 200KB](https://convertnest-app.vercel.app/compress-pdf-to-200kb): Compress a PDF to under 200KB, for government forms, visa applications and certificates. Pages are saved as images.
+- [Compress PDF to 500KB](https://convertnest-app.vercel.app/compress-pdf-to-500kb): Compress a PDF to under 500KB, for email attachments, resumes and multi-page documents. Pages are saved as images.
 - [Compress Image to 20KB](https://convertnest-app.vercel.app/compress-image-to-20kb): Compress any photo to under 20KB, for signature uploads and exam application forms.
 - [Compress Image to 50KB](https://convertnest-app.vercel.app/compress-image-to-50kb): Compress any photo to under 50KB, for passport-size photos on government and exam portals.
 - [Compress Image to 100KB](https://convertnest-app.vercel.app/compress-image-to-100kb): Compress any photo to under 100KB, for job applications, visa forms and profile photos.
@@ -35,5 +38,8 @@
 - [How to Convert Images Between JPG, PNG, WebP & More (Free)](https://convertnest-app.vercel.app/blog/how-to-convert-images-between-formats): Learn when to use JPG, PNG, or WebP and how to convert between image formats for free. Understand quality, file size, and transparency tradeoffs.
 - [How to Reduce Image Size for Your Website — Speed Up Load Time](https://convertnest-app.vercel.app/blog/how-to-reduce-image-size-for-website): Optimize your website images for faster load times and better SEO. Learn the best image sizes, formats, and free compression tools.
 - [How to Split a PDF and Extract Specific Pages (Free)](https://convertnest-app.vercel.app/blog/how-to-split-pdf-extract-pages): Split PDFs and extract specific pages for free. Learn three easy methods to pull out the pages you need from any PDF document.
-- [How to Convert Word to PDF — Keep Formatting Perfect](https://convertnest-app.vercel.app/blog/how-to-convert-word-to-pdf-free): Convert Word documents to PDF without losing formatting. Compare three free methods and learn which one preserves your layout best.
+- [How to Convert Word to PDF Free — and Keep Your Formatting](https://convertnest-app.vercel.app/blog/how-to-convert-word-to-pdf-free): Convert Word documents to PDF without losing formatting. Compare three free methods and learn which one preserves your layout best.
+- [How to Compress a PDF to 100KB (or 200KB, 500KB) — Free](https://convertnest-app.vercel.app/blog/how-to-compress-pdf-to-100kb): Compress a PDF to 100KB, 200KB or 500KB for job, exam and government portals. Free, runs in your browser, and finds the best quality that fits.
+- [How to Compress a Photo to 50KB or 20KB for Online Forms](https://convertnest-app.vercel.app/blog/how-to-compress-image-to-50kb): Reduce a photo, passport picture or signature to 50KB or 20KB for online application forms. Free, browser-based, and your photo never leaves your device.
+- [File Too Large to Upload? How to Shrink PDFs and Photos Fast](https://convertnest-app.vercel.app/blog/file-size-too-large-upload-fix): Getting a 'file too large' error on a portal? Here's how to shrink PDFs and photos below the upload limit in seconds, free and in your browser.
 

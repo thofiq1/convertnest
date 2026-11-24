@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "SVG to PNG Converter Free — Vector to Raster | ConvertNest",
+  title: "SVG to PNG Converter Free — Vector to Raster",
   description:
     "Convert SVG vector files to PNG or JPG at any resolution online for free. Scale up to 4x for high-res output. No signup. Browser-based.",
   keywords: ["svg to png", "convert svg to png", "svg to jpg", "svg converter", "vector to image free"],
   openGraph: {
     title: "SVG to PNG Converter Free — Vector to Raster",
     description: "Convert SVG vector files to PNG or JPG at any resolution online for free. No signup required.",
-    url: "https://convertnest-app.vercel.app/svg-to-png",
+    url: "/svg-to-png",
     siteName: "ConvertNest",
     type: "website",
   },
   alternates: {
-    canonical: "https://convertnest-app.vercel.app/svg-to-png",
+    canonical: "/svg-to-png",
   },
 };
 

@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — ConvertNest",
+  title: "Privacy Policy",
+  alternates: { canonical: "/privacy" },
   description:
     "ConvertNest privacy policy. All tools run entirely in your browser. Learn how we handle data, cookies, and advertising.",
 };

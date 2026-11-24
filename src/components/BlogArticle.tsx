@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { BlogPost } from "@/lib/blog";
-import { getRelatedPosts } from "@/lib/blog";
+import { getRelatedPosts, blogPosts } from "@/lib/blog";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
+import BreadcrumbSchema from "./BreadcrumbSchema";
 
 export function Breadcrumb({ postTitle }: { postTitle: string }) {
   return (
@@ -40,8 +42,37 @@ export function ArticleHeader({
   date: string;
   readTime: string;
 }) {
+  // Article JSON-LD is emitted here so every post gets it without editing
+  // each post file. The post is looked up by title (all posts pass post.title).
+  const post = blogPosts.find((p) => p.title === title);
+  const postUrl = post ? `${SITE_URL}/blog/${post.slug}` : undefined;
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: title,
+    ...(post ? { description: post.description } : {}),
+    datePublished: date,
+    dateModified: date,
+    ...(postUrl ? { url: postUrl, mainEntityOfPage: { "@type": "WebPage", "@id": postUrl } } : {}),
+    author: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+    publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+    inLanguage: "en",
+  };
   return (
     <header style={{ marginBottom: "2rem" }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      {postUrl && (
+        <BreadcrumbSchema
+          items={[
+            { name: "Home", url: `${SITE_URL}/` },
+            { name: "Blog", url: `${SITE_URL}/blog` },
+            { name: title, url: postUrl },
+          ]}
+        />
+      )}
       <h1
         style={{
           fontSize: "1.85rem",

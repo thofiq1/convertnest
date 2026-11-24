@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Compress Images Online Free — Reduce Image Size | ConvertNest",
+  title: "Compress Images Online Free — Reduce Image Size",
   description:
     "Compress JPG, PNG, and WebP images online for free without losing quality. Reduce image file size instantly. No signup, browser-based.",
   keywords: ["compress image", "image compressor", "reduce image size", "compress jpg", "compress png online free"],
   openGraph: {
     title: "Compress Images Online Free — Reduce Image Size",
     description: "Compress JPG, PNG, and WebP images online for free without losing quality. No signup required.",
-    url: "https://convertnest-app.vercel.app/image-compressor",
+    url: "/image-compressor",
     siteName: "ConvertNest",
     type: "website",
   },
   alternates: {
-    canonical: "https://convertnest-app.vercel.app/image-compressor",
+    canonical: "/image-compressor",
   },
 };
 

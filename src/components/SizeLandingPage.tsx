@@ -3,11 +3,9 @@ import ToolLayout from "@/components/ToolLayout";
 import TargetSizeCompressor from "@/components/TargetSizeCompressor";
 import { getSizePage } from "@/lib/sizePages";
 
-const BASE = "https://convertnest-app.vercel.app";
-
 export function sizeMetadata(kb: number): Metadata {
   const page = getSizePage(kb)!;
-  const title = `Compress Image to ${kb}KB Online Free — JPG Under ${kb}KB | ConvertNest`;
+  const title = `Compress Image to ${kb}KB Online Free`;
   const description = `Compress any photo to under ${kb}KB in seconds, free. Set the target size and download a JPG that fits upload limits for ${page.useCase}. No signup, files never leave your device.`;
   return {
     title,
@@ -20,8 +18,8 @@ export function sizeMetadata(kb: number): Metadata {
       `resize image to ${kb}kb`,
       `image ${kb}kb converter`,
     ],
-    openGraph: { title, description, url: `${BASE}/${page.slug}`, siteName: "ConvertNest", type: "website" },
-    alternates: { canonical: `${BASE}/${page.slug}` },
+    openGraph: { title, description, url: `/${page.slug}`, siteName: "ConvertNest", type: "website" },
+    alternates: { canonical: `/${page.slug}` },
   };
 }
 

@@ -15,7 +15,8 @@ import FaqSchema from "@/components/FaqSchema";
 const post = getBlogPost("how-to-merge-pdf-files-free")!;
 
 export const metadata: Metadata = {
-  title: `${post.title} | ConvertNest`,
+  title: post.title,
+  alternates: { canonical: `/blog/${post.slug}` },
   description: post.description,
   keywords: post.keywords,
   openGraph: {

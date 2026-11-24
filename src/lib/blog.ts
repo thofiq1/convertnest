@@ -149,7 +149,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "how-to-convert-word-to-pdf-free",
-    title: "How to Convert Word to PDF — Keep Formatting Perfect",
+    title: "How to Convert Word to PDF Free — and Keep Your Formatting",
     description:
       "Convert Word documents to PDF without losing formatting. Compare three free methods and learn which one preserves your layout best.",
     date: "2026-11-24",
@@ -163,6 +163,53 @@ export const blogPosts: BlogPost[] = [
     relatedTool: "word-to-pdf",
     relatedToolName: "Word to PDF",
   },
+  {
+    slug: "how-to-compress-pdf-to-100kb",
+    title: "How to Compress a PDF to 100KB (or 200KB, 500KB) — Free",
+    description:
+      "Compress a PDF to 100KB, 200KB or 500KB for job, exam and government portals. Free, runs in your browser, and finds the best quality that fits.",
+    date: "2026-11-24",
+    readTime: "4 min read",
+    keywords: [
+      "compress pdf to 100kb",
+      "reduce pdf size to 200kb",
+      "compress pdf to 500kb",
+      "pdf size reducer kb",
+    ],
+    relatedTool: "compress-pdf-to-100kb",
+    relatedToolName: "Compress PDF to 100KB",
+  },
+  {
+    slug: "how-to-compress-image-to-50kb",
+    title: "How to Compress a Photo to 50KB or 20KB for Online Forms",
+    description:
+      "Reduce a photo, passport picture or signature to 50KB or 20KB for online application forms. Free, browser-based, and your photo never leaves your device.",
+    date: "2026-11-24",
+    readTime: "4 min read",
+    keywords: [
+      "compress image to 50kb",
+      "photo size 20kb",
+      "reduce jpg size kb",
+      "passport photo size kb",
+    ],
+    relatedTool: "compress-image-to-50kb",
+    relatedToolName: "Compress Image to 50KB",
+  },
+  {
+    slug: "file-size-too-large-upload-fix",
+    title: "File Too Large to Upload? How to Shrink PDFs and Photos Fast",
+    description:
+      "Getting a 'file too large' error on a portal? Here's how to shrink PDFs and photos below the upload limit in seconds, free and in your browser.",
+    date: "2026-11-24",
+    readTime: "4 min read",
+    keywords: [
+      "file size too large to upload",
+      "reduce file size for upload",
+      "pdf too big to upload",
+    ],
+    relatedTool: "compress-pdf-to-200kb",
+    relatedToolName: "Compress PDF to 200KB",
+  },
 ];
 
 export function getBlogPost(slug: string): BlogPost | undefined {
@@ -173,7 +220,9 @@ export function getRelatedPosts(
   currentSlug: string,
   limit = 3
 ): BlogPost[] {
-  return blogPosts
-    .filter((p) => p.slug !== currentSlug)
-    .slice(0, limit);
+  // Take the posts that follow the current one (wrapping around), so every
+  // post gets linked from somewhere instead of always the first three.
+  const i = blogPosts.findIndex((p) => p.slug === currentSlug);
+  const rotated = i < 0 ? blogPosts : [...blogPosts.slice(i + 1), ...blogPosts.slice(0, i)];
+  return rotated.slice(0, limit);
 }

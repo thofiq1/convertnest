@@ -1,3 +1,5 @@
+import { SITE_URL } from "@/lib/site";
+
 interface ToolJsonLdProps {
   name: string;
   description: string;
@@ -21,7 +23,7 @@ export default function ToolJsonLd({ name, description, url }: ToolJsonLdProps) 
     provider: {
       "@type": "Organization",
       name: "ConvertNest",
-      url: "https://convertnest-app.vercel.app",
+      url: SITE_URL,
     },
     browserRequirements: "Requires JavaScript. Works in Chrome, Firefox, Safari, Edge.",
     permissions: "none",

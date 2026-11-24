@@ -3,10 +3,13 @@ import Script from "next/script";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  applicationName: SITE_NAME,
   title: {
-    default: "ConvertNest — Free Online File Converter & PDF Tools",
+    default: "Free Online PDF Tools & File Converter | ConvertNest",
     template: "%s | ConvertNest",
   },
   description:
@@ -29,7 +32,9 @@ export const metadata: Metadata = {
     google: "-30b_GIZaX7vrEBAUvG9wZKwFuu4bg-M9wi5l6K3qr0",
   },
   openGraph: {
-    title: "ConvertNest — Free Online File Converter & PDF Tools",
+    title: "Free Online PDF Tools & File Converter | ConvertNest",
+    siteName: SITE_NAME,
+    locale: "en_US",
     description:
       "Compress, merge, split, and convert PDFs and images. Free online tools — no signup, no watermarks.",
     type: "website",

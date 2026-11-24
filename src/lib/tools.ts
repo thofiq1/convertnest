@@ -90,7 +90,7 @@ export const tools: Tool[] = [
     name: "Word to PDF",
     slug: "word-to-pdf",
     description:
-      "Convert Word documents (.doc, .docx) to PDF format. Preserve formatting perfectly.",
+      "Convert Word documents (.docx) to PDF. Text, headings, lists and tables carry over; complex layouts may shift.",
     category: "Document",
     icon: "📝",
     keywords: ["word to pdf", "docx to pdf", "convert word to pdf", "doc to pdf"],
