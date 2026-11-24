@@ -78,6 +78,8 @@ export default function Footer() {
           <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             {[
               { href: "/image-compressor", label: "Image Compressor" },
+              { href: "/compress-image-to-50kb", label: "Compress Image to 50KB" },
+              { href: "/compress-image-to-100kb", label: "Compress Image to 100KB" },
               { href: "/image-converter", label: "Image Converter" },
               { href: "/image-resizer", label: "Image Resizer" },
               { href: "/word-to-pdf", label: "Word to PDF" },

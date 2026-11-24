@@ -393,6 +393,13 @@ export default function ImageCompressor() {
           shows the size reduction achieved. Download individually or all at once as a ZIP file. All
           processing happens in your browser — your images stay private.
         </p>
+        <p style={{ marginTop: "0.75rem" }}>
+          Need to hit an exact upload limit? Compress to a target size:{" "}
+          <a href="/compress-image-to-20kb" style={{ color: "var(--primary)" }}>20KB</a> ·{" "}
+          <a href="/compress-image-to-50kb" style={{ color: "var(--primary)" }}>50KB</a> ·{" "}
+          <a href="/compress-image-to-100kb" style={{ color: "var(--primary)" }}>100KB</a> ·{" "}
+          <a href="/compress-image-to-200kb" style={{ color: "var(--primary)" }}>200KB</a>
+        </p>
       </section>
     </ToolLayout>
     </ErrorBoundary>

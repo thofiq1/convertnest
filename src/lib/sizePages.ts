@@ -1,0 +1,18 @@
+// Landing pages for "compress image to X KB" searches.
+// Common upload limits on job, exam, visa and government portals.
+export interface SizePage {
+  kb: number;
+  slug: string;
+  useCase: string;
+}
+
+export const sizePages: SizePage[] = [
+  { kb: 20, slug: "compress-image-to-20kb", useCase: "signature uploads and exam application forms" },
+  { kb: 50, slug: "compress-image-to-50kb", useCase: "passport-size photos on government and exam portals" },
+  { kb: 100, slug: "compress-image-to-100kb", useCase: "job applications, visa forms and profile photos" },
+  { kb: 200, slug: "compress-image-to-200kb", useCase: "online forms, email attachments and website uploads" },
+];
+
+export function getSizePage(kb: number): SizePage | undefined {
+  return sizePages.find((p) => p.kb === kb);
+}

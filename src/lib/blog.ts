@@ -69,9 +69,9 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "how-to-password-protect-pdf-free",
-    title: "How to Password Protect a PDF — Free Online Tool",
+    title: "How to Password Protect a PDF for Free (Mac, Windows & More)",
     description:
-      "Lock your PDF with a password for free. Learn about user vs. owner passwords and how to set permissions.",
+      "Lock your PDF with a password for free using Preview, Word or LibreOffice. Learn about user vs. owner passwords and how to check it worked.",
     date: "2026-11-24",
     readTime: "5 min read",
     keywords: [

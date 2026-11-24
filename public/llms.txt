@@ -1,0 +1,39 @@
+# ConvertNest
+
+> Free online PDF and image tools that run entirely in the browser. Files are never uploaded to a server. No signup, no watermarks, no daily limits.
+
+## Tools
+- [Compress PDF](https://convertnest-app.vercel.app/compress-pdf): Reduce PDF file size while keeping quality. Free online PDF compressor — no signup, no watermarks.
+- [Merge PDF](https://convertnest-app.vercel.app/merge-pdf): Combine multiple PDF files into one document. Drag and drop to reorder pages easily.
+- [Split PDF](https://convertnest-app.vercel.app/split-pdf): Extract pages from a PDF or split it into separate files. Select the pages you need.
+- [JPG to PDF](https://convertnest-app.vercel.app/jpg-to-pdf): Convert JPG images to PDF. Combine multiple images into a single PDF document.
+- [PDF to JPG](https://convertnest-app.vercel.app/pdf-to-jpg): Convert PDF pages to high-quality JPG images. Download each page as a separate image.
+- [Image Compressor](https://convertnest-app.vercel.app/image-compressor): Compress JPEG, PNG, and WebP images without losing quality. Reduce image file size instantly.
+- [Image Converter](https://convertnest-app.vercel.app/image-converter): Convert images between JPG, PNG, WebP, and BMP formats. Free and fast format conversion.
+- [Image Resizer](https://convertnest-app.vercel.app/image-resizer): Resize images to any dimension. Set custom width and height or choose from social media presets.
+- [Word to PDF](https://convertnest-app.vercel.app/word-to-pdf): Convert Word documents (.doc, .docx) to PDF format. Preserve formatting perfectly.
+- [Rotate PDF](https://convertnest-app.vercel.app/rotate-pdf): Rotate PDF pages 90, 180, or 270 degrees. Fix scanned documents with wrong orientation.
+- [PDF Watermark](https://convertnest-app.vercel.app/pdf-watermark): Add text watermarks to your PDF files. Customize font size, opacity, position, and color.
+- [PDF Page Numbers](https://convertnest-app.vercel.app/pdf-page-numbers): Add page numbers to your PDF. Choose position, format, and starting number. Free and easy.
+- [HEIC to JPG](https://convertnest-app.vercel.app/heic-to-jpg): Convert iPhone HEIC photos to JPG or PNG format. Batch convert multiple files at once.
+- [Image Crop](https://convertnest-app.vercel.app/image-crop): Crop images with an interactive drag-and-drop editor. Aspect ratio presets for social media.
+- [SVG to PNG](https://convertnest-app.vercel.app/svg-to-png): Convert SVG vector files to PNG or JPG at any resolution. Scale up to 4x for high-res output.
+- [HTML to PDF](https://convertnest-app.vercel.app/html-to-pdf): Convert HTML code or web content to PDF. Paste your HTML and download a clean PDF document.
+- [PDF Unlock](https://convertnest-app.vercel.app/pdf-unlock): Remove password from PDF files. Enter the password you know and download an unlocked copy.
+- [Compress Image to 20KB](https://convertnest-app.vercel.app/compress-image-to-20kb): Compress any photo to under 20KB, for signature uploads and exam application forms.
+- [Compress Image to 50KB](https://convertnest-app.vercel.app/compress-image-to-50kb): Compress any photo to under 50KB, for passport-size photos on government and exam portals.
+- [Compress Image to 100KB](https://convertnest-app.vercel.app/compress-image-to-100kb): Compress any photo to under 100KB, for job applications, visa forms and profile photos.
+- [Compress Image to 200KB](https://convertnest-app.vercel.app/compress-image-to-200kb): Compress any photo to under 200KB, for online forms, email attachments and website uploads.
+
+## Guides
+- [How to Compress PDF Without Losing Quality — 2026 Guide](https://convertnest-app.vercel.app/blog/how-to-compress-pdf-without-losing-quality): Learn three proven ways to reduce PDF file size without losing quality. Free online tools, Mac Preview, and more.
+- [How to Add Page Numbers to PDF — 3 Free Methods](https://convertnest-app.vercel.app/blog/how-to-add-page-numbers-to-pdf-free): Add page numbers to any PDF for free. Choose from online tools, desktop apps, and browser-based solutions.
+- [HEIC vs JPG: What's the Difference & How to Convert](https://convertnest-app.vercel.app/blog/heic-vs-jpg-difference-how-to-convert): Understand the difference between HEIC and JPG formats, why iPhones use HEIC, and how to convert HEIC to JPG for free.
+- [How to Merge PDF Files Into One — Free & Easy](https://convertnest-app.vercel.app/blog/how-to-merge-pdf-files-free): Combine multiple PDF files into a single document for free. No signup, no watermarks — works right in your browser.
+- [How to Password Protect a PDF for Free (Mac, Windows & More)](https://convertnest-app.vercel.app/blog/how-to-password-protect-pdf-free): Lock your PDF with a password for free using Preview, Word or LibreOffice. Learn about user vs. owner passwords and how to check it worked.
+- [10 Best Free Online PDF Tools in 2026 — No Download Needed](https://convertnest-app.vercel.app/blog/best-free-online-pdf-tools-2026): Discover the top 10 free online PDF tools for 2026. Compress, merge, split, convert, and more — all in your browser with no downloads or signups.
+- [How to Convert Images Between JPG, PNG, WebP & More (Free)](https://convertnest-app.vercel.app/blog/how-to-convert-images-between-formats): Learn when to use JPG, PNG, or WebP and how to convert between image formats for free. Understand quality, file size, and transparency tradeoffs.
+- [How to Reduce Image Size for Your Website — Speed Up Load Time](https://convertnest-app.vercel.app/blog/how-to-reduce-image-size-for-website): Optimize your website images for faster load times and better SEO. Learn the best image sizes, formats, and free compression tools.
+- [How to Split a PDF and Extract Specific Pages (Free)](https://convertnest-app.vercel.app/blog/how-to-split-pdf-extract-pages): Split PDFs and extract specific pages for free. Learn three easy methods to pull out the pages you need from any PDF document.
+- [How to Convert Word to PDF — Keep Formatting Perfect](https://convertnest-app.vercel.app/blog/how-to-convert-word-to-pdf-free): Convert Word documents to PDF without losing formatting. Compare three free methods and learn which one preserves your layout best.
+

@@ -1,5 +1,6 @@
 import { tools } from "@/lib/tools";
 import { blogPosts } from "@/lib/blog";
+import { sizePages } from "@/lib/sizePages";
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -8,6 +9,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const toolPages = tools.map((tool) => ({
     url: `${baseUrl}/${tool.slug}`,
     lastModified: new Date("2026-11-21"),
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  }));
+
+  const sizeLandingPages = sizePages.map((p) => ({
+    url: `${baseUrl}/${p.slug}`,
+    lastModified: new Date("2026-11-24"),
     changeFrequency: "monthly" as const,
     priority: 0.8,
   }));
@@ -51,6 +59,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.4,
     },
     ...toolPages,
+    ...sizeLandingPages,
     ...blogPages,
   ];
 }
