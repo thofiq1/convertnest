@@ -98,6 +98,7 @@ export default function Footer() {
           <h4 style={{ fontWeight: 700, marginBottom: "0.75rem", fontSize: "0.85rem" }}>Company</h4>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             <Link href="/about" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.8rem" }}>About</Link>
+            <Link href="/blog" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.8rem" }}>Blog</Link>
             <Link href="/contact" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.8rem" }}>Contact</Link>
             <Link href="/privacy" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.8rem" }}>Privacy Policy</Link>
           </div>

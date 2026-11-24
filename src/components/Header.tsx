@@ -117,6 +117,9 @@ export default function Header() {
           <Link href="/#tools" style={{ color: "var(--muted)", textDecoration: "none", fontWeight: 500, transition: "color 0.2s" }}>
             Image Tools
           </Link>
+          <Link href="/blog" style={{ color: "var(--muted)", textDecoration: "none", fontWeight: 500, transition: "color 0.2s" }}>
+            Blog
+          </Link>
           <Link href="/about" style={{ color: "var(--muted)", textDecoration: "none", fontWeight: 500, transition: "color 0.2s" }}>
             About
           </Link>
@@ -211,6 +214,9 @@ export default function Header() {
           </Link>
           <Link href="/#tools" onClick={() => setMenuOpen(false)} style={{ display: "block", padding: "0.5rem 0", color: "var(--muted)", textDecoration: "none", fontSize: "0.9rem" }}>
             Image Tools
+          </Link>
+          <Link href="/blog" onClick={() => setMenuOpen(false)} style={{ display: "block", padding: "0.5rem 0", color: "var(--muted)", textDecoration: "none", fontSize: "0.9rem" }}>
+            Blog
           </Link>
           <Link href="/about" onClick={() => setMenuOpen(false)} style={{ display: "block", padding: "0.5rem 0", color: "var(--muted)", textDecoration: "none", fontSize: "0.9rem" }}>
             About

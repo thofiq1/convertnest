@@ -158,6 +158,24 @@ export const tools: Tool[] = [
     icon: "🎨",
     keywords: ["svg to png", "svg to jpg", "svg converter", "vector to raster"],
   },
+  {
+    name: "HTML to PDF",
+    slug: "html-to-pdf",
+    description:
+      "Convert HTML code or web content to PDF. Paste your HTML and download a clean PDF document.",
+    category: "Document",
+    icon: "🌐",
+    keywords: ["html to pdf", "webpage to pdf", "convert html to pdf", "web to pdf"],
+  },
+  {
+    name: "PDF Unlock",
+    slug: "pdf-unlock",
+    description:
+      "Remove password from PDF files. Enter the password you know and download an unlocked copy.",
+    category: "PDF",
+    icon: "🔓",
+    keywords: ["unlock pdf", "remove pdf password", "pdf unlocker", "decrypt pdf"],
+  },
 ];
 
 export const categories = [...new Set(tools.map((t) => t.category))];

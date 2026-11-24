@@ -134,6 +134,18 @@ const ToolIcon = ({ slug, category }: { slug: string; category?: string }) => {
         <polyline points="2 12 12 17 22 12" />
       </svg>
     ),
+    "html-to-pdf": (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="16 18 22 12 16 6" />
+        <polyline points="8 6 2 12 8 18" />
+      </svg>
+    ),
+    "pdf-unlock": (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+      </svg>
+    ),
   };
 
   const catColor = category ? categoryColors[category] : null;
@@ -238,7 +250,7 @@ export default function Home() {
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                 <polyline points="22 4 12 14.01 9 11.01" />
               </svg>
-              16 Free Tools — No Signup Required
+              18 Free Tools — No Signup Required
             </span>
           </div>
 
@@ -401,7 +413,7 @@ export default function Home() {
                         >
                           {tool.category}
                         </span>
-                        {["pdf-watermark", "pdf-page-numbers", "pdf-protect", "heic-to-jpg", "image-crop", "svg-to-png"].includes(tool.slug) && (
+                        {["pdf-watermark", "pdf-page-numbers", "pdf-protect", "heic-to-jpg", "image-crop", "svg-to-png", "html-to-pdf", "pdf-unlock"].includes(tool.slug) && (
                           <span className="new-badge">New</span>
                         )}
                       </span>
