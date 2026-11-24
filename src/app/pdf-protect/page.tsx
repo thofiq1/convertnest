@@ -84,41 +84,18 @@ export default function PDFProtect() {
   const protectPdf = async () => {
     if (!file) return;
     if (!validatePasswords()) return;
-    setProcessing(true);
+    // TEMPORARILY DISABLED: pdf-lib 1.17.1 has no encryption support — its save()
+    // silently ignores userPassword/ownerPassword, so the output was an UNENCRYPTED
+    // PDF presented to users as protected. Do not re-enable until encryption is done
+    // with a library that really supports it (e.g. @cantoo/pdf-lib's doc.encrypt())
+    // and the output is verified to refuse opening without the password.
+    void allowPrinting;
+    void allowCopying;
     setResultUrl(null);
-    try {
-      const { PDFDocument } = await import("pdf-lib");
-      const arrayBuffer = await file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer);
-
-      // pdf-lib supports encryption via save options
-      const pdfBytes = await pdfDoc.save({
-        userPassword: password,
-        ownerPassword: password,
-        permissions: {
-          printing: allowPrinting ? "highQuality" : undefined,
-          copying: allowCopying,
-          modifying: false,
-          annotating: false,
-          fillingForms: false,
-          contentAccessibility: true,
-          documentAssembly: false,
-        },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
-
-      const blob = new Blob([pdfBytes as BlobPart], { type: "application/pdf" });
-      setResultUrl(URL.createObjectURL(blob));
-    } catch (err: unknown) {
-      console.error("Protection error:", err);
-      const msg = err instanceof Error ? err.message : "";
-      if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is already encrypted. Please use an unprotected PDF.");
-      } else {
-        alert("Error protecting PDF. Please try again. Note: some PDF features may not be supported.");
-      }
-    }
-    setProcessing(false);
+    alert(
+      "Password protection is temporarily unavailable while we upgrade our encryption engine. " +
+      "We won't give you a file that only looks protected. Please check back soon."
+    );
   };
 
   useEffect(() => {
