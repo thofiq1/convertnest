@@ -10,6 +10,7 @@ import {
   CtaBox,
   RelatedPosts,
 } from "@/components/BlogArticle";
+import FaqSchema from "@/components/FaqSchema";
 
 const post = getBlogPost("heic-vs-jpg-difference-how-to-convert")!;
 
@@ -131,6 +132,36 @@ export default function HeicVsJpgBlogPost() {
           </P>
         </ArticleBody>
       </article>
+
+      <FaqSchema
+        faqs={[
+          { question: "Why are my iPhone photos HEIC?", answer: "Apple uses HEIC (High Efficiency Image Container) as the default photo format since iOS 11 because it produces smaller files than JPG while maintaining the same quality." },
+          { question: "Can Windows open HEIC files?", answer: "Windows 10 and 11 can open HEIC files after installing the HEIF Image Extensions from the Microsoft Store. For older systems, converting to JPG is the simplest solution." },
+          { question: "Does converting HEIC to JPG lose quality?", answer: "There is minimal quality loss when converting HEIC to JPG at high quality settings (90%+). The difference is virtually undetectable to the human eye." },
+        ]}
+      />
+      <section style={{ marginTop: "2.5rem" }}>
+        <h2 style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--foreground)", marginBottom: "1rem" }}>
+          Frequently Asked Questions
+        </h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {[
+            { q: "Why are my iPhone photos HEIC?", a: "Apple uses HEIC (High Efficiency Image Container) as the default photo format since iOS 11 because it produces smaller files than JPG while maintaining the same quality." },
+            { q: "Can Windows open HEIC files?", a: "Windows 10 and 11 can open HEIC files after installing the HEIF Image Extensions from the Microsoft Store. For older systems, converting to JPG is the simplest solution." },
+            { q: "Does converting HEIC to JPG lose quality?", a: "There is minimal quality loss when converting HEIC to JPG at high quality settings (90%+). The difference is virtually undetectable to the human eye." },
+          ].map((faq, i) => (
+            <details key={i} style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.75rem", overflow: "hidden" }}>
+              <summary style={{ padding: "1rem 1.25rem", fontWeight: 600, fontSize: "0.95rem", cursor: "pointer", listStyle: "none" }}>
+                {faq.q}
+              </summary>
+              <div style={{ padding: "0 1.25rem 1rem", color: "var(--muted)", fontSize: "0.9rem", lineHeight: 1.6 }}>
+                {faq.a}
+              </div>
+            </details>
+          ))}
+        </div>
+      </section>
+
       <RelatedPosts currentSlug={post.slug} />
     </ArticleWrapper>
   );

@@ -79,8 +79,89 @@ export const blogPosts: BlogPost[] = [
       "encrypt pdf free",
       "lock pdf with password",
     ],
-    relatedTool: "pdf-protect",
-    relatedToolName: "Protect PDF",
+    relatedTool: "compress-pdf",
+    relatedToolName: "Compress PDF",
+  },
+  {
+    slug: "best-free-online-pdf-tools-2026",
+    title: "10 Best Free Online PDF Tools in 2026 — No Download Needed",
+    description:
+      "Discover the top 10 free online PDF tools for 2026. Compress, merge, split, convert, and more — all in your browser with no downloads or signups.",
+    date: "2026-11-24",
+    readTime: "6 min read",
+    keywords: [
+      "free online pdf tools",
+      "best pdf tools 2026",
+      "free pdf editor online",
+      "online pdf converter",
+    ],
+    relatedTool: "compress-pdf",
+    relatedToolName: "Compress PDF",
+  },
+  {
+    slug: "how-to-convert-images-between-formats",
+    title: "How to Convert Images Between JPG, PNG, WebP & More (Free)",
+    description:
+      "Learn when to use JPG, PNG, or WebP and how to convert between image formats for free. Understand quality, file size, and transparency tradeoffs.",
+    date: "2026-11-24",
+    readTime: "5 min read",
+    keywords: [
+      "convert image format",
+      "jpg to png",
+      "webp to jpg",
+      "png to jpg free",
+      "image format converter",
+    ],
+    relatedTool: "image-converter",
+    relatedToolName: "Image Converter",
+  },
+  {
+    slug: "how-to-reduce-image-size-for-website",
+    title: "How to Reduce Image Size for Your Website — Speed Up Load Time",
+    description:
+      "Optimize your website images for faster load times and better SEO. Learn the best image sizes, formats, and free compression tools.",
+    date: "2026-11-24",
+    readTime: "5 min read",
+    keywords: [
+      "reduce image size",
+      "compress image for website",
+      "optimize images for web",
+      "image compression online",
+    ],
+    relatedTool: "image-compressor",
+    relatedToolName: "Image Compressor",
+  },
+  {
+    slug: "how-to-split-pdf-extract-pages",
+    title: "How to Split a PDF and Extract Specific Pages (Free)",
+    description:
+      "Split PDFs and extract specific pages for free. Learn three easy methods to pull out the pages you need from any PDF document.",
+    date: "2026-11-24",
+    readTime: "4 min read",
+    keywords: [
+      "split pdf",
+      "extract pages from pdf",
+      "split pdf online free",
+      "remove pages from pdf",
+    ],
+    relatedTool: "split-pdf",
+    relatedToolName: "Split PDF",
+  },
+  {
+    slug: "how-to-convert-word-to-pdf-free",
+    title: "How to Convert Word to PDF — Keep Formatting Perfect",
+    description:
+      "Convert Word documents to PDF without losing formatting. Compare three free methods and learn which one preserves your layout best.",
+    date: "2026-11-24",
+    readTime: "5 min read",
+    keywords: [
+      "word to pdf",
+      "convert docx to pdf",
+      "word to pdf free online",
+      "doc to pdf converter",
+    ],
+    relatedTool: "word-to-pdf",
+    relatedToolName: "Word to PDF",
   },
 ];
 

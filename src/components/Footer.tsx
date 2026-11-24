@@ -64,7 +64,6 @@ export default function Footer() {
               { href: "/jpg-to-pdf", label: "JPG to PDF" },
               { href: "/pdf-watermark", label: "PDF Watermark" },
               { href: "/pdf-page-numbers", label: "PDF Page Numbers" },
-              { href: "/pdf-protect", label: "Protect PDF" },
             ].map((link) => (
               <Link key={link.href} href={link.href} style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.8rem", transition: "color 0.2s" }}>
                 {link.label}

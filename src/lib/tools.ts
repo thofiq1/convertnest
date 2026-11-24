@@ -122,15 +122,8 @@ export const tools: Tool[] = [
     icon: "🔢",
     keywords: ["add page numbers pdf", "pdf page numbers", "number pdf pages", "pdf numbering"],
   },
-  {
-    name: "Protect PDF",
-    slug: "pdf-protect",
-    description:
-      "Add password protection to your PDF files. Set passwords and control printing & copying permissions.",
-    category: "PDF",
-    icon: "🔐",
-    keywords: ["protect pdf", "password pdf", "encrypt pdf", "lock pdf", "secure pdf"],
-  },
+  // Protect PDF ("pdf-protect") is unlisted until real encryption ships —
+  // pdf-lib 1.17.1 can't encrypt. Re-add here once the output is verified.
   {
     name: "HEIC to JPG",
     slug: "heic-to-jpg",

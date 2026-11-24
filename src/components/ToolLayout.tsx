@@ -1,13 +1,21 @@
 import Link from "next/link";
 import AdBanner from "./AdBanner";
 import ToolJsonLd from "./ToolJsonLd";
+import BreadcrumbSchema from "./BreadcrumbSchema";
+import FaqSchema from "./FaqSchema";
 import { tools, getToolBySlug } from "@/lib/tools";
+
+interface FaqItem {
+  question: string;
+  answer: string;
+}
 
 interface ToolLayoutProps {
   title: string;
   description: string;
   slug: string;
   children: React.ReactNode;
+  faqs?: FaqItem[];
 }
 
 function getRelatedTools(currentSlug: string) {
@@ -26,7 +34,7 @@ function getRelatedTools(currentSlug: string) {
   return [...sameCategory, ...others].slice(0, 3);
 }
 
-export default function ToolLayout({ title, description, slug, children }: ToolLayoutProps) {
+export default function ToolLayout({ title, description, slug, children, faqs }: ToolLayoutProps) {
   const relatedTools = getRelatedTools(slug);
 
   return (
@@ -36,6 +44,13 @@ export default function ToolLayout({ title, description, slug, children }: ToolL
         description={description}
         url={`https://convertnest-app.vercel.app/${slug}`}
       />
+      <BreadcrumbSchema
+        items={[
+          { name: "Home", url: "https://convertnest-app.vercel.app/" },
+          { name: title, url: `https://convertnest-app.vercel.app/${slug}` },
+        ]}
+      />
+      {faqs && faqs.length > 0 && <FaqSchema faqs={faqs} />}
 
       {/* Breadcrumb */}
       <nav
@@ -175,6 +190,66 @@ export default function ToolLayout({ title, description, slug, children }: ToolL
                   </p>
                 </div>
               </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* FAQ Section */}
+      {faqs && faqs.length > 0 && (
+        <div style={{ marginTop: "2.5rem" }}>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1rem" }}>
+            Frequently Asked Questions
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            {faqs.map((faq, i) => (
+              <details
+                key={i}
+                style={{
+                  background: "var(--card-bg)",
+                  border: "1px solid var(--card-border)",
+                  borderRadius: "0.75rem",
+                  overflow: "hidden",
+                }}
+              >
+                <summary
+                  style={{
+                    padding: "1rem 1.25rem",
+                    fontWeight: 600,
+                    fontSize: "0.95rem",
+                    cursor: "pointer",
+                    listStyle: "none",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  {faq.question}
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ flexShrink: 0, marginLeft: "0.75rem", color: "var(--muted)" }}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </summary>
+                <div
+                  style={{
+                    padding: "0 1.25rem 1rem",
+                    color: "var(--muted)",
+                    fontSize: "0.9rem",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {faq.answer}
+                </div>
+              </details>
             ))}
           </div>
         </div>

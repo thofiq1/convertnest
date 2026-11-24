@@ -123,6 +123,10 @@ export default function WordToPDF() {
       slug="word-to-pdf"
       title="Word to PDF"
       description="Convert Word documents (.docx) to PDF. Preview your document before converting."
+      faqs={[
+        { question: "Will my formatting be preserved?", answer: "Most formatting transfers well including headings, tables, lists, and images. Complex layouts with custom fonts may need minor adjustments." },
+        { question: "Can I convert .doc files (older Word format)?", answer: "Only .docx files (Word 2007+) are supported. Save older .doc files as .docx in Word first, then convert here." },
+      ]}
     >
       {sizeWarning && (
         <div style={{

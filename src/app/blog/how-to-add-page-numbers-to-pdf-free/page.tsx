@@ -10,6 +10,7 @@ import {
   CtaBox,
   RelatedPosts,
 } from "@/components/BlogArticle";
+import FaqSchema from "@/components/FaqSchema";
 
 const post = getBlogPost("how-to-add-page-numbers-to-pdf-free")!;
 
@@ -130,6 +131,34 @@ export default function AddPageNumbersBlogPost() {
           </P>
         </ArticleBody>
       </article>
+
+      <FaqSchema
+        faqs={[
+          { question: "Can I add page numbers to a PDF without Adobe?", answer: "Yes. Free online tools like ConvertNest let you add page numbers with custom positioning, formatting, and starting numbers — no software download needed." },
+          { question: "How do I skip page numbers on the first page?", answer: "Most PDF page number tools offer a 'skip first page' option. In ConvertNest, simply toggle the 'Skip first page' switch before processing." },
+        ]}
+      />
+      <section style={{ marginTop: "2.5rem" }}>
+        <h2 style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--foreground)", marginBottom: "1rem" }}>
+          Frequently Asked Questions
+        </h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {[
+            { q: "Can I add page numbers to a PDF without Adobe?", a: "Yes. Free online tools like ConvertNest let you add page numbers with custom positioning, formatting, and starting numbers — no software download needed." },
+            { q: "How do I skip page numbers on the first page?", a: "Most PDF page number tools offer a 'skip first page' option. In ConvertNest, simply toggle the 'Skip first page' switch before processing." },
+          ].map((faq, i) => (
+            <details key={i} style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.75rem", overflow: "hidden" }}>
+              <summary style={{ padding: "1rem 1.25rem", fontWeight: 600, fontSize: "0.95rem", cursor: "pointer", listStyle: "none" }}>
+                {faq.q}
+              </summary>
+              <div style={{ padding: "0 1.25rem 1rem", color: "var(--muted)", fontSize: "0.9rem", lineHeight: 1.6 }}>
+                {faq.a}
+              </div>
+            </details>
+          ))}
+        </div>
+      </section>
+
       <RelatedPosts currentSlug={post.slug} />
     </ArticleWrapper>
   );

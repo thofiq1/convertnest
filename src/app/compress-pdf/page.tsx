@@ -148,6 +148,11 @@ export default function CompressPDF() {
       slug="compress-pdf"
       title="Compress PDF"
       description="Reduce PDF file size by up to 70% while maintaining quality. Choose your compression level for the perfect balance."
+      faqs={[
+        { question: "How much can I reduce my PDF size?", answer: "Most PDFs can be compressed by 50-80%. The exact reduction depends on the content — image-heavy PDFs compress more than text-only ones." },
+        { question: "Will compression affect my PDF quality?", answer: "ConvertNest offers adjustable compression. The default setting reduces size significantly while keeping text sharp and images clear." },
+        { question: "Is there a file size limit?", answer: "ConvertNest handles PDFs up to 100MB. Since processing happens in your browser, speed depends on your device." },
+      ]}
     >
       {/* Quality Preset Selector */}
       <div style={{ marginBottom: "1.5rem" }}>

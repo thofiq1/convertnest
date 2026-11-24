@@ -10,6 +10,7 @@ import {
   CtaBox,
   RelatedPosts,
 } from "@/components/BlogArticle";
+import FaqSchema from "@/components/FaqSchema";
 
 const post = getBlogPost("how-to-password-protect-pdf-free")!;
 
@@ -80,23 +81,28 @@ export default function PasswordProtectPdfBlogPost() {
             draft contract you are sharing for review only.
           </P>
 
-          <H2>How to Protect a PDF With ConvertNest</H2>
+          <H2>Free Ways to Password Protect a PDF</H2>
           <P>
-            ConvertNest makes it easy to add password protection to any PDF,
-            and it is completely free. Upload your PDF, enter the password you
-            want to set, and download the encrypted file. The encryption
-            happens entirely in your browser using industry-standard AES
-            encryption, so your document and password never travel over the
-            internet.
+            On a Mac, open the PDF in Preview, choose File → Export, tick
+            &quot;Encrypt&quot;, and set a password. On Windows, Microsoft Word can
+            do it: open or create the document, choose File → Save As → PDF →
+            Options, and tick &quot;Encrypt the document with a password&quot;.
+            LibreOffice (free) offers the same option in its PDF export dialog.
           </P>
           <P>
-            This is an important distinction from many online PDF tools that
-            upload your file to a server for processing. With ConvertNest,
-            your sensitive document stays on your device the entire time — the
-            browser handles the encryption locally using JavaScript.
+            Whichever method you use, test the result: reopen the file and
+            confirm it actually asks for the password before you send it.
+            Some tools silently skip encryption, and a file that only looks
+            protected is worse than one you know is unprotected.
+          </P>
+          <P>
+            ConvertNest&apos;s browser-based Protect PDF tool is being upgraded and
+            will return once encryption is verified end to end. In the
+            meantime, if you need to shrink a file before encrypting it, our
+            free compressor works entirely in your browser.
           </P>
 
-          <CtaBox toolSlug={post.relatedTool} toolName={post.relatedToolName} />
+          <CtaBox toolSlug="compress-pdf" toolName="Compress PDF" />
 
           <H2>Tips for Choosing a Strong Password</H2>
           <P>
@@ -132,6 +138,36 @@ export default function PasswordProtectPdfBlogPost() {
           </P>
         </ArticleBody>
       </article>
+
+      <FaqSchema
+        faqs={[
+          { question: "What's the difference between user password and owner password?", answer: "A user password prevents opening the PDF entirely. An owner password allows opening but restricts actions like printing, copying text, or editing." },
+          { question: "Can a password-protected PDF be cracked?", answer: "Strong passwords (12+ characters with mixed case, numbers, and symbols) are extremely difficult to crack. Short or common passwords can be vulnerable to brute-force attacks." },
+          { question: "Does password protection reduce PDF quality?", answer: "No. Encryption protects access to the file without altering its content or quality in any way." },
+        ]}
+      />
+      <section style={{ marginTop: "2.5rem" }}>
+        <h2 style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--foreground)", marginBottom: "1rem" }}>
+          Frequently Asked Questions
+        </h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {[
+            { q: "What's the difference between user password and owner password?", a: "A user password prevents opening the PDF entirely. An owner password allows opening but restricts actions like printing, copying text, or editing." },
+            { q: "Can a password-protected PDF be cracked?", a: "Strong passwords (12+ characters with mixed case, numbers, and symbols) are extremely difficult to crack. Short or common passwords can be vulnerable to brute-force attacks." },
+            { q: "Does password protection reduce PDF quality?", a: "No. Encryption protects access to the file without altering its content or quality in any way." },
+          ].map((faq, i) => (
+            <details key={i} style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.75rem", overflow: "hidden" }}>
+              <summary style={{ padding: "1rem 1.25rem", fontWeight: 600, fontSize: "0.95rem", cursor: "pointer", listStyle: "none" }}>
+                {faq.q}
+              </summary>
+              <div style={{ padding: "0 1.25rem 1rem", color: "var(--muted)", fontSize: "0.9rem", lineHeight: 1.6 }}>
+                {faq.a}
+              </div>
+            </details>
+          ))}
+        </div>
+      </section>
+
       <RelatedPosts currentSlug={post.slug} />
     </ArticleWrapper>
   );

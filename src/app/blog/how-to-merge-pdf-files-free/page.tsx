@@ -10,6 +10,7 @@ import {
   CtaBox,
   RelatedPosts,
 } from "@/components/BlogArticle";
+import FaqSchema from "@/components/FaqSchema";
 
 const post = getBlogPost("how-to-merge-pdf-files-free")!;
 
@@ -134,6 +135,34 @@ export default function MergePdfBlogPost() {
           </P>
         </ArticleBody>
       </article>
+
+      <FaqSchema
+        faqs={[
+          { question: "How many PDFs can I merge at once?", answer: "ConvertNest has no limit on the number of PDFs you can merge. Upload as many files as you need and drag them into your preferred order." },
+          { question: "Will merging PDFs reduce quality?", answer: "No. Merging PDFs combines the original pages without any recompression, so quality remains exactly the same as the source files." },
+        ]}
+      />
+      <section style={{ marginTop: "2.5rem" }}>
+        <h2 style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--foreground)", marginBottom: "1rem" }}>
+          Frequently Asked Questions
+        </h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {[
+            { q: "How many PDFs can I merge at once?", a: "ConvertNest has no limit on the number of PDFs you can merge. Upload as many files as you need and drag them into your preferred order." },
+            { q: "Will merging PDFs reduce quality?", a: "No. Merging PDFs combines the original pages without any recompression, so quality remains exactly the same as the source files." },
+          ].map((faq, i) => (
+            <details key={i} style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.75rem", overflow: "hidden" }}>
+              <summary style={{ padding: "1rem 1.25rem", fontWeight: 600, fontSize: "0.95rem", cursor: "pointer", listStyle: "none" }}>
+                {faq.q}
+              </summary>
+              <div style={{ padding: "0 1.25rem 1rem", color: "var(--muted)", fontSize: "0.9rem", lineHeight: 1.6 }}>
+                {faq.a}
+              </div>
+            </details>
+          ))}
+        </div>
+      </section>
+
       <RelatedPosts currentSlug={post.slug} />
     </ArticleWrapper>
   );

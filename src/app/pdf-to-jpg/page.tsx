@@ -194,6 +194,11 @@ export default function PDFtoJPG() {
       slug="pdf-to-jpg"
       title="PDF to JPG / PNG"
       description="Convert PDF pages to high-quality JPG or PNG images. Choose resolution, quality, and page range."
+      faqs={[
+        { question: "Should I choose JPG or PNG?", answer: "JPG is best for photos and general use — smaller files with great quality. PNG is ideal when you need transparency or pixel-perfect text." },
+        { question: "What resolution should I use?", answer: "2x (default) works well for most uses. Use 3x for print-quality images or 1x for smaller file sizes." },
+        { question: "Can I convert specific pages only?", answer: "Yes. Switch to 'Custom Range' and enter page numbers like '1-3, 5' to convert only the pages you need." },
+      ]}
     >
       {sizeWarning && (
         <div style={{

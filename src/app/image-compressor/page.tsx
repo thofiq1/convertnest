@@ -210,6 +210,11 @@ export default function ImageCompressor() {
       slug="image-compressor"
       title="Image Compressor"
       description="Compress images to reduce file size. Adjust quality, resize, and convert formats — all in your browser."
+      faqs={[
+        { question: "Which image format compresses the most?", answer: "WebP typically produces the smallest files, followed by JPEG. PNG files are larger but preserve transparency and sharp edges." },
+        { question: "Will compression make my images blurry?", answer: "At 70-80% quality, most images look identical to the original. Only at very low quality settings will you notice visible artifacts." },
+        { question: "Can I compress multiple images at once?", answer: "Yes. Upload as many images as you need and download them all at once as a ZIP file." },
+      ]}
     >
       {sizeWarnings.length > 0 && (
         <div style={{

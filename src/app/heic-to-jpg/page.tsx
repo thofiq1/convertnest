@@ -44,14 +44,26 @@ export default function HeicToJpg() {
   }, [images]);
 
   const convertHeic = async (file: File, fmt: string, q: number): Promise<{ blob: Blob; url: string }> => {
+    try {
+      return await convertNative(file, fmt, q);
+    } catch {
+      // Most browsers (Chrome, Firefox, Edge on Windows) can't decode HEIC natively.
+      // Fall back to the heic2any decoder, which works everywhere.
+      const heic2any = (await import("heic2any")).default;
+      const mimeType = fmt === "png" ? "image/png" : "image/jpeg";
+      const out = await heic2any({ blob: file, toType: mimeType, quality: q / 100 });
+      const blob = Array.isArray(out) ? out[0] : out;
+      return { blob, url: URL.createObjectURL(blob) };
+    }
+  };
+
+  const convertNative = (file: File, fmt: string, q: number): Promise<{ blob: Blob; url: string }> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
       img.onerror = () => {
         URL.revokeObjectURL(url);
-        reject(new Error(
-          "Your browser cannot read this HEIC file. Try using Safari or the latest Chrome/Edge, which have native HEIC support."
-        ));
+        reject(new Error("Native HEIC decoding not supported"));
       };
       img.onload = () => {
         const canvas = document.createElement("canvas");

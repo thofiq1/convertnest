@@ -164,6 +164,11 @@ export default function MergePDF() {
       slug="merge-pdf"
       title="Merge PDF"
       description="Combine multiple PDF files into one. Drag to reorder pages before merging — completely free."
+      faqs={[
+        { question: "Can I reorder files before merging?", answer: "Yes. Drag and drop your files into any order before merging. Files are combined from top to bottom." },
+        { question: "Will merging reduce the quality of my PDFs?", answer: "No. Merging copies original pages without recompression, so quality stays identical to the source files." },
+        { question: "Can I merge password-protected PDFs?", answer: "You need to remove the password first. Use ConvertNest's PDF Unlock tool, then merge the unprotected files." },
+      ]}
     >
       <div
         onDragOver={(e) => { e.preventDefault(); if (dragIndex === null) setDragOver(true); }}

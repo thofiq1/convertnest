@@ -10,6 +10,7 @@ import {
   CtaBox,
   RelatedPosts,
 } from "@/components/BlogArticle";
+import FaqSchema from "@/components/FaqSchema";
 
 const post = getBlogPost("how-to-compress-pdf-without-losing-quality")!;
 
@@ -131,6 +132,36 @@ export default function CompressPdfBlogPost() {
           </P>
         </ArticleBody>
       </article>
+
+      <FaqSchema
+        faqs={[
+          { question: "Does compressing a PDF reduce quality?", answer: "It depends on the method. Lossless compression reduces size without any quality loss. Lossy compression sacrifices some image quality for smaller files. ConvertNest offers both options." },
+          { question: "What is a good PDF file size?", answer: "For email attachments, under 10MB is ideal. For web uploads, under 5MB works best. Most PDFs can be compressed by 50-80% without noticeable quality loss." },
+          { question: "Is it safe to compress PDFs online?", answer: "With browser-based tools like ConvertNest, your files are never uploaded to a server. All processing happens locally in your browser, keeping your documents completely private." },
+        ]}
+      />
+      <section style={{ marginTop: "2.5rem" }}>
+        <h2 style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--foreground)", marginBottom: "1rem" }}>
+          Frequently Asked Questions
+        </h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {[
+            { q: "Does compressing a PDF reduce quality?", a: "It depends on the method. Lossless compression reduces size without any quality loss. Lossy compression sacrifices some image quality for smaller files. ConvertNest offers both options." },
+            { q: "What is a good PDF file size?", a: "For email attachments, under 10MB is ideal. For web uploads, under 5MB works best. Most PDFs can be compressed by 50-80% without noticeable quality loss." },
+            { q: "Is it safe to compress PDFs online?", a: "With browser-based tools like ConvertNest, your files are never uploaded to a server. All processing happens locally in your browser, keeping your documents completely private." },
+          ].map((faq, i) => (
+            <details key={i} style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.75rem", overflow: "hidden" }}>
+              <summary style={{ padding: "1rem 1.25rem", fontWeight: 600, fontSize: "0.95rem", cursor: "pointer", listStyle: "none" }}>
+                {faq.q}
+              </summary>
+              <div style={{ padding: "0 1.25rem 1rem", color: "var(--muted)", fontSize: "0.9rem", lineHeight: 1.6 }}>
+                {faq.a}
+              </div>
+            </details>
+          ))}
+        </div>
+      </section>
+
       <RelatedPosts currentSlug={post.slug} />
     </ArticleWrapper>
   );

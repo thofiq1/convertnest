@@ -210,6 +210,10 @@ export default function SplitPDF() {
       slug="split-pdf"
       title="Split PDF"
       description="Extract specific pages or split every page into a separate PDF. Visual page selector included."
+      faqs={[
+        { question: "Can I extract specific pages from a PDF?", answer: "Yes. Click individual page thumbnails to select them, or enter a page range like '1-3, 5, 7-10' for precise control." },
+        { question: "Can I split every page into a separate file?", answer: "Yes. Use the 'Split All Pages' button to get each page as its own PDF, downloaded together in a ZIP file." },
+      ]}
     >
       {!file ? (
         <div
