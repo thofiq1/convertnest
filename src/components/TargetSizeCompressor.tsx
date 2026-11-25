@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { sizePages } from "@/lib/sizePages";
-import { type SizePreset, loadImageFile, drawExact, bestQualityUnder, padJpegTo } from "@/lib/exactSize";
+import { type SizePreset, loadImageFile, drawExact, bestQualityUnder, padJpegTo, cleanSource, frameWarnings } from "@/lib/exactSize";
 
 interface Result {
   url: string;
@@ -17,6 +17,8 @@ interface Result {
   padded?: boolean;
   label?: string; // preset id used for the file name
   sig: string; // settings this result was made with
+  warnings?: string[];
+  cleaned?: boolean;
 }
 
 function loadImage(file: File): Promise<HTMLImageElement> {
@@ -102,6 +104,7 @@ export default function TargetSizeCompressor({
   // Optional exact dimensions on the general size pages.
   const [dimW, setDimW] = useState("");
   const [dimH, setDimH] = useState("");
+  const [cleanUp, setCleanUp] = useState(true);
   // Keep what the user is typing as a string; only clamp when it's used,
   // so typing "15" or clearing the box doesn't fight the user.
   const [kbInput, setKbInput] = useState(String(defaultKb));
@@ -113,7 +116,8 @@ export default function TargetSizeCompressor({
     : exactW >= 16 && exactH >= 16 && exactW <= 8000 && exactH <= 8000
       ? { w: exactW, h: exactH, fit: "cover" as const, minKb: undefined }
       : null;
-  const sig = `${targetKb}|${exactDims ? `${exactDims.w}x${exactDims.h}` : ""}|${presetId}`;
+  const doClean = Boolean(preset && preset.fit === "contain" && cleanUp);
+  const sig = `${targetKb}|${exactDims ? `${exactDims.w}x${exactDims.h}` : ""}|${presetId}|${doClean}`;
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false);
@@ -137,7 +141,10 @@ export default function TargetSizeCompressor({
       const target = kb * 1000;
       if (exactDims) {
         const img = await loadImageFile(f);
-        const canvas = drawExact(img, exactDims.w, exactDims.h, exactDims.fit);
+        const source = doClean ? cleanSource(img, { w: exactDims.w, h: exactDims.h }) : img;
+        const cleaned = doClean;
+        const canvas = drawExact(source, exactDims.w, exactDims.h, exactDims.fit);
+        const warnings = frameWarnings(img, exactDims.w, exactDims.h, exactDims.fit);
         const r = await bestQualityUnder(canvas, target);
         let blob = r.blob;
         let padded = false;
@@ -146,7 +153,7 @@ export default function TargetSizeCompressor({
           blob = await padJpegTo(blob, exactDims.minKb * 1024 + 256);
           padded = true;
         }
-        setResult({ url: URL.createObjectURL(blob), size: blob.size, width: exactDims.w, height: exactDims.h, quality: r.q, reachedTarget: r.reached, targetKb: kb, minKb: exactDims.minKb, padded, label: preset?.id, sig });
+        setResult({ url: URL.createObjectURL(blob), size: blob.size, width: exactDims.w, height: exactDims.h, quality: r.q, reachedTarget: r.reached, targetKb: kb, minKb: exactDims.minKb, padded, label: preset?.id, sig, warnings, cleaned });
       } else if (f.size <= target && f.type === "image/jpeg") {
         const img = await loadImage(f);
         setResult({ url: URL.createObjectURL(f), size: f.size, width: img.naturalWidth, height: img.naturalHeight, quality: 1, reachedTarget: true, targetKb: kb, sig });
@@ -196,6 +203,12 @@ export default function TargetSizeCompressor({
               {preset.minKb ? `${preset.minKb}–${preset.maxKb} KB` : `under ${preset.maxKb} KB`}
               {preset.fit === "contain" ? " · fitted on white, nothing cut off" : " · centred and cropped to fit"}
             </p>
+          )}
+          {preset?.fit === "contain" && (
+            <label style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontSize: "0.85rem", marginTop: "0.4rem", cursor: "pointer" }}>
+              <input type="checkbox" checked={cleanUp} onChange={(e) => setCleanUp(e.target.checked)} />
+              Clean up: make the paper white and the ink darker
+            </label>
           )}
           {file && (
             <button className="btn-secondary" style={{ marginTop: "0.6rem" }} onClick={() => run(file, targetKb)} disabled={busy}>
@@ -269,6 +282,12 @@ export default function TargetSizeCompressor({
                 Original: {fmt(file.size)}<br />
                 Dimensions: {result.width} × {result.height}px<br />
                 JPG quality: {Math.round(result.quality * 100)}%
+                {result.cleaned && (
+                  <>
+                    <br />
+                    Cleaned up: paper whitened and ink darkened. Untick &ldquo;Clean up&rdquo; and press Apply if you prefer the original look.
+                  </>
+                )}
                 {result.padded && (
                   <>
                     <br />
@@ -286,6 +305,11 @@ export default function TargetSizeCompressor({
               </a>
             </div>
           </div>
+          {result.warnings && result.warnings.length > 0 && (
+            <div style={{ marginTop: "1rem", fontSize: "0.85rem", color: "var(--foreground)", background: "rgba(234,179,8,0.12)", border: "1px solid rgba(234,179,8,0.4)", borderRadius: "0.6rem", padding: "0.6rem 0.8rem" }}>
+              {result.warnings.map((w) => <p key={w}>{w}</p>)}
+            </div>
+          )}
           {result.quality < 0.4 && result.reachedTarget && (
             <p style={{ marginTop: "1rem", fontSize: "0.85rem", color: "var(--muted)" }}>
               To fit this limit the image needed heavy compression. If it looks too soft, crop it first with our{" "}
