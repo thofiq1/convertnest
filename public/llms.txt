@@ -35,6 +35,16 @@
 - [Compress Image to 300KB](https://fitthefile.com/compress-image-to-300kb): Compress any photo to under 300KB, for document photos, scanned certificates and online forms.
 - [Compress Image to 500KB](https://fitthefile.com/compress-image-to-500kb): Compress any photo to under 500KB, for websites, email attachments and marketplace listings.
 
+## Exam and visa upload tools
+- [US Visa Photo Resizer — 600×600, Under 240KB (DS-160)](https://fitthefile.com/us-visa-photo-resizer): Make a square US visa photo at 600×600 pixels and under 240KB for the DS-160 and other uploads. Free, private, done in your browser. Requirements cited from: https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/photos/digital-image-requirements.html
+- [IBPS Photo & Signature Resizer — 200×230, 140×60 px](https://fitthefile.com/ibps-photo-signature-resizer): Resize your photo to 200×230 px (20–50KB), signature to 140×60 px (10–20KB), thumb and declaration for IBPS and bank exam forms. Free, private. Requirements cited from: https://punjabandsind.bank.in/system/uploads/document/2150_2024101518104187881.pdf
+
+## Key facts
+- All processing is client-side in the browser; files are never uploaded.
+- Target-size tools output a file under the limit using 1 KB = 1000 bytes, so it fits portals that count either way.
+- Target-size PDFs are rasterised (pages saved as images), so text in the result is not selectable.
+- Free and ad-supported; no account, no watermark, no daily limit.
+
 ## Guides
 - [How to Compress PDF Without Losing Quality — 2026 Guide](https://fitthefile.com/blog/how-to-compress-pdf-without-losing-quality): Learn three proven ways to reduce PDF file size without losing quality. Free online tools, Mac Preview, and more.
 - [How to Add Page Numbers to PDF — 3 Free Methods](https://fitthefile.com/blog/how-to-add-page-numbers-to-pdf-free): Add page numbers to any PDF for free. Choose from online tools, desktop apps, and browser-based solutions.
@@ -46,8 +56,8 @@
 - [How to Reduce Image Size for Your Website — Speed Up Load Time](https://fitthefile.com/blog/how-to-reduce-image-size-for-website): Optimize your website images for faster load times and better SEO. Learn the best image sizes, formats, and free compression tools.
 - [How to Split a PDF and Extract Specific Pages (Free)](https://fitthefile.com/blog/how-to-split-pdf-extract-pages): Split PDFs and extract specific pages for free. Learn three easy methods to pull out the pages you need from any PDF document.
 - [How to Convert Word to PDF Free — and Keep Your Formatting](https://fitthefile.com/blog/how-to-convert-word-to-pdf-free): Convert Word documents to PDF without losing formatting. Compare three free methods and learn which one preserves your layout best.
-- [How to Compress a PDF to 100KB (or 200KB, 500KB) — Free](https://fitthefile.com/blog/how-to-compress-pdf-to-100kb): Compress a PDF to 100KB, 200KB or 500KB for job, exam and government portals. Free, runs in your browser, and finds the best quality that fits.
-- [How to Compress a Photo to 50KB or 20KB for Online Forms](https://fitthefile.com/blog/how-to-compress-image-to-50kb): Reduce a photo, passport picture or signature to 50KB or 20KB for online application forms. Free, browser-based, and your photo never leaves your device.
+- [PDF Won't Go Under 100KB? How to Shrink It (and When It Can't)](https://fitthefile.com/blog/how-to-compress-pdf-to-100kb): Compress a PDF to 100KB, 200KB or 500KB for job, exam and government portals. Free, runs in your browser, and finds the best quality that fits.
+- [Getting a Photo Under 50KB or 20KB for Online Forms: A Practical Guide](https://fitthefile.com/blog/how-to-compress-image-to-50kb): Reduce a photo, passport picture or signature to 50KB or 20KB for online application forms. Free, browser-based, and your photo never leaves your device.
 - [File Too Large to Upload? How to Shrink PDFs and Photos Fast](https://fitthefile.com/blog/file-size-too-large-upload-fix): Getting a 'file too large' error on a portal? Here's how to shrink PDFs and photos below the upload limit in seconds, free and in your browser.
 - [How to Resize a Signature to 10KB–20KB for Online Forms](https://fitthefile.com/blog/how-to-resize-signature-for-online-form): Make a clean JPG signature under 10KB or 20KB for exam, job and government forms. Free, from a phone photo, and your signature never leaves your device.
 - [Free Smallpdf Alternative: No Account, No Uploads](https://fitthefile.com/blog/smallpdf-alternative-free): An honest comparison of FitTheFile and Smallpdf: what each does better, free plan limits, and when to use which. FitTheFile runs in your browser with no account.

@@ -71,7 +71,7 @@ export default function SignatureResizePost() {
           </P>
           <H2>5. Compress Under the Limit</H2>
           <P>
-            Drop the cropped image into the <Link href="/compress-image-to-20kb" style={linkStyle}>20KB tool</Link> (or the <Link href="/compress-image-to-10kb" style={linkStyle}>10KB tool</Link> for stricter forms). It picks the highest JPG quality that fits and only reduces dimensions if it has to. Check the preview, then download.
+            Drop the cropped image into the <Link href="/compress-image-to-20kb" style={linkStyle}>20KB tool</Link> (or the <Link href="/compress-image-to-10kb" style={linkStyle}>10KB tool</Link> for stricter forms). It picks the highest JPG quality that fits and only reduces dimensions if it has to. Check the preview, then download. If your form gives exact pixels as well as a KB range (bank exams often ask for 140 × 60 px at 10&ndash;20KB), the <Link href="/ibps-photo-signature-resizer" style={linkStyle}>IBPS photo and signature resizer</Link> does both in one step, including the minimum size.
           </P>
           <CtaBox toolSlug="compress-image-to-20kb" toolName="Compress Image to 20KB" />
           <H2>If the Result Looks Blurry</H2>

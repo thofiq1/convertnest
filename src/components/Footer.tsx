@@ -86,6 +86,8 @@ export default function Footer() {
               { href: "/compress-image-to-50kb", label: "Compress Image to 50KB" },
               { href: "/compress-image-to-100kb", label: "Compress Image to 100KB" },
               { href: "/compress-image-to-200kb", label: "Compress Image to 200KB" },
+              { href: "/ibps-photo-signature-resizer", label: "IBPS Photo & Signature" },
+              { href: "/us-visa-photo-resizer", label: "US Visa Photo" },
               { href: "/image-converter", label: "Image Converter" },
               { href: "/image-resizer", label: "Image Resizer" },
               { href: "/word-to-pdf", label: "Word to PDF" },

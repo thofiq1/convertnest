@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { sizePages } from "@/lib/sizePages";
+import { type SizePreset, loadImageFile, drawExact, bestQualityUnder, padJpegTo } from "@/lib/exactSize";
 
 interface Result {
   url: string;
@@ -12,6 +13,10 @@ interface Result {
   quality: number;
   reachedTarget: boolean;
   targetKb: number; // the limit this result was made for
+  minKb?: number;
+  padded?: boolean;
+  label?: string; // preset id used for the file name
+  sig: string; // settings this result was made with
 }
 
 function loadImage(file: File): Promise<HTMLImageElement> {
@@ -83,12 +88,32 @@ async function compressToTarget(file: File, targetBytes: number) {
 
 const fmt = (bytes: number) => (bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 / 1024).toFixed(2)} MB`);
 
-export default function TargetSizeCompressor({ defaultKb }: { defaultKb: number }) {
+export default function TargetSizeCompressor({
+  defaultKb,
+  presets,
+  showOtherSizes = true,
+}: {
+  defaultKb: number;
+  presets?: SizePreset[];
+  showOtherSizes?: boolean;
+}) {
+  const [presetId, setPresetId] = useState(presets?.[0]?.id ?? "");
+  const preset = presets?.find((p) => p.id === presetId);
+  // Optional exact dimensions on the general size pages.
+  const [dimW, setDimW] = useState("");
+  const [dimH, setDimH] = useState("");
   // Keep what the user is typing as a string; only clamp when it's used,
   // so typing "15" or clearing the box doesn't fight the user.
   const [kbInput, setKbInput] = useState(String(defaultKb));
   const parsedKb = parseInt(kbInput, 10);
-  const targetKb = Number.isFinite(parsedKb) ? Math.min(20000, Math.max(5, parsedKb)) : defaultKb;
+  const targetKb = preset ? preset.maxKb : Number.isFinite(parsedKb) ? Math.min(20000, Math.max(5, parsedKb)) : defaultKb;
+  const exactW = parseInt(dimW, 10), exactH = parseInt(dimH, 10);
+  const exactDims = preset
+    ? { w: preset.width, h: preset.height, fit: preset.fit, minKb: preset.minKb }
+    : exactW >= 16 && exactH >= 16 && exactW <= 8000 && exactH <= 8000
+      ? { w: exactW, h: exactH, fit: "cover" as const, minKb: undefined }
+      : null;
+  const sig = `${targetKb}|${exactDims ? `${exactDims.w}x${exactDims.h}` : ""}|${presetId}`;
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false);
@@ -110,12 +135,24 @@ export default function TargetSizeCompressor({ defaultKb }: { defaultKb: number 
       // Use 1KB = 1000 bytes so the file fits whether a portal counts
       // KB as 1000 or 1024 bytes.
       const target = kb * 1000;
-      if (f.size <= target && f.type === "image/jpeg") {
+      if (exactDims) {
+        const img = await loadImageFile(f);
+        const canvas = drawExact(img, exactDims.w, exactDims.h, exactDims.fit);
+        const r = await bestQualityUnder(canvas, target);
+        let blob = r.blob;
+        let padded = false;
+        // Meet a portal's minimum under either KB definition (1000 or 1024 bytes).
+        if (exactDims.minKb && blob.size < exactDims.minKb * 1024) {
+          blob = await padJpegTo(blob, exactDims.minKb * 1024 + 256);
+          padded = true;
+        }
+        setResult({ url: URL.createObjectURL(blob), size: blob.size, width: exactDims.w, height: exactDims.h, quality: r.q, reachedTarget: r.reached, targetKb: kb, minKb: exactDims.minKb, padded, label: preset?.id, sig });
+      } else if (f.size <= target && f.type === "image/jpeg") {
         const img = await loadImage(f);
-        setResult({ url: URL.createObjectURL(f), size: f.size, width: img.naturalWidth, height: img.naturalHeight, quality: 1, reachedTarget: true, targetKb: kb });
+        setResult({ url: URL.createObjectURL(f), size: f.size, width: img.naturalWidth, height: img.naturalHeight, quality: 1, reachedTarget: true, targetKb: kb, sig });
       } else {
         const r = await compressToTarget(f, target);
-        setResult({ url: URL.createObjectURL(r.blob), size: r.blob.size, width: r.w, height: r.h, quality: r.q, reachedTarget: r.reached, targetKb: kb });
+        setResult({ url: URL.createObjectURL(r.blob), size: r.blob.size, width: r.w, height: r.h, quality: r.q, reachedTarget: r.reached, targetKb: kb, sig });
       }
     } catch (e) {
       const heic = /\.hei[cf]$/i.test(f.name) || /hei[cf]/i.test(f.type);
@@ -133,30 +170,71 @@ export default function TargetSizeCompressor({ defaultKb }: { defaultKb: number 
     run(f, targetKb);
   };
 
-  const downloadName = file && result ? file.name.replace(/\.[^.]+$/, "") + `-${result.targetKb}kb.jpg` : "image.jpg";
+  const downloadName = file && result ? file.name.replace(/\.[^.]+$/, "") + (result.label ? `-${result.label}` : `-${result.targetKb}kb`) + ".jpg" : "image.jpg";
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap", marginBottom: "1rem" }}>
-        <label style={{ fontWeight: 600, fontSize: "0.9rem" }} htmlFor="target-kb">Target size</label>
-        <input
-          id="target-kb"
-          type="number"
-          min={5}
-          max={20000}
-          inputMode="numeric"
-          value={kbInput}
-          onChange={(e) => setKbInput(e.target.value)}
-          onBlur={() => setKbInput(String(targetKb))}
-          style={{ width: 110 }}
-        />
-        <span style={{ color: "var(--muted)", fontSize: "0.9rem" }}>KB (maximum)</span>
-        {file && (
-          <button className="btn-secondary" onClick={() => { setKbInput(String(targetKb)); run(file, targetKb); }} disabled={busy}>
-            {result && result.targetKb !== targetKb ? `Compress to ${targetKb} KB` : "Recompress"}
-          </button>
-        )}
-      </div>
+      {presets ? (
+        <div style={{ marginBottom: "1rem" }}>
+          <div role="radiogroup" aria-label="Choose what you're uploading" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.6rem" }}>
+            {presets.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                role="radio"
+                aria-checked={p.id === presetId}
+                className={`category-pill ${p.id === presetId ? "active" : ""}`}
+                onClick={() => setPresetId(p.id)}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          {preset && (
+            <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
+              Output: JPG, exactly {preset.width} × {preset.height}px,{" "}
+              {preset.minKb ? `${preset.minKb}–${preset.maxKb} KB` : `under ${preset.maxKb} KB`}
+              {preset.fit === "contain" ? " · fitted on white, nothing cut off" : " · centred and cropped to fit"}
+            </p>
+          )}
+          {file && (
+            <button className="btn-secondary" style={{ marginTop: "0.6rem" }} onClick={() => run(file, targetKb)} disabled={busy}>
+              {result && result.sig !== sig ? "Apply to this photo" : "Redo"}
+            </button>
+          )}
+        </div>
+      ) : (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.6rem" }}>
+            <label style={{ fontWeight: 600, fontSize: "0.9rem" }} htmlFor="target-kb">Target size</label>
+            <input
+              id="target-kb"
+              type="number"
+              min={5}
+              max={20000}
+              inputMode="numeric"
+              value={kbInput}
+              onChange={(e) => setKbInput(e.target.value)}
+              onBlur={() => setKbInput(String(targetKb))}
+              style={{ width: 110 }}
+            />
+            <span style={{ color: "var(--muted)", fontSize: "0.9rem" }}>KB (maximum)</span>
+            {file && (
+              <button className="btn-secondary" onClick={() => { setKbInput(String(targetKb)); run(file, targetKb); }} disabled={busy}>
+                {result && result.sig !== sig ? "Apply new settings" : "Recompress"}
+              </button>
+            )}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1rem", fontSize: "0.9rem" }}>
+            <label htmlFor="exact-w" style={{ fontWeight: 600 }}>Exact size</label>
+            <span style={{ color: "var(--muted)" }}>(optional)</span>
+            <input id="exact-w" type="number" inputMode="numeric" placeholder="Width" aria-label="Exact width in pixels" value={dimW} onChange={(e) => setDimW(e.target.value)} style={{ width: 90 }} />
+            <span aria-hidden="true">×</span>
+            <input id="exact-h" type="number" inputMode="numeric" placeholder="Height" aria-label="Exact height in pixels" value={dimH} onChange={(e) => setDimH(e.target.value)} style={{ width: 90 }} />
+            <span style={{ color: "var(--muted)" }}>px</span>
+          </div>
+        </>
+      )}
 
       <div
         className={`drop-zone ${dragOver ? "drag-active" : ""}`}
@@ -167,7 +245,7 @@ export default function TargetSizeCompressor({ defaultKb }: { defaultKb: number 
       >
         <input id="target-file" type="file" accept="image/*" hidden onChange={(e) => onFiles(e.target.files)} />
         <p style={{ fontWeight: 600, marginBottom: "0.35rem" }}>
-          {busy ? "Compressing…" : `Drop an image here or tap to choose one (under ${targetKb} KB)`}
+          {busy ? "Compressing…" : preset ? `Drop your ${preset.label.split(" ·")[0].toLowerCase()} here or tap to choose it` : `Drop an image here or tap to choose one (under ${targetKb} KB)`}
         </p>
         <p style={{ color: "var(--muted)", fontSize: "0.85rem" }}>JPG, PNG or WebP · Output is JPG · Stays on your device</p>
       </div>
@@ -181,12 +259,23 @@ export default function TargetSizeCompressor({ defaultKb }: { defaultKb: number 
             <img src={result.url} alt="Compressed preview" style={{ maxWidth: 220, maxHeight: 220, borderRadius: 8, border: "1px solid var(--card-border)" }} />
             <div style={{ flex: 1, minWidth: 220 }}>
               <p style={{ fontWeight: 700, fontSize: "1.1rem", color: result.reachedTarget ? "var(--success)" : "var(--warning)", marginBottom: "0.5rem" }}>
-                {result.reachedTarget ? `✓ ${fmt(result.size)} — under ${result.targetKb} KB` : `Smallest we could reach: ${fmt(result.size)}`}
+                {result.reachedTarget
+                  ? result.minKb
+                    ? `✓ ${fmt(result.size)} — within ${result.minKb}–${result.targetKb} KB`
+                    : `✓ ${fmt(result.size)} — under ${result.targetKb} KB`
+                  : `Smallest we could reach: ${fmt(result.size)}`}
               </p>
               <p style={{ color: "var(--muted)", fontSize: "0.85rem", lineHeight: 1.7 }}>
                 Original: {fmt(file.size)}<br />
                 Dimensions: {result.width} × {result.height}px<br />
                 JPG quality: {Math.round(result.quality * 100)}%
+                {result.padded && (
+                  <>
+                    <br />
+                    Even at top quality this image is smaller than the {result.minKb} KB minimum, so we added
+                    empty metadata to reach it. The picture itself is unchanged.
+                  </>
+                )}
               </p>
               <a
                 href={result.url}
@@ -206,7 +295,7 @@ export default function TargetSizeCompressor({ defaultKb }: { defaultKb: number 
         </div>
       )}
 
-      <p style={{ marginTop: "1.5rem", fontSize: "0.85rem", color: "var(--muted)" }}>
+      {showOtherSizes && <p style={{ marginTop: "1.5rem", fontSize: "0.85rem", color: "var(--muted)" }}>
         Other sizes:{" "}
         {sizePages.map((p, i) => (
           <span key={p.slug}>
@@ -214,7 +303,7 @@ export default function TargetSizeCompressor({ defaultKb }: { defaultKb: number 
             {i < sizePages.length - 1 ? " · " : ""}
           </span>
         ))}
-      </p>
+      </p>}
     </div>
   );
 }

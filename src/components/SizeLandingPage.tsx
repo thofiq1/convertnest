@@ -107,6 +107,18 @@ export default function SizeLandingPage({ kb }: { kb: number }) {
           Need exact pixel dimensions? Set them first with <Link href="/image-resizer" style={{ color: "var(--primary)", textDecoration: "underline" }}>Image Resizer</Link>,
           or cut away background with <Link href="/image-crop" style={{ color: "var(--primary)", textDecoration: "underline" }}>Image Crop</Link>, then compress here.
         </p>
+        {kb <= 50 && (
+          <p style={{ marginTop: "0.75rem" }}>
+            Applying for a bank exam? The <Link href="/ibps-photo-signature-resizer" style={{ color: "var(--primary)", textDecoration: "underline" }}>IBPS photo and signature resizer</Link> sets
+            the exact pixel size and KB range for each item in one step.
+          </p>
+        )}
+        {kb >= 200 && kb <= 300 && (
+          <p style={{ marginTop: "0.75rem" }}>
+            Uploading a US visa photo? The <Link href="/us-visa-photo-resizer" style={{ color: "var(--primary)", textDecoration: "underline" }}>US visa photo resizer</Link> makes
+            a square 600 × 600 JPEG under 240KB.
+          </p>
+        )}
       </section>
     </ToolLayout>
   );

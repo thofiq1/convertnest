@@ -2,6 +2,7 @@ import { SITE_URL } from "@/lib/site";
 import { tools } from "@/lib/tools";
 import { blogPosts } from "@/lib/blog";
 import { sizePages, pdfSizePages } from "@/lib/sizePages";
+import { examPages } from "@/lib/examPages";
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -17,6 +18,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const sizeLandingPages = [...pdfSizePages, ...sizePages].map((p) => ({
     url: `${baseUrl}/${p.slug}`,
     lastModified: new Date("2026-11-24"),
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  }));
+
+  const examLandingPages = examPages.map((p) => ({
+    url: `${baseUrl}/${p.slug}`,
+    lastModified: new Date("2026-11-25"),
     changeFrequency: "monthly" as const,
     priority: 0.8,
   }));
@@ -61,6 +69,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     ...toolPages,
     ...sizeLandingPages,
+    ...examLandingPages,
     ...blogPages,
   ];
 }

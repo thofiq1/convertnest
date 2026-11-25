@@ -1,6 +1,7 @@
 "use client";
 
 import { sizePages, pdfSizePages } from "@/lib/sizePages";
+import { examPages } from "@/lib/examPages";
 import Link from "next/link";
 import { tools, categories } from "@/lib/tools";
 import AdBanner from "@/components/AdBanner";
@@ -373,6 +374,7 @@ export default function HomeContent() {
               {[
                 ...pdfSizePages.map((p) => ({ href: `/${p.slug}`, label: `PDF to ${p.kb}KB` })),
                 ...sizePages.map((p) => ({ href: `/${p.slug}`, label: `Image to ${p.kb}KB` })),
+                ...examPages.map((p) => ({ href: `/${p.slug}`, label: p.navLabel })),
               ].map((link) => (
                 <Link
                   key={link.href}
