@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import ToolLayout from "@/components/ToolLayout";
 import PdfTargetSizeCompressor from "@/components/PdfTargetSizeCompressor";
 import { getPdfSizePage } from "@/lib/sizePages";
+import { DEFAULT_OG_IMAGES } from "@/lib/site";
 
 export function pdfSizeMetadata(kb: number): Metadata {
   const page = getPdfSizePage(kb)!;
@@ -18,7 +19,8 @@ export function pdfSizeMetadata(kb: number): Metadata {
       `pdf ${kb}kb converter`,
       `shrink pdf to ${kb}kb`,
     ],
-    openGraph: { title, description, url: `/${page.slug}`, siteName: "FitTheFile", type: "website" },
+    openGraph: {
+    images: DEFAULT_OG_IMAGES, title, description, url: `/${page.slug}`, siteName: "FitTheFile", type: "website" },
     alternates: { canonical: `/${page.slug}` },
   };
 }

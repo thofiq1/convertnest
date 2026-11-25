@@ -17,7 +17,7 @@ interface ConvertedImage {
 
 export default function ImageConverter() {
   const [images, setImages] = useState<ConvertedImage[]>([]);
-  const [outputFormat, setOutputFormat] = useState<"jpeg" | "png" | "webp" | "bmp">("png");
+  const [outputFormat, setOutputFormat] = useState<"jpeg" | "png" | "webp">("png");
   const [quality, setQuality] = useState(92);
   const [dragOver, setDragOver] = useState(false);
 
@@ -193,7 +193,13 @@ export default function ImageConverter() {
     <ToolLayout
       slug="image-converter"
       title="Image Converter"
-      description="Convert images between JPG, PNG, WebP, and BMP formats. Batch convert with quality control."
+      description="Convert images to JPG, PNG or WebP — including BMP and GIF files. Batch convert with quality control."
+      faqs={[
+        { question: "Which formats can I convert between?", answer: "You can convert common browser-readable images (such as JPG, PNG and WebP) to JPG, PNG or WebP. Use the quality slider for JPG and WebP to balance size and detail." },
+        { question: "What happens to transparent backgrounds?", answer: "PNG and WebP keep transparency. JPG doesn't support it, so transparent areas are filled with white." },
+        { question: "Can I convert iPhone HEIC photos here?", answer: "Use the HEIC to JPG tool instead; it includes a decoder for iPhone photos that most browsers can't open on their own." },
+        { question: "Can I convert many images at once?", answer: "Yes. Add several images, then download each one or all of them together as a ZIP file." },
+      ]}
     >
       {sizeWarnings.length > 0 && (
         <div style={{
@@ -233,7 +239,7 @@ export default function ImageConverter() {
             <div>
               <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.3rem" }}>Convert To</label>
               <div style={{ display: "flex", gap: "0.4rem" }}>
-                {(["jpeg", "png", "webp", "bmp"] as const).map((fmt) => (
+                {(["jpeg", "png", "webp"] as const).map((fmt) => (
                   <button key={fmt} onClick={() => setOutputFormat(fmt)}
                     style={{
                       flex: 1, padding: "0.5rem", border: "1px solid var(--card-border)", borderRadius: "0.3rem",
@@ -351,7 +357,7 @@ export default function ImageConverter() {
           How to Convert Image Formats Online
         </h2>
         <p>
-          Upload images in any format and convert them to JPG, PNG, WebP, or BMP. For JPG and WebP,
+          Upload images in any format and convert them to JPG, PNG or WebP. For JPG and WebP,
           adjust the quality slider to balance file size and image quality. Batch convert multiple images
           at once and download them individually or as a ZIP file. All processing happens in your
           browser — your images are never uploaded to any server.

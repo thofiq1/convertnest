@@ -200,6 +200,12 @@ export default function PDFPageNumbers() {
       slug="pdf-page-numbers"
       title="Add Page Numbers to PDF"
       description="Add page numbers to your PDF files. Choose position, format, and starting number. Free online tool."
+      faqs={[
+        { question: "Which number formats can I use?", answer: "Four formats: 1, Page 1, 1 of N, and Page 1 of N. You can also choose the position (top or bottom; left, center or right), the font size and the starting number." },
+        { question: "Can I leave the cover page unnumbered?", answer: "Yes. Turn on \"Skip first page\" and numbering starts on the second page." },
+        { question: "Does adding page numbers change the rest of my PDF?", answer: "No. The numbers are drawn on top of your existing pages; the original content stays as it was." },
+        { question: "Can I number a password-protected PDF?", answer: "Not directly. Remove the password first with the Unlock PDF tool, then add page numbers." },
+      ]}
     >
       {!file ? (
         <div

@@ -97,7 +97,8 @@ export default function ToolLayout({ title, description, slug, children, faqs }:
         </span>
       </div>
 
-      <AdBanner format="horizontal" slot="tool-top" />
+      {/* Add a real numeric AdSense slot ID here after approval, e.g. slot="1234567890" */}
+      <AdBanner format="horizontal" />
 
       <div style={{ marginTop: "1.5rem" }}>{children}</div>
 
@@ -257,7 +258,8 @@ export default function ToolLayout({ title, description, slug, children, faqs }:
       )}
 
       <div style={{ marginTop: "2rem" }}>
-        <AdBanner format="rectangle" slot="tool-bottom" />
+        {/* Add a real numeric AdSense slot ID here after approval */}
+        <AdBanner format="rectangle" />
       </div>
     </div>
   );

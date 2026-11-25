@@ -205,6 +205,12 @@ export default function JPGtoPDF() {
       slug="jpg-to-pdf"
       title="JPG to PDF"
       description="Convert images to PDF. Supports JPG, PNG, WebP, and BMP. Reorder, set page size, orientation, and margins."
+      faqs={[
+        { question: "Can I put several images into one PDF?", answer: "Yes. Add as many images as you need, drag them into order, and each image becomes one page of the PDF, top to bottom." },
+        { question: "Which page sizes can I choose?", answer: "A4, US Letter, or Fit, which makes each page the size of its image. You can also set orientation and a margin of 0 to 72 points." },
+        { question: "Which image formats are supported?", answer: "JPG and PNG are added directly. Other formats your browser can open, such as WebP, are converted to JPG first." },
+        { question: "My PDF is too big for an upload form. What now?", answer: "Run the finished PDF through Compress PDF or one of the compress-PDF-to-KB tools to bring it under the limit." },
+      ]}
     >
       {sizeWarnings.length > 0 && (
         <div style={{

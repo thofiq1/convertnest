@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import ToolLayout from "@/components/ToolLayout";
 import TargetSizeCompressor from "@/components/TargetSizeCompressor";
 import { getSizePage } from "@/lib/sizePages";
+import { DEFAULT_OG_IMAGES } from "@/lib/site";
 
 export function sizeMetadata(kb: number): Metadata {
   const page = getSizePage(kb)!;
@@ -18,7 +19,8 @@ export function sizeMetadata(kb: number): Metadata {
       `resize image to ${kb}kb`,
       `image ${kb}kb converter`,
     ],
-    openGraph: { title, description, url: `/${page.slug}`, siteName: "FitTheFile", type: "website" },
+    openGraph: {
+    images: DEFAULT_OG_IMAGES, title, description, url: `/${page.slug}`, siteName: "FitTheFile", type: "website" },
     alternates: { canonical: `/${page.slug}` },
   };
 }

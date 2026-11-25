@@ -288,6 +288,12 @@ export default function SvgToPng() {
       slug="svg-to-png"
       title="SVG to PNG Converter"
       description="Convert SVG vector files to PNG or JPG images at any resolution. Free online SVG converter."
+      faqs={[
+        { question: "How do I get a sharper PNG?", answer: "Pick a higher scale (up to 4x) or type a custom width. SVG is vector, so a larger output stays crisp." },
+        { question: "Does the PNG keep a transparent background?", answer: "PNG output keeps transparency. For JPG output, transparent areas are filled with the background color you choose." },
+        { question: "Can I convert several SVG files at once?", answer: "Yes. Add multiple SVGs and download them individually or as a ZIP file." },
+        { question: "Why does my SVG look different after converting?", answer: "SVGs that rely on external fonts or linked images may render differently, because the browser can only draw what is inside the file." },
+      ]}
     >
       {sizeWarnings.length > 0 && (
         <div style={{

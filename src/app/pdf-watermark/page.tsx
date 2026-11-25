@@ -200,6 +200,12 @@ export default function PDFWatermark() {
       slug="pdf-watermark"
       title="Add Watermark to PDF"
       description="Add text watermarks to your PDF files. Customize font size, opacity, position, and color. Free online tool."
+      faqs={[
+        { question: "What can I customize?", answer: "The watermark text, font size, opacity, color, and position: diagonal across the page, center, top, or bottom." },
+        { question: "Is the watermark added to every page?", answer: "Yes. The same watermark is applied to all pages. You can preview it on the first page before applying." },
+        { question: "Which characters can I use in the watermark?", answer: "The watermark uses the standard Helvetica font, so stick to basic Latin letters, numbers and common punctuation." },
+        { question: "Can I remove the watermark later?", answer: "Keep your original file. The watermark is written into the new PDF's pages, so this tool can't take it back out." },
+      ]}
     >
       {!file ? (
         <div

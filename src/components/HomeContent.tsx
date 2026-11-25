@@ -368,6 +368,7 @@ export default function HomeContent() {
                 { href: "/compress-image-to-20kb", label: "Image to 20KB" },
                 { href: "/compress-image-to-50kb", label: "Image to 50KB" },
                 { href: "/compress-image-to-100kb", label: "Image to 100KB" },
+                { href: "/compress-image-to-200kb", label: "Image to 200KB" },
               ].map((link) => (
                 <Link
                   key={link.href}

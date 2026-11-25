@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getBlogPost } from "@/lib/blog";
+import { DEFAULT_OG_IMAGES } from "@/lib/site";
 import {
   ArticleWrapper,
   Breadcrumb,
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
   description: post.description,
   keywords: post.keywords,
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: post.title,
     description: post.description,
     siteName: "FitTheFile",
@@ -103,7 +105,7 @@ export default function ConvertImagesBlogPost() {
             <Link href="/image-converter" style={{ color: "var(--primary)" }}>
               Image Converter
             </Link>{" "}
-            handles conversions between JPG, PNG, WebP, BMP, GIF, and more.
+            converts JPG, PNG, WebP, BMP and GIF files into JPG, PNG or WebP.
             Drop your image in, pick the target format, and download the result.
             Everything runs in your browser — your images never get uploaded to
             a server, which matters if you are converting screenshots or

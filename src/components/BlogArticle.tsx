@@ -56,6 +56,7 @@ export function ArticleHeader({
     ...(postUrl ? { url: postUrl, mainEntityOfPage: { "@type": "WebPage", "@id": postUrl } } : {}),
     author: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
     publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+    image: `${SITE_URL}/opengraph-image`,
     inLanguage: "en",
   };
   return (

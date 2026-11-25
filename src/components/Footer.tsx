@@ -59,6 +59,7 @@ export default function Footer() {
               { href: "/compress-pdf", label: "Compress PDF" },
               { href: "/compress-pdf-to-100kb", label: "Compress PDF to 100KB" },
               { href: "/compress-pdf-to-200kb", label: "Compress PDF to 200KB" },
+              { href: "/compress-pdf-to-500kb", label: "Compress PDF to 500KB" },
               { href: "/merge-pdf", label: "Merge PDF" },
               { href: "/split-pdf", label: "Split PDF" },
               { href: "/rotate-pdf", label: "Rotate PDF" },
@@ -66,6 +67,7 @@ export default function Footer() {
               { href: "/jpg-to-pdf", label: "JPG to PDF" },
               { href: "/pdf-watermark", label: "PDF Watermark" },
               { href: "/pdf-page-numbers", label: "PDF Page Numbers" },
+              { href: "/pdf-unlock", label: "Unlock PDF" },
             ].map((link) => (
               <Link key={link.href} href={link.href} style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.8rem", transition: "color 0.2s" }}>
                 {link.label}
@@ -80,14 +82,17 @@ export default function Footer() {
           <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             {[
               { href: "/image-compressor", label: "Image Compressor" },
+              { href: "/compress-image-to-20kb", label: "Compress Image to 20KB" },
               { href: "/compress-image-to-50kb", label: "Compress Image to 50KB" },
               { href: "/compress-image-to-100kb", label: "Compress Image to 100KB" },
+              { href: "/compress-image-to-200kb", label: "Compress Image to 200KB" },
               { href: "/image-converter", label: "Image Converter" },
               { href: "/image-resizer", label: "Image Resizer" },
               { href: "/word-to-pdf", label: "Word to PDF" },
               { href: "/heic-to-jpg", label: "HEIC to JPG" },
               { href: "/image-crop", label: "Image Crop" },
               { href: "/svg-to-png", label: "SVG to PNG" },
+              { href: "/html-to-pdf", label: "HTML to PDF" },
             ].map((link) => (
               <Link key={link.href} href={link.href} style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.8rem", transition: "color 0.2s" }}>
                 {link.label}

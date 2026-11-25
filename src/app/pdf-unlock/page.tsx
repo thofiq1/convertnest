@@ -159,6 +159,12 @@ function PdfUnlockTool() {
       slug="pdf-unlock"
       title="Unlock PDF — Remove Password"
       description="Remove password protection from PDF files. Enter the password you know and download an unlocked copy. Free online tool."
+      faqs={[
+        { question: "Can this tool remove a password I don't know?", answer: "No. It is not a password cracker. You must enter the correct password to open and unlock the file." },
+        { question: "Will the unlocked PDF look the same?", answer: "Each page is redrawn as a high-resolution image at the original page size, so it looks the same, but text in the unlocked copy can't be selected or searched. Keep your original if you need that." },
+        { question: "Is my password sent anywhere?", answer: "No. The PDF is opened and rebuilt in your browser, and the password is only used there." },
+        { question: "What can I do after unlocking?", answer: "You can merge, split, rotate or add page numbers to the unlocked copy, since those tools can't open password-protected PDFs." },
+      ]}
     >
       {!file ? (
         <div

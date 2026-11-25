@@ -245,6 +245,12 @@ export default function HeicToJpg() {
       slug="heic-to-jpg"
       title="HEIC to JPG Converter"
       description="Convert iPhone HEIC photos to JPG or PNG format. Free online converter — no upload needed."
+      faqs={[
+        { question: "Why won't my HEIC photo open on Windows or a website?", answer: "HEIC is the default iPhone photo format, but many apps, websites and upload forms only accept JPG or PNG. Converting to JPG gives you a file that opens almost everywhere." },
+        { question: "Does it work in Chrome, Firefox and Edge?", answer: "Yes. If your browser can't decode HEIC by itself, the tool loads a built-in HEIC decoder and converts the photo in your browser instead." },
+        { question: "Should I pick JPG or PNG?", answer: "JPG gives smaller files and is accepted almost everywhere; use the quality slider to trade size for detail. PNG keeps full detail but files are usually much larger." },
+        { question: "Can I convert several photos at once?", answer: "Yes. Add multiple .heic or .heif files and download them one by one or together as a ZIP file." },
+      ]}
     >
       {sizeWarnings.length > 0 && (
         <div style={{
@@ -416,9 +422,9 @@ export default function HeicToJpg() {
           any server.
         </p>
         <p style={{ marginTop: "0.5rem" }}>
-          <strong>Browser compatibility:</strong> This tool uses your browser&apos;s native HEIC support.
-          Safari, Chrome 122+, and Edge 122+ can decode HEIC natively. If your browser doesn&apos;t support
-          HEIC, try using the latest version of Chrome or Safari.
+          <strong>Browser compatibility:</strong> If your browser can decode HEIC on its own (for example
+          Safari), the tool uses that. Otherwise it loads a built-in HEIC decoder, so conversion also works
+          in Chrome, Firefox and Edge.
         </p>
       </section>
     </ToolLayout>

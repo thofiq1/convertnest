@@ -12,6 +12,7 @@ import {
   RelatedPosts,
 } from "@/components/BlogArticle";
 import FaqSchema from "@/components/FaqSchema";
+import { DEFAULT_OG_IMAGES } from "@/lib/site";
 
 const post = getBlogPost("file-size-too-large-upload-fix")!;
 
@@ -21,6 +22,7 @@ export const metadata: Metadata = {
   description: post.description,
   keywords: post.keywords,
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: post.title,
     description: post.description,
     siteName: "FitTheFile",

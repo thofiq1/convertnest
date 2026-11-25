@@ -382,6 +382,12 @@ export default function ImageCrop() {
       slug="image-crop"
       title="Crop Image Online"
       description="Crop images to any size with an easy drag-and-drop interface. Aspect ratio presets for social media. Free online tool."
+      faqs={[
+        { question: "Which aspect ratios are available?", answer: "You can crop freely or lock the crop box to a preset ratio such as 1:1 for profile and Instagram photos or 16:9 for video thumbnails." },
+        { question: "Will cropping reduce quality?", answer: "The cropped area is copied at its original pixel size. PNG output keeps full detail; JPG output is saved at high quality (92%)." },
+        { question: "What output format do I get?", answer: "Choose Original, JPG or PNG. Original keeps PNG and WebP as they are and saves other formats as JPG." },
+        { question: "Can I crop a photo to a passport or form size?", answer: "Crop to the shape you need here, then use the Image Resizer to set exact pixel dimensions or a compress-to-KB tool to get under a file size limit." },
+      ]}
     >
       {sizeWarning && (
         <div style={{

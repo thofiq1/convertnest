@@ -123,6 +123,12 @@ function HtmlToPdfTool() {
       slug="html-to-pdf"
       title="HTML to PDF Converter"
       description="Convert HTML code or web content to PDF. Paste your HTML, preview it, and download a clean PDF document."
+      faqs={[
+        { question: "How is the PDF created?", answer: "The tool renders your HTML in a preview frame, then opens your browser's print dialog with the paper size, orientation and margins you picked. Choose \"Save as PDF\" as the destination to save the file." },
+        { question: "Can I paste just a fragment of HTML?", answer: "Yes. If you paste a snippet without <html> tags, it is wrapped in a simple page with basic styling for text, images and tables." },
+        { question: "Can I convert a web page by its URL?", answer: "No. This tool converts HTML code that you paste. To save a live web page, open it in your browser and use Print > Save as PDF." },
+        { question: "Is my HTML uploaded anywhere?", answer: "No. The preview and printing happen in your browser." },
+      ]}
     >
       {/* HTML Input Area */}
       <div style={{ marginBottom: "1.5rem" }}>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getBlogPost } from "@/lib/blog";
+import { DEFAULT_OG_IMAGES } from "@/lib/site";
 import {
   ArticleWrapper,
   Breadcrumb,
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
   description: post.description,
   keywords: post.keywords,
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: post.title,
     description: post.description,
     siteName: "FitTheFile",

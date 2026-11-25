@@ -11,6 +11,7 @@ import {
   RelatedPosts,
 } from "@/components/BlogArticle";
 import FaqSchema from "@/components/FaqSchema";
+import { DEFAULT_OG_IMAGES } from "@/lib/site";
 
 const post = getBlogPost("how-to-password-protect-pdf-free")!;
 
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
   description: post.description,
   keywords: post.keywords,
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: post.title,
     description: post.description,
     siteName: "FitTheFile",

@@ -148,6 +148,12 @@ export default function RotatePDF() {
       slug="rotate-pdf"
       title="Rotate PDF"
       description="Rotate individual pages or all pages at once. Preview rotations before applying."
+      faqs={[
+        { question: "Can I rotate only some pages?", answer: "Yes. Rotate any page left or right individually, or use Rotate All to turn every page at once." },
+        { question: "Does rotating reduce quality?", answer: "No. The tool changes each page's rotation setting and doesn't re-render or recompress page content, so text and images stay as they were." },
+        { question: "Why are my scanned pages sideways?", answer: "Scanners and phone apps sometimes save the wrong orientation. Rotate the affected pages here and download the corrected PDF." },
+        { question: "Can I rotate a password-protected PDF?", answer: "Remove the password first with the Unlock PDF tool, then rotate the pages." },
+      ]}
     >
       {!file ? (
         <div

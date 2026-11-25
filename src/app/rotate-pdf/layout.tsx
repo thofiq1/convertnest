@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DEFAULT_OG_IMAGES } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Rotate PDF Online Free — Fix Page Orientation",
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
     "Rotate PDF pages online for free. Turn pages 90, 180, or 270 degrees to fix orientation. No signup, no watermarks. Works in your browser.",
   keywords: ["rotate pdf", "rotate pdf pages", "turn pdf", "fix pdf orientation", "rotate pdf online free"],
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: "Rotate PDF Online Free — Fix Page Orientation",
     description: "Rotate PDF pages online for free. Turn pages 90, 180, or 270 degrees to fix orientation.",
     url: "/rotate-pdf",

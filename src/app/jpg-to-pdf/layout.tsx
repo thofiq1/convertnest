@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DEFAULT_OG_IMAGES } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "JPG to PDF Converter Free — Images to PDF",
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
     "Convert JPG, PNG, and other images to PDF for free. Combine multiple images into one PDF. No signup, no watermarks. Works in your browser.",
   keywords: ["jpg to pdf", "image to pdf", "convert jpg to pdf free", "photo to pdf", "jpeg to pdf converter"],
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: "JPG to PDF Converter Free — Images to PDF",
     description: "Convert JPG, PNG, and other images to PDF for free. No signup, no watermarks.",
     url: "/jpg-to-pdf",

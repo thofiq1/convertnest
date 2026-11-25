@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DEFAULT_OG_IMAGES } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Split PDF Online Free — Extract Pages from PDF",
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
     "Split PDF files online for free. Extract specific pages or separate into individual files. No signup, no watermarks. Works in your browser.",
   keywords: ["split pdf", "extract pages from pdf", "separate pdf pages", "pdf splitter", "split pdf online free"],
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: "Split PDF Online Free — Extract Pages from PDF",
     description: "Split PDF files online for free. Extract specific pages or separate into individual files.",
     url: "/split-pdf",

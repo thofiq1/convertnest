@@ -12,7 +12,7 @@ export const tools: Tool[] = [
     name: "Compress PDF",
     slug: "compress-pdf",
     description:
-      "Reduce PDF file size while keeping quality. Free online PDF compressor — no signup, no watermarks.",
+      "Shrink PDF file size with an adjustable quality level. Free online PDF compressor — no signup, no watermarks.",
     category: "PDF",
     icon: "📦",
     keywords: ["compress pdf", "pdf compressor", "reduce pdf size", "shrink pdf"],
@@ -57,7 +57,7 @@ export const tools: Tool[] = [
     name: "Image Compressor",
     slug: "image-compressor",
     description:
-      "Compress JPEG, PNG, and WebP images without losing quality. Reduce image file size instantly.",
+      "Compress JPEG, PNG, and WebP images with a quality slider. Reduce image file size instantly.",
     category: "Image",
     icon: "🗜️",
     keywords: ["compress image", "image compressor", "reduce image size", "compress jpg"],
@@ -66,7 +66,7 @@ export const tools: Tool[] = [
     name: "Image Converter",
     slug: "image-converter",
     description:
-      "Convert images between JPG, PNG, WebP, and BMP formats. Free and fast format conversion.",
+      "Convert images to JPG, PNG or WebP, including BMP and GIF files. Free and fast format conversion.",
     category: "Image",
     icon: "🔄",
     keywords: [

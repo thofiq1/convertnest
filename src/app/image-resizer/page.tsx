@@ -247,6 +247,12 @@ export default function ImageResizer() {
       slug="image-resizer"
       title="Image Resizer"
       description="Resize images to exact dimensions, by percentage, or social media presets. Batch resize supported."
+      faqs={[
+        { question: "How do I resize without stretching my photo?", answer: "Use Exact Size with the aspect-ratio lock on, or Percentage mode. Both keep the original proportions." },
+        { question: "Do the social media presets crop my image?", answer: "No. Presets resize to the preset's exact width and height, so a photo with a different shape will be stretched. Crop it to the right ratio first with the Crop Image tool." },
+        { question: "Can I resize several images at once?", answer: "Yes. Add multiple images, apply the same settings, and download them individually or as a ZIP file." },
+        { question: "Does resizing also reduce file size?", answer: "Making an image smaller in pixels usually makes the file smaller too. If you need to get under a specific KB limit, use one of the compress-image-to-KB tools." },
+      ]}
     >
       {sizeWarnings.length > 0 && (
         <div style={{

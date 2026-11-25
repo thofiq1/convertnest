@@ -11,6 +11,7 @@ import {
   RelatedPosts,
 } from "@/components/BlogArticle";
 import FaqSchema from "@/components/FaqSchema";
+import { DEFAULT_OG_IMAGES } from "@/lib/site";
 
 const post = getBlogPost("how-to-compress-pdf-without-losing-quality")!;
 
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
   description: post.description,
   keywords: post.keywords,
   openGraph: {
+    images: DEFAULT_OG_IMAGES,
     title: post.title,
     description: post.description,
     siteName: "FitTheFile",
@@ -75,7 +77,7 @@ export default function CompressPdfBlogPost() {
             the file nearly identical), High, Recommended (a balanced option that
             works well for most documents), and Minimum Size for when you need
             the smallest file possible. For most use cases, the Recommended
-            preset reduces file size by 50-70% with no noticeable quality loss.
+            preset often shrinks scanned and image-heavy PDFs by half or more while staying readable. Results vary by document, so check the output before you send it.
             Each page is saved as an image, so text in the compressed file
             can&rsquo;t be selected or searched — keep your original if you need that.
           </P>

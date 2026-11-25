@@ -439,7 +439,7 @@ export default function CompressPDF() {
         </h2>
         <p>
           Our compressor re-saves each page as an optimized image at the resolution and quality you choose.
-          Choose your compression level: <strong>Recommended</strong> typically reduces files by 40–70% with minimal
+          Choose your compression level: <strong>Recommended</strong> often shrinks scanned and image-heavy PDFs substantially with minimal
           visible quality loss. For print-quality documents, use <strong>Maximum</strong>. For email attachments
           or web uploads, <strong>Minimum Size</strong> gets the smallest files possible. Because pages become
           images, text in the result can&apos;t be selected or searched, so keep your original if you need that.
