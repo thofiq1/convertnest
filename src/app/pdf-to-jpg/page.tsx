@@ -117,6 +117,10 @@ export default function PDFtoJPG() {
         setProcessing(false);
         return;
       }
+      if (pageNums.length > 300 && !window.confirm(`This will convert ${pageNums.length} pages, which can take a long time and use a lot of memory. Continue? (Tip: pick a page range instead.)`)) {
+        setProcessing(false);
+        return;
+      }
 
       const mimeType = format === "png" ? "image/png" : "image/jpeg";
       const ext: "jpg" | "png" = format === "png" ? "png" : "jpg";

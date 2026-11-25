@@ -142,6 +142,9 @@ export default function JPGtoPDF() {
               img.onerror = () => reject(new Error(decodeErrorMessage(entry.file)));
               img.src = entry.previewUrl;
             });
+            if (img.width * img.height > 100_000_000) {
+              throw new Error(`${entry.file.name} is too large (over 100 megapixels). Please resize it first.`);
+            }
             canvas.width = img.width;
             canvas.height = img.height;
             const ctx = canvas.getContext("2d");
@@ -197,7 +200,9 @@ export default function JPGtoPDF() {
       setResultUrl(URL.createObjectURL(blob));
     } catch (err) {
       console.error("Conversion error:", err);
-      if (current && isHeicFile(current)) {
+      if (err instanceof Error && err.message.includes("megapixels")) {
+        setError({ message: err.message, heic: false });
+      } else if (current && isHeicFile(current)) {
         setError({ message: `${current.name}: ${HEIC_HINT}.`, heic: true });
       } else if (current) {
         setError({ message: `Couldn't add ${current.name} to the PDF — it may be damaged or in a format your browser can't read. Remove it and try again.`, heic: false });

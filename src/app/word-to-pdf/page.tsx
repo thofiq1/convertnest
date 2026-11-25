@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { sanitizeHtml, escapeHtml } from "@/lib/sanitizeHtml";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize } from "@/utils/fileValidation";
@@ -48,8 +49,24 @@ export default function WordToPDF() {
     try {
       const mammoth = await import("mammoth");
       const arrayBuffer = await f.arrayBuffer();
+      // Guard against "zip bomb" .docx files that expand to gigabytes.
+      try {
+        const JSZip = (await import("jszip")).default;
+        const zip = await JSZip.loadAsync(arrayBuffer);
+        let total = 0;
+        zip.forEach((_p, entry) => {
+          total += (entry as unknown as { _data?: { uncompressedSize?: number } })._data?.uncompressedSize || 0;
+        });
+        if (total > 300 * 1024 * 1024) {
+          alert("This Word file expands to more than 300 MB and can't be converted in the browser.");
+          setProcessing(false);
+          return;
+        }
+      } catch {
+        // Not a readable zip — let mammoth report the error below.
+      }
       const result = await mammoth.convertToHtml({ arrayBuffer });
-      setHtmlContent(result.value);
+      setHtmlContent(sanitizeHtml(result.value));
 
       const msgs = result.messages
         .filter((m: { type: string }) => m.type === "warning")
@@ -77,7 +94,7 @@ export default function WordToPDF() {
         <!DOCTYPE html>
         <html>
         <head>
-          <title>${file?.name || "document"}</title>
+          <title>${escapeHtml(file?.name || "document")}</title>
           <style>
             @page { size: A4; margin: 2cm; }
             body {

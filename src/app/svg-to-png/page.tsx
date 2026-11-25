@@ -70,6 +70,7 @@ export default function SvgToPng() {
         reject(new Error(`Failed to load SVG: ${file.name}`));
       };
       img.onload = () => {
+        try {
         // Determine natural dimensions
         let natW = img.naturalWidth || 300;
         let natH = img.naturalHeight || 150;
@@ -132,6 +133,10 @@ export default function SvgToPng() {
           mimeType,
           qualityParam
         );
+        } catch (e) {
+          URL.revokeObjectURL(svgUrl);
+          reject(e instanceof Error ? e : new Error(`Failed to convert SVG: ${file.name}`));
+        }
       };
       img.src = svgUrl;
     });
