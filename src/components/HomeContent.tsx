@@ -215,17 +215,26 @@ export default function HomeContent() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            name: "FitTheFile",
-            url: `${SITE_URL}/`,
-            description: "Free online PDF tools and file converters. Compress, merge, split, and convert PDFs and images.",
-          }),
+          __html: JSON.stringify([
+            {
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "FitTheFile",
+              url: `${SITE_URL}/`,
+              description: "Compress PDFs and photos to any KB limit, plus free PDF and image tools that run in your browser.",
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "FitTheFile",
+              url: `${SITE_URL}/`,
+              logo: `${SITE_URL}/press/logo.png`,
+            },
+          ]),
         }}
       />
       {/* ── Hero Section ── */}
-      <section className="hero-gradient bg-dots" style={{ padding: "5rem 1.5rem 4rem", textAlign: "center", position: "relative", overflow: "hidden" }}>
+      <section className="hero-gradient bg-dots hero-section" style={{ padding: "5rem 1.5rem 4rem", textAlign: "center", position: "relative", overflow: "hidden" }}>
         {/* Animated blobs */}
         <div className="hero-blob" style={{
           width: 400, height: 400,
@@ -241,7 +250,7 @@ export default function HomeContent() {
 
         <div style={{ maxWidth: 720, margin: "0 auto", position: "relative", zIndex: 1 }}>
           {/* Tool count badge */}
-          <div className="fade-up" style={{ marginBottom: "0.75rem" }}>
+          <div className="fade-up hide-mobile" style={{ marginBottom: "0.75rem" }}>
             <span className="tool-count-badge">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
@@ -272,7 +281,7 @@ export default function HomeContent() {
               marginBottom: "1rem",
             }}
           >
-            Free Online{" "}
+            Make any PDF or photo fit an{" "}
             <span
               style={{
                 background: "linear-gradient(135deg, var(--gradient-start), var(--gradient-end))",
@@ -280,9 +289,8 @@ export default function HomeContent() {
                 WebkitTextFillColor: "transparent",
               }}
             >
-              PDF Tools
-            </span>{" "}
-            &amp; File Converter
+              upload limit
+            </span>
           </h1>
 
           <p
@@ -295,8 +303,8 @@ export default function HomeContent() {
               margin: "0 auto 2rem",
             }}
           >
-            Make any PDF or photo fit an upload limit — compress to 100KB, 50KB or any size.
-            Plus merge, split and convert. Free, private, in your browser.
+            Type the limit (20KB, 50KB, 100KB or any size) and get the sharpest file that fits.
+            Plus {tools.length} free PDF and image tools. Nothing is uploaded.
           </p>
 
           <div className="fade-up fade-up-delay-3" style={{ display: "flex", justifyContent: "center", gap: "0.75rem", flexWrap: "wrap" }}>

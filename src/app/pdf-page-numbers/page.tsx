@@ -20,11 +20,19 @@ export default function PDFPageNumbers() {
   const [processing, setProcessing] = useState(false);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   // Settings
   const [numberPosition, setNumberPosition] = useState<NumberPosition>("bottom-center");
   const [numberFormat, setNumberFormat] = useState<NumberFormat>("1");
-  const [startingNumber, setStartingNumber] = useState(1);
+  // Raw text of the start-number field; validated/clamped when used or on blur, not on each keystroke
+  const [startingInput, setStartingInput] = useState("1");
+  const clampStart = (raw: string) => {
+    const n = parseInt(raw, 10);
+    if (isNaN(n)) return 1;
+    return Math.min(99999, Math.max(1, n));
+  };
+  const startingNumber = clampStart(startingInput);
   const [fontSize, setFontSize] = useState(12);
   const [skipFirstPage, setSkipFirstPage] = useState(false);
 
@@ -34,7 +42,7 @@ export default function PDFPageNumbers() {
     setResultUrl(null);
     try {
       const pdfjsLib = await import("pdfjs-dist");
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
       const arrayBuffer = await pdfFile.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       const thumbs: PageThumb[] = [];
@@ -81,7 +89,11 @@ export default function PDFPageNumbers() {
   const handleFile = useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return;
     const f = files[0];
-    if (f.type !== "application/pdf") return;
+    if (f.type !== "application/pdf" && !/\.pdf$/i.test(f.name)) {
+      setFileError(`${f.name} isn't a PDF. Please choose a PDF file.`);
+      return;
+    }
+    setFileError(null);
     const validation = validateFileSize(f, "pdf");
     if (!validation.valid) { alert(validation.error); return; }
     if (validation.warning) alert(validation.warning);
@@ -208,7 +220,7 @@ export default function PDFPageNumbers() {
       ]}
     >
       {!file ? (
-        <div
+        <div data-dropzone="true"
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files); }}
@@ -226,6 +238,7 @@ export default function PDFPageNumbers() {
           <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>#</div>
           <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>Drop a PDF file here or click to browse</p>
           <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>Add page numbers to every page of your PDF</p>
+          {fileError && <p role="alert" style={{ color: "#dc2626", fontSize: "0.85rem", marginTop: "0.75rem", fontWeight: 600 }}>{fileError}</p>}
         </div>
       ) : (
         <div>
@@ -298,8 +311,9 @@ export default function PDFPageNumbers() {
                   {/* Starting Number */}
                   <label>
                     <span style={{ fontSize: "0.8rem", fontWeight: 500, display: "block", marginBottom: "0.3rem" }}>Starting Number</span>
-                    <input type="number" min={1} value={startingNumber}
-                      onChange={(e) => { setStartingNumber(Math.max(1, Number(e.target.value))); setResultUrl(null); }}
+                    <input type="number" min={1} max={99999} value={startingInput}
+                      onChange={(e) => { setStartingInput(e.target.value); setResultUrl(null); }}
+                      onBlur={() => setStartingInput(String(clampStart(startingInput)))}
                       style={{
                         width: "100%", padding: "0.5rem 0.75rem", border: "1px solid var(--card-border)",
                         borderRadius: "0.5rem", fontSize: "0.85rem", background: "var(--background)",

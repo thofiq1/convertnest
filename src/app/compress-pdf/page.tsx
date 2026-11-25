@@ -12,6 +12,8 @@ interface CompressionResult {
   url: string;
   originalSize: number;
   compressedSize: number;
+  /** True when compression couldn't shrink the file, so the original is offered unchanged */
+  keptOriginal?: boolean;
 }
 
 const PRESETS: Record<QualityPreset, { label: string; quality: number; dpi: number; description: string }> = {
@@ -49,12 +51,15 @@ export default function CompressPDF() {
   }, [files, processing]);
 
   const [sizeWarnings, setSizeWarnings] = useState<string[]>([]);
+  const [typeError, setTypeError] = useState<string | null>(null);
 
   const handleFiles = useCallback((newFiles: FileList | null) => {
     if (!newFiles) return;
-    const pdfFiles = Array.from(newFiles).filter(
-      (f) => f.type === "application/pdf"
-    );
+    const all = Array.from(newFiles);
+    const isPdf = (f: File) => f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+    const pdfFiles = all.filter(isPdf);
+    const rejected = all.filter((f) => !isPdf(f));
+    setTypeError(rejected.length ? rejected.map((f) => `${f.name} isn't a PDF.`).join(" ") : null);
     const warnings: string[] = [];
     const accepted: File[] = [];
 
@@ -87,6 +92,26 @@ export default function CompressPDF() {
     return (bytes / (1024 * 1024)).toFixed(2) + " MB";
   };
 
+  // Only offer the compressed file if it is actually smaller; otherwise hand back the original
+  const makeResult = (file: File, bytes: Uint8Array): CompressionResult => {
+    if (bytes.length >= file.size) {
+      return {
+        name: file.name,
+        url: URL.createObjectURL(file),
+        originalSize: file.size,
+        compressedSize: file.size,
+        keptOriginal: true,
+      };
+    }
+    const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
+    return {
+      name: file.name.replace(/\.pdf$/i, "") + "-compressed.pdf",
+      url: URL.createObjectURL(blob),
+      originalSize: file.size,
+      compressedSize: blob.size,
+    };
+  };
+
   const compress = async () => {
     if (files.length === 0) return;
     setProcessing(true);
@@ -105,13 +130,7 @@ export default function CompressPDF() {
           setProgress((p) => ({ ...p, stage }));
         });
 
-        const blob = new Blob([compressedBytes as BlobPart], { type: "application/pdf" });
-        allResults.push({
-          name: file.name.replace(".pdf", "-compressed.pdf"),
-          url: URL.createObjectURL(blob),
-          originalSize: file.size,
-          compressedSize: blob.size,
-        });
+        allResults.push(makeResult(file, compressedBytes));
       } catch (err) {
         console.error(`Error compressing ${file.name}:`, err);
         // If compression fails, still provide the original with basic optimization
@@ -120,13 +139,7 @@ export default function CompressPDF() {
           const fallbackBuf = await file.arrayBuffer();
           const pdfDoc = await PDFDocument.load(fallbackBuf);
           const bytes = await pdfDoc.save({ useObjectStreams: true });
-          const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
-          allResults.push({
-            name: file.name.replace(".pdf", "-compressed.pdf"),
-            url: URL.createObjectURL(blob),
-            originalSize: file.size,
-            compressedSize: blob.size,
-          });
+          allResults.push(makeResult(file, bytes));
         } catch (fallbackErr: unknown) {
           const msg = fallbackErr instanceof Error ? fallbackErr.message : "";
           if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
@@ -199,7 +212,7 @@ export default function CompressPDF() {
       </div>
 
       {/* Drop Zone */}
-      <div
+      <div data-dropzone="true"
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
@@ -226,6 +239,7 @@ export default function CompressPDF() {
         <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>
           Compress one or multiple PDFs at once — 100% free, 100% private
         </p>
+        {typeError && <p role="alert" style={{ color: "#dc2626", fontSize: "0.85rem", marginTop: "0.75rem", fontWeight: 600 }}>{typeError}</p>}
       </div>
 
       {/* File List */}
@@ -383,9 +397,14 @@ export default function CompressPDF() {
                     fontSize: "0.9rem",
                     color: reduction > 5 ? "#22c55e" : reduction > 0 ? "#eab308" : "#ef4444",
                   }}>
-                    {reduction > 0 ? `−${reduction.toFixed(1)}%` : "No reduction"}
+                    {r.keptOriginal ? "Already optimized" : reduction > 0 ? `−${reduction.toFixed(1)}%` : "No reduction"}
                   </span>
                 </div>
+                {r.keptOriginal && (
+                  <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginBottom: "0.75rem" }}>
+                    This PDF is already optimized and can&apos;t be made smaller without losing its text. We kept your original file unchanged.
+                  </p>
+                )}
 
                 {/* Visual compression bar */}
                 <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "0.75rem" }}>
@@ -425,7 +444,7 @@ export default function CompressPDF() {
                     boxSizing: "border-box",
                   }}
                 >
-                  Download Compressed PDF
+                  {r.keptOriginal ? "Download Original PDF" : "Download Compressed PDF"}
                 </a>
               </div>
             );
@@ -472,7 +491,7 @@ async function compressPdfFile(
   onProgress: (stage: string) => void
 ): Promise<Uint8Array> {
   const pdfjsLib = await import("pdfjs-dist");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
   const { PDFDocument } = await import("pdf-lib");
 
   // Load the source PDF with pdfjs for rendering

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize } from "@/utils/fileValidation";
+import { extFromMime, originalOutputMime, baseName, isImageFile, unsupportedFileMessage, decodeErrorMessage } from "@/lib/imageOutput";
 
 interface CropRect {
   x: number;
@@ -110,7 +111,7 @@ export default function ImageCrop() {
   const handleFile = useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return;
     const f = files[0];
-    if (!f.type.startsWith("image/")) return;
+    if (!isImageFile(f)) { setSizeWarning(unsupportedFileMessage(f)); return; }
 
     const sizeCheck = validateFileSize(f, "image");
     if (!sizeCheck.valid) {
@@ -287,8 +288,16 @@ export default function ImageCrop() {
     if (!file || !imageUrl || actualCropW <= 0 || actualCropH <= 0) return;
 
     const img = new Image();
-    img.src = imageUrl;
-    await new Promise<void>((resolve) => { img.onload = () => resolve(); });
+    try {
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error(decodeErrorMessage(file)));
+        img.src = imageUrl;
+      });
+    } catch (err) {
+      setSizeWarning(err instanceof Error ? err.message : decodeErrorMessage(file));
+      return;
+    }
 
     const canvas = document.createElement("canvas");
     canvas.width = actualCropW;
@@ -299,7 +308,7 @@ export default function ImageCrop() {
     // Determine output mime
     let mime: string;
     if (outputFormat === "original") {
-      mime = file.type === "image/png" ? "image/png" : file.type === "image/webp" ? "image/webp" : "image/jpeg";
+      mime = originalOutputMime(file.type);
     } else {
       mime = outputFormat === "png" ? "image/png" : "image/jpeg";
     }
@@ -314,13 +323,19 @@ export default function ImageCrop() {
 
     const qualityParam = mime === "image/png" ? undefined : 0.92;
 
-    const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (b) => { if (b) resolve(b); else reject(new Error("Failed to crop")); },
-        mime,
-        qualityParam
-      );
-    });
+    let blob: Blob;
+    try {
+      blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (b) => { if (b) resolve(b); else reject(new Error("Failed to crop")); },
+          mime,
+          qualityParam
+        );
+      });
+    } catch {
+      setSizeWarning(`Couldn't crop ${file.name}. Try a smaller crop area or a different image.`);
+      return;
+    }
 
     if (croppedUrl) URL.revokeObjectURL(croppedUrl);
     const url = URL.createObjectURL(blob);
@@ -331,16 +346,12 @@ export default function ImageCrop() {
   };
 
   const downloadCropped = () => {
-    if (!croppedUrl || !file) return;
-    let ext: string;
-    if (outputFormat === "original") {
-      ext = file.name.split(".").pop() || "jpg";
-    } else {
-      ext = outputFormat === "png" ? "png" : "jpg";
-    }
+    if (!croppedUrl || !croppedBlob || !file) return;
+    // Name the file after the bytes we actually produced, not the current dropdown value.
+    const ext = extFromMime(croppedBlob.type);
     const a = document.createElement("a");
     a.href = croppedUrl;
-    a.download = file.name.replace(/\.[^.]+$/, "") + `-cropped.${ext}`;
+    a.download = baseName(file.name) + `-cropped.${ext}`;
     a.click();
   };
 
@@ -400,7 +411,7 @@ export default function ImageCrop() {
       )}
 
       {!file ? (
-        <div
+        <div data-dropzone="true"
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files); }}
@@ -485,6 +496,11 @@ export default function ImageCrop() {
               src={imageUrl!}
               alt="Image to crop"
               onLoad={onImageLoad}
+              onError={() => {
+                const failed = file;
+                resetAll();
+                if (failed) setSizeWarning(decodeErrorMessage(failed));
+              }}
               style={{
                 maxWidth: "100%",
                 maxHeight: "70vh",

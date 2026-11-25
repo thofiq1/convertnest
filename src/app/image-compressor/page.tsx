@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize, isDuplicateFile } from "@/utils/fileValidation";
+import { extFromMime, originalOutputMime, baseName, fileExt, uniqueName, isHeicFile, isImageFile, unsupportedFileMessage, decodeErrorMessage } from "@/lib/imageOutput";
 
 interface ImageResult {
   file: File;
@@ -13,6 +14,12 @@ interface ImageResult {
   originalSize: number;
   compressedSize: number;
   processing: boolean;
+  /** Extension matching the bytes in compressedBlob (set when the result is produced). */
+  outExt: string;
+  /** Output format setting used to produce this result. */
+  fmtUsed: string;
+  keptOriginal: boolean;
+  error: string | null;
 }
 
 export default function ImageCompressor() {
@@ -44,15 +51,16 @@ export default function ImageCompressor() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [images]);
 
-  const compressImage = async (file: File, q: number, mw: number, fmt: string): Promise<{ blob: Blob; url: string }> => {
+  const compressImage = async (file: File, q: number, mw: number, fmt: string): Promise<{ blob: Blob; url: string; resized: boolean }> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`Failed to load image: ${file.name}`)); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error(decodeErrorMessage(file))); };
       img.onload = () => {
         let w = img.width;
         let h = img.height;
-        if (mw > 0 && w > mw) {
+        const resized = mw > 0 && w > mw;
+        if (resized) {
           h = Math.round(h * (mw / w));
           w = mw;
         }
@@ -65,7 +73,7 @@ export default function ImageCompressor() {
 
         let mimeType: string;
         if (fmt === "original") {
-          mimeType = file.type === "image/png" ? "image/png" : file.type === "image/webp" ? "image/webp" : "image/jpeg";
+          mimeType = originalOutputMime(file.type);
         } else {
           mimeType = fmt === "webp" ? "image/webp" : "image/jpeg";
         }
@@ -79,7 +87,7 @@ export default function ImageCompressor() {
             canvas.width = 0;
             canvas.height = 0;
             URL.revokeObjectURL(url);
-            resolve({ blob, url: compUrl });
+            resolve({ blob, url: compUrl, resized });
           },
           mimeType,
           qualityParam
@@ -89,11 +97,37 @@ export default function ImageCompressor() {
     });
   };
 
+  // Compress one file; never throws. Returns the fields to merge into its row.
+  const processOne = async (file: File, q: number, mw: number, fmt: string): Promise<Partial<ImageResult>> => {
+    try {
+      const { blob, url, resized } = await compressImage(file, q, mw, fmt);
+      const sameFormat = fmt === "original" || blob.type === file.type;
+      if (blob.size >= file.size && sameFormat && !resized) {
+        // Compression made it bigger: hand back the original file untouched.
+        URL.revokeObjectURL(url);
+        return {
+          compressedBlob: file, compressedUrl: URL.createObjectURL(file), compressedSize: file.size,
+          outExt: fileExt(file.name) || extFromMime(file.type), keptOriginal: true, fmtUsed: fmt, error: null, processing: false,
+        };
+      }
+      return {
+        compressedBlob: blob, compressedUrl: url, compressedSize: blob.size,
+        outExt: extFromMime(blob.type), keptOriginal: false, fmtUsed: fmt, error: null, processing: false,
+      };
+    } catch (err) {
+      return {
+        compressedBlob: null, compressedUrl: null, compressedSize: 0, keptOriginal: false, fmtUsed: fmt, processing: false,
+        error: err instanceof Error ? err.message : `Couldn't compress ${file.name}`,
+      };
+    }
+  };
+
   const handleFiles = useCallback(async (files: FileList | null) => {
     if (!files) return;
-    const imgFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const all = Array.from(files);
+    const imgFiles = all.filter(isImageFile);
 
-    const warnings: string[] = [];
+    const warnings: string[] = all.filter((f) => !isImageFile(f)).map((f) => unsupportedFileMessage(f));
     const accepted: File[] = [];
     for (const f of imgFiles) {
       const sizeCheck = validateFileSize(f, "image");
@@ -111,7 +145,7 @@ export default function ImageCompressor() {
     if (unique.length < accepted.length) {
       warnings.push(`${accepted.length - unique.length} duplicate file(s) skipped.`);
     }
-    if (warnings.length > 0) setSizeWarnings(warnings);
+    setSizeWarnings(warnings);
 
     const newImages: ImageResult[] = unique.map((file) => ({
       file,
@@ -121,42 +155,36 @@ export default function ImageCompressor() {
       originalSize: file.size,
       compressedSize: 0,
       processing: true,
+      outExt: "",
+      fmtUsed: outputFormat,
+      keptOriginal: false,
+      error: null,
     }));
 
     setImages((prev) => [...prev, ...newImages]);
 
     for (let i = 0; i < unique.length; i++) {
       const currentFile = unique[i];
-      const { blob, url } = await compressImage(currentFile, quality, maxWidth, outputFormat);
+      const result = await processOne(currentFile, quality, maxWidth, outputFormat);
       setImages((prev) => {
         const updated = [...prev];
         const idx = updated.findIndex((r) => r.file === currentFile);
-        if (idx >= 0) {
-          updated[idx] = {
-            ...updated[idx],
-            compressedBlob: blob,
-            compressedUrl: url,
-            compressedSize: blob.size,
-            processing: false,
-          };
-        }
+        if (idx >= 0) updated[idx] = { ...updated[idx], ...result };
         return updated;
       });
     }
-  }, [quality, maxWidth, outputFormat]);
+  }, [quality, maxWidth, outputFormat, images]);
 
   const recompressAll = async () => {
     const currentImages = [...images];
-    setImages(currentImages.map((img) => ({ ...img, processing: true, compressedBlob: null, compressedUrl: null, compressedSize: 0 })));
+    setImages(currentImages.map((img) => ({ ...img, processing: true, compressedBlob: null, compressedUrl: null, compressedSize: 0, error: null, keptOriginal: false })));
 
     for (const img of currentImages) {
-      const { blob, url } = await compressImage(img.file, quality, maxWidth, outputFormat);
+      const result = await processOne(img.file, quality, maxWidth, outputFormat);
       setImages((prev) => {
         const updated = [...prev];
         const idx = updated.findIndex((r) => r.file === img.file);
-        if (idx >= 0) {
-          updated[idx] = { ...updated[idx], compressedBlob: blob, compressedUrl: url, compressedSize: blob.size, processing: false };
-        }
+        if (idx >= 0) updated[idx] = { ...updated[idx], ...result };
         return updated;
       });
     }
@@ -168,10 +196,9 @@ export default function ImageCompressor() {
 
   const downloadSingle = (img: ImageResult) => {
     if (!img.compressedUrl) return;
-    const ext = outputFormat === "original" ? img.file.name.split(".").pop() : outputFormat === "webp" ? "webp" : "jpg";
     const a = document.createElement("a");
     a.href = img.compressedUrl;
-    a.download = img.file.name.replace(/\.[^.]+$/, "") + `-compressed.${ext}`;
+    a.download = baseName(img.file.name) + `-compressed.${img.outExt}`;
     a.click();
   };
 
@@ -182,10 +209,9 @@ export default function ImageCompressor() {
 
     const JSZip = (await import("jszip")).default;
     const zip = new JSZip();
-    const ext = outputFormat === "webp" ? "webp" : outputFormat === "jpeg" ? "jpg" : "";
+    const used = new Set<string>();
     completed.forEach((img) => {
-      const finalExt = ext || img.file.name.split(".").pop() || "jpg";
-      zip.file(img.file.name.replace(/\.[^.]+$/, "") + `-compressed.${finalExt}`, img.compressedBlob!);
+      zip.file(uniqueName(baseName(img.file.name) + `-compressed.${img.outExt}`, used), img.compressedBlob!);
     });
     const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
@@ -200,9 +226,11 @@ export default function ImageCompressor() {
     return (bytes / (1024 * 1024)).toFixed(2) + " MB";
   };
 
-  const totalOriginal = images.reduce((sum, img) => sum + img.originalSize, 0);
-  const totalCompressed = images.reduce((sum, img) => sum + img.compressedSize, 0);
-  const completedCount = images.filter((img) => img.compressedBlob).length;
+  const doneImages = images.filter((img) => img.compressedBlob);
+  const totalOriginal = doneImages.reduce((sum, img) => sum + img.originalSize, 0);
+  const totalCompressed = doneImages.reduce((sum, img) => sum + img.compressedSize, 0);
+  const completedCount = doneImages.length;
+  const formatStale = images.some((img) => !img.processing && img.fmtUsed !== outputFormat);
 
   return (
     <ErrorBoundary>
@@ -225,7 +253,7 @@ export default function ImageCompressor() {
           {sizeWarnings.map((w, i) => <div key={i}>⚠ {w}</div>)}
         </div>
       )}
-      <div
+      <div data-dropzone="true"
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
@@ -293,6 +321,11 @@ export default function ImageCompressor() {
               <button onClick={recompressAll} className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
                 Re-compress with new settings
               </button>
+              {formatStale && (
+                <span style={{ fontSize: "0.8rem", color: "#b45309", alignSelf: "center" }}>
+                  Format changed — click Re-compress to apply it.
+                </span>
+              )}
               <button
                 onClick={() => {
                   const input = document.createElement("input");
@@ -347,6 +380,18 @@ export default function ImageCompressor() {
                   <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
                     {img.processing ? (
                       <span>Compressing...</span>
+                    ) : img.error ? (
+                      <span style={{ color: "#ef4444" }}>
+                        {img.error}
+                        {isHeicFile(img.file) && <> · <a href="/heic-to-jpg" style={{ color: "var(--primary)" }}>Open HEIC to JPG</a></>}
+                      </span>
+                    ) : img.keptOriginal ? (
+                      <>
+                        {formatSize(img.originalSize)}
+                        <span style={{ marginLeft: "0.4rem", fontWeight: 600, color: "#22c55e" }}>
+                          Already optimized — kept original
+                        </span>
+                      </>
                     ) : (
                       <>
                         {formatSize(img.originalSize)} → {formatSize(img.compressedSize)}

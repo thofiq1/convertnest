@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { pdfSizePages } from "@/lib/sizePages";
 
@@ -12,6 +12,7 @@ interface Outcome {
   quality: number | null;
   reachedTarget: boolean;
   keptOriginal: boolean;
+  targetKb: number; // the limit this result was made for
 }
 
 // Resolution ladder: try sharp first, step down only when needed.
@@ -23,7 +24,7 @@ const fmt = (b: number) => (b < 1024 * 1024 ? `${(b / 1024).toFixed(1)} KB` : `$
 
 async function loadPdfjs() {
   const pdfjsLib = await import("pdfjs-dist");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
   return pdfjsLib;
 }
 
@@ -110,7 +111,9 @@ async function compressPdfToTarget(
 }
 
 export default function PdfTargetSizeCompressor({ defaultKb }: { defaultKb: number }) {
-  const [targetKb, setTargetKb] = useState(defaultKb);
+  const [kbInput, setKbInput] = useState(String(defaultKb));
+  const parsedKb = parseInt(kbInput, 10);
+  const targetKb = Number.isFinite(parsedKb) ? Math.min(20000, Math.max(20, parsedKb)) : defaultKb;
   const [file, setFile] = useState<File | null>(null);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [busy, setBusy] = useState(false);
@@ -119,18 +122,24 @@ export default function PdfTargetSizeCompressor({ defaultKb }: { defaultKb: numb
   const [dragOver, setDragOver] = useState(false);
 
   useEffect(() => () => { if (outcome) URL.revokeObjectURL(outcome.url); }, [outcome]);
+  const resultRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (outcome) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [outcome]);
 
   const run = async (f: File, kb: number) => {
     setBusy(true); setError(null); setOutcome(null); setProgress("Reading PDF…");
     try {
-      const target = kb * 1024;
+      const target = kb * 1000; // fits whether a portal counts 1KB as 1000 or 1024 bytes
       const bytes = new Uint8Array(await f.arrayBuffer());
+      const head = new TextDecoder().decode(bytes.slice(0, 1024));
+      if (!head.includes("%PDF-")) throw new Error("This file isn't a valid PDF. Please choose a PDF document.");
       if (f.size <= target) {
-        setOutcome({ url: URL.createObjectURL(f), size: f.size, pages: 0, dpi: null, quality: null, reachedTarget: true, keptOriginal: true });
+        setOutcome({ url: URL.createObjectURL(f), size: f.size, pages: 0, dpi: null, quality: null, reachedTarget: true, keptOriginal: true, targetKb: kb });
       } else {
         const r = await compressPdfToTarget(bytes, target, setProgress);
         const blob = new Blob([r.data as BlobPart], { type: "application/pdf" });
-        setOutcome({ url: URL.createObjectURL(blob), size: blob.size, pages: r.pages, dpi: r.dpi, quality: r.quality, reachedTarget: r.reached, keptOriginal: false });
+        setOutcome({ url: URL.createObjectURL(blob), size: blob.size, pages: r.pages, dpi: r.dpi, quality: r.quality, reachedTarget: r.reached, keptOriginal: false, targetKb: kb });
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
@@ -144,20 +153,21 @@ export default function PdfTargetSizeCompressor({ defaultKb }: { defaultKb: numb
     if (!f) return;
     if (f.type !== "application/pdf" && !f.name.toLowerCase().endsWith(".pdf")) { setError("Please choose a PDF file."); return; }
     if (f.size > 100 * 1024 * 1024) { setError("Please use a PDF under 100MB."); return; }
+    setKbInput(String(targetKb));
     setFile(f);
     run(f, targetKb);
   };
 
-  const downloadName = file ? file.name.replace(/\.pdf$/i, "") + `-${targetKb}kb.pdf` : "compressed.pdf";
+  const downloadName = file && outcome ? file.name.replace(/\.pdf$/i, "") + `-${outcome.targetKb}kb.pdf` : "compressed.pdf";
 
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap", marginBottom: "1rem" }}>
         <label style={{ fontWeight: 600, fontSize: "0.9rem" }} htmlFor="pdf-target-kb">Target size</label>
-        <input id="pdf-target-kb" type="number" min={20} max={20000} value={targetKb}
-          onChange={(e) => setTargetKb(Math.max(20, parseInt(e.target.value) || defaultKb))} style={{ width: 110 }} />
+        <input id="pdf-target-kb" type="number" min={20} max={20000} inputMode="numeric" value={kbInput}
+          onChange={(e) => setKbInput(e.target.value)} onBlur={() => setKbInput(String(targetKb))} style={{ width: 110 }} />
         <span style={{ color: "var(--muted)", fontSize: "0.9rem" }}>KB (maximum)</span>
-        {file && <button className="btn-secondary" onClick={() => run(file, targetKb)} disabled={busy}>Recompress</button>}
+        {file && <button className="btn-secondary" onClick={() => { setKbInput(String(targetKb)); run(file, targetKb); }} disabled={busy}>{outcome && outcome.targetKb !== targetKb ? `Compress to ${targetKb} KB` : "Recompress"}</button>}
       </div>
 
       <div
@@ -168,33 +178,33 @@ export default function PdfTargetSizeCompressor({ defaultKb }: { defaultKb: numb
         onClick={() => !busy && document.getElementById("pdf-target-file")?.click()}
       >
         <input id="pdf-target-file" type="file" accept="application/pdf,.pdf" hidden onChange={(e) => onFiles(e.target.files)} />
-        <p style={{ fontWeight: 600, marginBottom: "0.35rem" }}>{busy ? progress || "Working…" : `Drop a PDF here to compress it under ${targetKb} KB`}</p>
+        <p style={{ fontWeight: 600, marginBottom: "0.35rem" }}>{busy ? progress || "Working…" : `Drop a PDF here or tap to choose one (under ${targetKb} KB)`}</p>
         <p style={{ color: "var(--muted)", fontSize: "0.85rem" }}>Up to {MAX_PAGES} pages · Stays on your device · No signup</p>
       </div>
 
       {error && <p style={{ color: "var(--danger)", marginTop: "1rem" }}>{error}</p>}
 
       {outcome && file && (
-        <div className="scale-in" style={{ marginTop: "1.5rem", padding: "1.5rem", border: "1px solid var(--card-border)", borderRadius: "1rem", background: "var(--card-bg)" }}>
+        <div ref={resultRef} className="scale-in" style={{ marginTop: "1.5rem", padding: "1.5rem", border: "1px solid var(--card-border)", borderRadius: "1rem", background: "var(--card-bg)" }}>
           <p style={{ fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.5rem", color: outcome.reachedTarget ? "var(--success)" : "var(--warning)" }}>
             {outcome.keptOriginal
-              ? `✓ Already under ${targetKb} KB (${fmt(outcome.size)}) — no changes needed`
+              ? `✓ Already under ${outcome.targetKb} KB (${fmt(outcome.size)}) — no changes needed`
               : outcome.reachedTarget
-                ? `✓ ${fmt(outcome.size)} — under ${targetKb} KB`
-                : `Couldn't reach ${targetKb} KB. Smallest possible: ${fmt(outcome.size)}`}
+                ? `✓ ${fmt(outcome.size)} — under ${outcome.targetKb} KB`
+                : `Couldn't reach ${outcome.targetKb} KB. Smallest possible: ${fmt(outcome.size)}`}
           </p>
           <p style={{ color: "var(--muted)", fontSize: "0.85rem", lineHeight: 1.7 }}>
             Original: {fmt(file.size)}
             {!outcome.keptOriginal && <> · {outcome.pages} page{outcome.pages > 1 ? "s" : ""} · {outcome.dpi} DPI · quality {Math.round((outcome.quality ?? 0) * 100)}%</>}
           </p>
           <a href={outcome.url} download={downloadName}
-            style={{ display: "inline-block", marginTop: "0.9rem", background: "#22c55e", color: "white", padding: "0.7rem 1.5rem", borderRadius: "0.625rem", fontWeight: 600, textDecoration: "none" }}>
+            style={{ display: "inline-block", marginTop: "0.9rem", background: "#15803d", color: "white", padding: "0.7rem 1.5rem", borderRadius: "0.625rem", fontWeight: 600, textDecoration: "none" }}>
             Download PDF
           </a>
           {!outcome.keptOriginal && (
             <p style={{ marginTop: "1rem", fontSize: "0.85rem", color: "var(--muted)", lineHeight: 1.6 }}>
               To fit under a size limit, each page is saved as an image, so text in the result can&apos;t be selected or searched.
-              {!outcome.reachedTarget && <> This PDF has too many pages for {targetKb} KB — try a larger target, or <Link href="/split-pdf" style={{ color: "var(--primary)" }}>split it</Link> and compress the parts.</>}
+              {!outcome.reachedTarget && <> This PDF has too many pages for {outcome.targetKb} KB — try a larger target, or <Link href="/split-pdf" style={{ color: "var(--primary)" }}>split it</Link> and compress the parts.</>}
               {outcome.reachedTarget && (outcome.dpi ?? 999) < 72 && <> At this size, small text may be hard to read — check the file before you submit it.</>}
             </p>
           )}

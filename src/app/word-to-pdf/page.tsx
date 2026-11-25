@@ -138,7 +138,7 @@ export default function WordToPDF() {
         </div>
       )}
       {!file ? (
-        <div
+        <div data-dropzone="true"
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files); }}

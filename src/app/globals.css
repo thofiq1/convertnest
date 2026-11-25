@@ -11,7 +11,7 @@ html { scroll-behavior: smooth; }
   --primary-glow: rgba(37, 99, 235, 0.15);
   --card-bg: #ffffff;
   --card-border: #e2e8f0;
-  --muted: #64748b;
+  --muted: #4b5768;
   --accent: #f1f5f9;
   --success: #22c55e;
   --warning: #eab308;
@@ -69,8 +69,6 @@ body {
 }
 .hero-gradient {
   background: var(--hero-bg);
-  background-size: 200% 200%;
-  animation: heroShift 12s ease infinite;
 }
 
 /* ---- Fade-in / slide-up ---- */
@@ -264,8 +262,11 @@ textarea:focus, input:focus, select:focus {
   border-radius: 2rem;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--success);
+  color: #15803d;
 }
+@media (prefers-color-scheme: dark) { .trust-badge { color: #4ade80; } }
+html.dark-mode .trust-badge { color: #4ade80; }
+html.light-mode .trust-badge { color: #15803d; }
 
 /* ---- Category pill ---- */
 .category-pill {
@@ -281,7 +282,7 @@ textarea:focus, input:focus, select:focus {
   transition: all 0.2s;
 }
 .category-pill.active {
-  background: var(--primary);
+  background: var(--primary-dark);
   color: white;
   box-shadow: 0 2px 10px rgba(37, 99, 235, 0.3);
 }
@@ -325,7 +326,7 @@ html.light-mode {
   --primary-glow: rgba(37, 99, 235, 0.15) !important;
   --card-bg: #ffffff !important;
   --card-border: #e2e8f0 !important;
-  --muted: #64748b !important;
+  --muted: #4b5768 !important;
   --accent: #f1f5f9 !important;
   --hero-bg: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 50%, #fdf2f8 100%) !important;
   --dot-color: rgba(37, 99, 235, 0.07) !important;
@@ -360,7 +361,6 @@ html.light-mode .glass-header {
   border-radius: 50%;
   filter: blur(80px);
   opacity: 0.5;
-  animation: blobFloat 8s ease-in-out infinite;
   pointer-events: none;
 }
 
@@ -420,4 +420,19 @@ html.light-mode .glass-header {
 }
 @media (max-width: 480px) {
   .hero-title { font-size: 1.5rem !important; }
+}
+
+/* ---- Accessibility ---- */
+main p a { text-decoration: underline; text-underline-offset: 2px; }
+.drop-zone:focus-visible, [data-dropzone]:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  .fade-up { opacity: 1 !important; transform: none !important; }
+}
+@media (prefers-color-scheme: dark) { .btn-primary { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); } }
+html.dark-mode .btn-primary { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
+html.light-mode .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); }
+@media (max-width: 640px) {
+  .hero-section { padding: 2.25rem 1rem 2rem !important; }
+  .hide-mobile { display: none !important; }
 }

@@ -3,13 +3,13 @@ import HomeContent from "@/components/HomeContent";
 import { DEFAULT_OG_IMAGES } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: { absolute: "Free Online PDF Tools & File Converter | FitTheFile" },
+  title: { absolute: "Compress PDF & Photos to Any KB Size, Free | FitTheFile" },
   alternates: { canonical: "/" },
   openGraph: {
     images: DEFAULT_OG_IMAGES,
-    title: "Free Online PDF Tools & File Converter | FitTheFile",
+    title: "Compress PDF & Photos to Any KB Size, Free | FitTheFile",
     description:
-      "Compress, merge, split, and convert PDFs and images. Free online tools — no signup, no watermarks.",
+      "Compress a PDF or photo to 20KB, 50KB, 100KB or any limit you type, plus merge, split and convert. Free, no signup, files never leave your browser.",
     url: "/",
     siteName: "FitTheFile",
     type: "website",

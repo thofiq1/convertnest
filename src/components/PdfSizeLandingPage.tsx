@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import ToolLayout from "@/components/ToolLayout";
 import PdfTargetSizeCompressor from "@/components/PdfTargetSizeCompressor";
 import { getPdfSizePage } from "@/lib/sizePages";
+import { pdfSizeContent } from "@/lib/sizeContent";
+import { pdfSizeTests, PDF_TEST_INPUTS, SIZE_TESTS_DATE } from "@/lib/sizeTests";
 import { DEFAULT_OG_IMAGES } from "@/lib/site";
 
 export function pdfSizeMetadata(kb: number): Metadata {
   const page = getPdfSizePage(kb)!;
+  const content = pdfSizeContent[kb];
   const title = `Compress PDF to ${kb}KB Online Free`;
-  const description = `Reduce any PDF to under ${kb}KB in seconds, free. Set the target size and download a PDF that fits upload limits for ${page.useCase}. No signup, files stay on your device.`;
+  const description = content.metaDescription;
   return {
     title,
     description,
@@ -16,29 +20,25 @@ export function pdfSizeMetadata(kb: number): Metadata {
       `reduce pdf size to ${kb}kb`,
       `pdf size reducer ${kb}kb`,
       `compress pdf under ${kb}kb`,
-      `pdf ${kb}kb converter`,
       `shrink pdf to ${kb}kb`,
     ],
-    openGraph: {
-    images: DEFAULT_OG_IMAGES, title, description, url: `/${page.slug}`, siteName: "FitTheFile", type: "website" },
+    openGraph: { images: DEFAULT_OG_IMAGES, title, description, url: `/${page.slug}`, siteName: "FitTheFile", type: "website" },
     alternates: { canonical: `/${page.slug}` },
   };
 }
 
+const h2 = { color: "var(--foreground)", fontSize: "1.25rem", fontWeight: 700, margin: "2rem 0 0.75rem" } as const;
+const cell = { padding: "0.5rem 0.6rem", borderBottom: "1px solid var(--card-border)", textAlign: "left" as const };
+
 export default function PdfSizeLandingPage({ kb }: { kb: number }) {
   const page = getPdfSizePage(kb)!;
+  const content = pdfSizeContent[kb];
+  const tests = pdfSizeTests[kb];
   const faqs = [
-    {
-      question: `How do I compress a PDF to ${kb}KB?`,
-      answer: `Upload your PDF to FitTheFile's ${kb}KB compressor. It tries the sharpest settings first and lowers resolution and quality only as far as needed to get under ${kb}KB, then gives you the file to download.`,
-    },
-    {
-      question: `Can every PDF be compressed to ${kb}KB?`,
-      answer: `Most short documents can. Very long PDFs may not fit, because each page needs some minimum space to stay readable. If the limit can't be reached, the tool tells you and shows the smallest size it managed, so you can split the file or use a larger target.`,
-    },
+    ...content.faqs,
     {
       question: "Will I still be able to select text in the PDF?",
-      answer: "No. To fit under a size limit, each page is saved as an image. That's fine for most upload portals and scanned documents, but if you need searchable text, keep a copy of the original.",
+      answer: "No. To fit under a size limit, each page is saved as an image. That's fine for most upload portals, but keep your original if you need searchable text.",
     },
     {
       question: "Is my PDF uploaded to a server?",
@@ -49,25 +49,60 @@ export default function PdfSizeLandingPage({ kb }: { kb: number }) {
   return (
     <ToolLayout
       title={`Compress PDF to ${kb}KB`}
-      description={`Shrink any PDF to under ${kb}KB — ideal for ${page.useCase}. Free, no signup, runs in your browser.`}
+      description={`Shrink any PDF to under ${kb}KB. ${content.bestFor} Free, no signup, runs in your browser.`}
       slug={page.slug}
       faqs={faqs}
+      related={["split-pdf", "merge-pdf", "compress-pdf"]}
+      guides={["how-to-compress-pdf-to-100kb", "file-size-too-large-upload-fix"]}
     >
       <PdfTargetSizeCompressor defaultKb={kb} />
 
-      <section style={{ marginTop: "2.5rem", lineHeight: 1.75, color: "var(--muted)", fontSize: "0.95rem" }}>
-        <h2 style={{ color: "var(--foreground)", fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.75rem" }}>
-          How to compress a PDF to {kb}KB
-        </h2>
-        <ol style={{ paddingLeft: "1.25rem", marginBottom: "1.25rem" }}>
-          <li>Drop your PDF into the box above.</li>
-          <li>The tool tries the highest resolution and quality first, stepping down only until the file fits under {kb}KB.</li>
-          <li>Check the result, then click <strong>Download PDF</strong>.</li>
-        </ol>
-        <p>
-          A {kb}KB limit is common for {page.useCase}. Scanned documents and phone photos of paperwork are often
-          several megabytes, far over that. This tool does the trial and error for you, and tells you honestly if a
-          file is too long to fit. You can type any other target size in the box above the upload area.
+      <section style={{ marginTop: "2rem", lineHeight: 1.75, color: "var(--muted)", fontSize: "0.95rem" }}>
+        <h2 style={h2}>What to expect at {kb}KB</h2>
+        <p>{content.expect}</p>
+
+        {tests && (
+          <>
+            <h2 style={h2}>Our test results at {kb}KB</h2>
+            <p>
+              We ran two scanned test documents through this exact tool ({SIZE_TESTS_DATE}). Higher DPI means sharper
+              text; 72 DPI and above is comfortable to read on screen.
+            </p>
+            <div style={{ overflowX: "auto", margin: "0.75rem 0 0.5rem" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
+                <thead>
+                  <tr style={{ color: "var(--foreground)" }}>
+                    <th style={cell}>Test document</th>
+                    <th style={cell}>Result</th>
+                    <th style={cell}>Resolution</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {PDF_TEST_INPUTS.map((input) => {
+                    const r = tests[input.key];
+                    return (
+                      <tr key={input.key}>
+                        <td style={cell}>{input.label}</td>
+                        <td style={cell}>{r.kept ? `${r.size} (already fit, unchanged)` : r.size}</td>
+                        <td style={cell}>{r.kept ? "Original" : `${r.dpi} DPI, quality ${r.q}%`}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
+        <h2 style={h2}>Tips for {kb}KB</h2>
+        <ul style={{ paddingLeft: "1.25rem", listStyle: "disc" }}>
+          {content.tips.map((t) => (
+            <li key={t} style={{ marginBottom: "0.35rem" }}>{t}</li>
+          ))}
+        </ul>
+        <p style={{ marginTop: "0.75rem" }}>
+          Only need some pages? Extract them with <Link href="/split-pdf" style={{ color: "var(--primary)", textDecoration: "underline" }}>Split PDF</Link> first:
+          fewer pages means sharper results at {kb}KB.
         </p>
       </section>
     </ToolLayout>

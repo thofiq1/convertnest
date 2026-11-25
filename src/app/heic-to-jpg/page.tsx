@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize, isDuplicateFile } from "@/utils/fileValidation";
+import { extFromMime, baseName, uniqueName, isHeicFile, unsupportedFileMessage } from "@/lib/imageOutput";
 
 interface ConvertedImage {
   file: File;
@@ -14,6 +15,10 @@ interface ConvertedImage {
   convertedSize: number;
   processing: boolean;
   error: string | null;
+  /** Extension matching the bytes in convertedBlob (set when the result is produced). */
+  outExt: string;
+  /** Output format setting used to produce this result. */
+  fmtUsed: string;
 }
 
 export default function HeicToJpg() {
@@ -101,17 +106,16 @@ export default function HeicToJpg() {
 
   const handleFiles = useCallback(async (files: FileList | null) => {
     if (!files) return;
-    const heicFiles = Array.from(files).filter((f) => {
-      const ext = f.name.toLowerCase().split(".").pop();
-      return ext === "heic" || ext === "heif" || f.type === "image/heic" || f.type === "image/heif";
-    });
+    const all = Array.from(files);
+    const heicFiles = all.filter(isHeicFile);
+    const rejected = all.filter((f) => !isHeicFile(f)).map((f) => unsupportedFileMessage(f, "a HEIC/HEIF file"));
 
     if (heicFiles.length === 0) {
-      setSizeWarnings(["No HEIC/HEIF files found. Please select .heic or .heif files."]);
+      setSizeWarnings([...rejected, "No HEIC/HEIF files found. Please select .heic or .heif files."]);
       return;
     }
 
-    const warnings: string[] = [];
+    const warnings: string[] = rejected;
     const accepted: File[] = [];
     for (const f of heicFiles) {
       const sizeCheck = validateFileSize(f, "image");
@@ -128,7 +132,7 @@ export default function HeicToJpg() {
     if (unique.length < accepted.length) {
       warnings.push(`${accepted.length - unique.length} duplicate file(s) skipped.`);
     }
-    if (warnings.length > 0) setSizeWarnings(warnings);
+    setSizeWarnings(warnings);
 
     const newImages: ConvertedImage[] = unique.map((file) => ({
       file,
@@ -139,6 +143,8 @@ export default function HeicToJpg() {
       convertedSize: 0,
       processing: true,
       error: null,
+      outExt: "",
+      fmtUsed: outputFormat,
     }));
 
     setImages((prev) => [...prev, ...newImages]);
@@ -150,7 +156,7 @@ export default function HeicToJpg() {
           const updated = [...prev];
           const idx = updated.findIndex((r) => r.file === imgFile);
           if (idx >= 0) {
-            updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, processing: false };
+            updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, processing: false, outExt: extFromMime(blob.type, outputFormat === "png" ? "png" : "jpg"), fmtUsed: outputFormat };
           }
           return updated;
         });
@@ -159,7 +165,7 @@ export default function HeicToJpg() {
           const updated = [...prev];
           const idx = updated.findIndex((r) => r.file === imgFile);
           if (idx >= 0) {
-            updated[idx] = { ...updated[idx], processing: false, error: err instanceof Error ? err.message : "Conversion failed" };
+            updated[idx] = { ...updated[idx], processing: false, fmtUsed: outputFormat, error: err instanceof Error ? err.message : "Conversion failed" };
           }
           return updated;
         });
@@ -178,7 +184,7 @@ export default function HeicToJpg() {
           const updated = [...prev];
           const idx = updated.findIndex((r) => r.file === img.file);
           if (idx >= 0) {
-            updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, processing: false };
+            updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, processing: false, outExt: extFromMime(blob.type, outputFormat === "png" ? "png" : "jpg"), fmtUsed: outputFormat };
           }
           return updated;
         });
@@ -187,7 +193,7 @@ export default function HeicToJpg() {
           const updated = [...prev];
           const idx = updated.findIndex((r) => r.file === img.file);
           if (idx >= 0) {
-            updated[idx] = { ...updated[idx], processing: false, error: err instanceof Error ? err.message : "Conversion failed" };
+            updated[idx] = { ...updated[idx], processing: false, fmtUsed: outputFormat, error: err instanceof Error ? err.message : "Conversion failed" };
           }
           return updated;
         });
@@ -204,13 +210,11 @@ export default function HeicToJpg() {
     });
   };
 
-  const extMap: Record<string, string> = { jpeg: "jpg", png: "png" };
-
   const downloadSingle = (img: ConvertedImage) => {
     if (!img.convertedUrl) return;
     const a = document.createElement("a");
     a.href = img.convertedUrl;
-    a.download = img.file.name.replace(/\.[^.]+$/, "") + `.${extMap[outputFormat]}`;
+    a.download = baseName(img.file.name) + `.${img.outExt}`;
     a.click();
   };
 
@@ -221,13 +225,14 @@ export default function HeicToJpg() {
 
     const JSZip = (await import("jszip")).default;
     const zip = new JSZip();
+    const used = new Set<string>();
     completed.forEach((img) => {
-      zip.file(img.file.name.replace(/\.[^.]+$/, "") + `.${extMap[outputFormat]}`, img.convertedBlob!);
+      zip.file(uniqueName(baseName(img.file.name) + `.${img.outExt}`, used), img.convertedBlob!);
     });
     const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `heic-converted-${outputFormat}.zip`;
+    a.download = "heic-converted.zip";
     a.click();
   };
 
@@ -238,6 +243,7 @@ export default function HeicToJpg() {
   };
 
   const completedCount = images.filter((img) => img.convertedBlob).length;
+  const formatStale = images.some((img) => !img.processing && img.fmtUsed !== outputFormat);
 
   return (
     <ErrorBoundary>
@@ -261,7 +267,7 @@ export default function HeicToJpg() {
           {sizeWarnings.map((w, i) => <div key={i}>{w}</div>)}
         </div>
       )}
-      <div
+      <div data-dropzone="true"
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
@@ -325,6 +331,11 @@ export default function HeicToJpg() {
               <button onClick={reconvertAll} className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
                 Re-convert with new settings
               </button>
+              {formatStale && (
+                <span style={{ fontSize: "0.8rem", color: "#b45309", alignSelf: "center" }}>
+                  Format changed — click Re-convert to apply it.
+                </span>
+              )}
               <button onClick={() => {
                 const input = document.createElement("input");
                 input.type = "file"; input.accept = ".heic,.heif"; input.multiple = true;
@@ -380,7 +391,7 @@ export default function HeicToJpg() {
                           color: "#22c55e",
                           fontWeight: 600,
                         }}>
-                          .{extMap[outputFormat]}
+                          .{img.outExt}
                         </span>
                       </>
                     )}

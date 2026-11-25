@@ -176,10 +176,11 @@ export default function Header() {
             background: "none",
             border: "none",
             cursor: "pointer",
-            padding: 4,
+            padding: 11,
             color: "var(--foreground)",
           }}
           aria-label="Toggle menu"
+          aria-expanded={menuOpen}
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             {menuOpen ? (

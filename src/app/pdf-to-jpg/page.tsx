@@ -9,6 +9,8 @@ interface ConvertedPage {
   pageNum: number;
   url: string;
   blob: Blob;
+  /** File extension matching the encoded data, fixed at conversion time */
+  ext: "jpg" | "png";
 }
 
 export default function PDFtoJPG() {
@@ -44,11 +46,16 @@ export default function PDFtoJPG() {
   }, [file, processing]);
 
   const [sizeWarning, setSizeWarning] = useState("");
+  const [fileError, setFileError] = useState<string | null>(null);
 
   const handleFile = useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return;
     const f = files[0];
-    if (f.type !== "application/pdf") return;
+    if (f.type !== "application/pdf" && !/\.pdf$/i.test(f.name)) {
+      setFileError(`${f.name} isn't a PDF. Please choose a PDF file.`);
+      return;
+    }
+    setFileError(null);
 
     const sizeCheck = validateFileSize(f, "pdf");
     if (!sizeCheck.valid) {
@@ -62,7 +69,7 @@ export default function PDFtoJPG() {
     // Count pages
     (async () => {
       const pdfjsLib = await import("pdfjs-dist");
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
       const ab = await f.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
       setTotalPages(pdf.numPages);
@@ -97,7 +104,7 @@ export default function PDFtoJPG() {
     setConvertedPages([]);
     try {
       const pdfjsLib = await import("pdfjs-dist");
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
       const ab = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
 
@@ -112,6 +119,7 @@ export default function PDFtoJPG() {
       }
 
       const mimeType = format === "png" ? "image/png" : "image/jpeg";
+      const ext: "jpg" | "png" = format === "png" ? "png" : "jpg";
       const results: ConvertedPage[] = [];
 
       for (const pageNum of pageNums) {
@@ -134,7 +142,7 @@ export default function PDFtoJPG() {
         const url = URL.createObjectURL(blob);
         canvas.width = 0;
         canvas.height = 0;
-        results.push({ pageNum, url, blob });
+        results.push({ pageNum, url, blob, ext });
       }
 
       setConvertedPages(results);
@@ -155,16 +163,15 @@ export default function PDFtoJPG() {
     if (convertedPages.length === 1) {
       const a = document.createElement("a");
       a.href = convertedPages[0].url;
-      a.download = `${file!.name.replace(/\.pdf$/i, "")}_page_${convertedPages[0].pageNum}.${format === "png" ? "png" : "jpg"}`;
+      a.download = `${file!.name.replace(/\.pdf$/i, "")}_page_${convertedPages[0].pageNum}.${convertedPages[0].ext}`;
       a.click();
       return;
     }
     const JSZip = (await import("jszip")).default;
     const zip = new JSZip();
     const baseName = file!.name.replace(/\.pdf$/i, "");
-    const ext = format === "png" ? "png" : "jpg";
     convertedPages.forEach((cp) => {
-      zip.file(`${baseName}_page_${cp.pageNum}.${ext}`, cp.blob);
+      zip.file(`${baseName}_page_${cp.pageNum}.${cp.ext}`, cp.blob);
     });
     const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
@@ -178,7 +185,7 @@ export default function PDFtoJPG() {
   const downloadSingle = (cp: ConvertedPage) => {
     const a = document.createElement("a");
     a.href = cp.url;
-    a.download = `${file!.name.replace(/\.pdf$/i, "")}_page_${cp.pageNum}.${format === "png" ? "png" : "jpg"}`;
+    a.download = `${file!.name.replace(/\.pdf$/i, "")}_page_${cp.pageNum}.${cp.ext}`;
     a.click();
   };
 
@@ -210,7 +217,7 @@ export default function PDFtoJPG() {
         </div>
       )}
       {!file ? (
-        <div
+        <div data-dropzone="true"
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files); }}
@@ -228,6 +235,7 @@ export default function PDFtoJPG() {
           <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🖼</div>
           <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>Drop a PDF file here or click to browse</p>
           <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>Convert pages to JPG or PNG images</p>
+          {fileError && <p role="alert" style={{ color: "#dc2626", fontSize: "0.85rem", marginTop: "0.75rem", fontWeight: 600 }}>{fileError}</p>}
         </div>
       ) : (
         <div>

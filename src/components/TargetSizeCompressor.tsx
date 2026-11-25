@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { sizePages } from "@/lib/sizePages";
 
@@ -11,6 +11,7 @@ interface Result {
   height: number;
   quality: number;
   reachedTarget: boolean;
+  targetKb: number; // the limit this result was made for
 }
 
 function loadImage(file: File): Promise<HTMLImageElement> {
@@ -37,37 +38,57 @@ function encode(img: HTMLImageElement, w: number, h: number, q: number): Promise
   );
 }
 
-// Finds the highest JPG quality that fits under the target. If even the lowest
-// sensible quality is too big, shrinks the dimensions and tries again.
+// Below this JPG quality, blocky artefacts become obvious, so it's better to
+// make the image a little smaller than to crush the quality.
+const MIN_GOOD_QUALITY = 0.5;
+// Don't shrink below this on the short side just to keep quality up.
+const MIN_SIDE = 160;
+
+// Finds the highest JPG quality that fits under the target. If the best
+// quality that fits is too low (or nothing fits), shrinks the dimensions by
+// 20% and tries again. Falls back to a lower quality only once the image
+// would otherwise get very small.
 async function compressToTarget(file: File, targetBytes: number) {
   const img = await loadImage(file);
   let w = img.naturalWidth;
   let h = img.naturalHeight;
-  let best: { blob: Blob; w: number; h: number; q: number } | null = null;
+  let lowQuality: { blob: Blob; w: number; h: number; q: number } | null = null;
 
-  for (let round = 0; round < 12; round++) {
+  for (let round = 0; round < 25; round++) {
     let lo = 0.1, hi = 0.95, found: { blob: Blob; q: number } | null = null;
     for (let i = 0; i < 7; i++) {
       const mid = (lo + hi) / 2;
       const blob = await encode(img, w, h, mid);
       if (blob.size <= targetBytes) { found = { blob, q: mid }; lo = mid; } else { hi = mid; }
     }
-    if (found) { best = { blob: found.blob, w, h, q: found.q }; break; }
-    w = Math.max(1, Math.round(w * 0.8));
-    h = Math.max(1, Math.round(h * 0.8));
+    if (found && found.q >= MIN_GOOD_QUALITY) {
+      return { blob: found.blob, w, h, q: found.q, reached: true };
+    }
+    // Remember the largest result that fit, in case we can't keep quality up.
+    if (found && !lowQuality) lowQuality = { blob: found.blob, w, h, q: found.q };
+    const nw = Math.round(w * 0.8);
+    const nh = Math.round(h * 0.8);
+    if (Math.min(nw, nh) < MIN_SIDE) {
+      if (lowQuality) break;
+      if (Math.min(nw, nh) < 1) break;
+    }
+    w = Math.max(1, nw);
+    h = Math.max(1, nh);
   }
 
-  if (!best) {
-    const blob = await encode(img, w, h, 0.1);
-    return { blob, w, h, q: 0.1, reached: blob.size <= targetBytes };
-  }
-  return { blob: best.blob, w: best.w, h: best.h, q: best.q, reached: true };
+  if (lowQuality) return { ...lowQuality, reached: true };
+  const blob = await encode(img, w, h, 0.1);
+  return { blob, w, h, q: 0.1, reached: blob.size <= targetBytes };
 }
 
 const fmt = (bytes: number) => (bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 / 1024).toFixed(2)} MB`);
 
 export default function TargetSizeCompressor({ defaultKb }: { defaultKb: number }) {
-  const [targetKb, setTargetKb] = useState(defaultKb);
+  // Keep what the user is typing as a string; only clamp when it's used,
+  // so typing "15" or clearing the box doesn't fight the user.
+  const [kbInput, setKbInput] = useState(String(defaultKb));
+  const parsedKb = parseInt(kbInput, 10);
+  const targetKb = Number.isFinite(parsedKb) ? Math.min(20000, Math.max(5, parsedKb)) : defaultKb;
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false);
@@ -76,21 +97,29 @@ export default function TargetSizeCompressor({ defaultKb }: { defaultKb: number 
 
   useEffect(() => () => { if (result) URL.revokeObjectURL(result.url); }, [result]);
 
+  const resultRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (result) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [result]);
+
   const run = async (f: File, kb: number) => {
     setBusy(true);
     setError(null);
     setResult(null);
     try {
-      const target = kb * 1024;
+      // Use 1KB = 1000 bytes so the file fits whether a portal counts
+      // KB as 1000 or 1024 bytes.
+      const target = kb * 1000;
       if (f.size <= target && f.type === "image/jpeg") {
         const img = await loadImage(f);
-        setResult({ url: URL.createObjectURL(f), size: f.size, width: img.naturalWidth, height: img.naturalHeight, quality: 1, reachedTarget: true });
+        setResult({ url: URL.createObjectURL(f), size: f.size, width: img.naturalWidth, height: img.naturalHeight, quality: 1, reachedTarget: true, targetKb: kb });
       } else {
         const r = await compressToTarget(f, target);
-        setResult({ url: URL.createObjectURL(r.blob), size: r.blob.size, width: r.w, height: r.h, quality: r.q, reachedTarget: r.reached });
+        setResult({ url: URL.createObjectURL(r.blob), size: r.blob.size, width: r.w, height: r.h, quality: r.q, reachedTarget: r.reached, targetKb: kb });
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong.");
+      const heic = /\.hei[cf]$/i.test(f.name) || /hei[cf]/i.test(f.type);
+      setError(heic ? "iPhone HEIC photos can't be read here. Convert it with HEIC to JPG first, then compress." : e instanceof Error ? e.message : "Something went wrong.");
     }
     setBusy(false);
   };
@@ -98,12 +127,13 @@ export default function TargetSizeCompressor({ defaultKb }: { defaultKb: number 
   const onFiles = (files: FileList | null) => {
     const f = files?.[0];
     if (!f) return;
-    if (!f.type.startsWith("image/")) { setError("Please choose an image file (JPG, PNG or WebP)."); return; }
+    if (!f.type.startsWith("image/") && !/\.(jpe?g|png|webp|gif|bmp|hei[cf])$/i.test(f.name)) { setError(`${f.name} isn't an image. Please choose a JPG, PNG or WebP file.`); return; }
+    setKbInput(String(targetKb));
     setFile(f);
     run(f, targetKb);
   };
 
-  const downloadName = file ? file.name.replace(/\.[^.]+$/, "") + `-${targetKb}kb.jpg` : "image.jpg";
+  const downloadName = file && result ? file.name.replace(/\.[^.]+$/, "") + `-${result.targetKb}kb.jpg` : "image.jpg";
 
   return (
     <div>
@@ -113,15 +143,17 @@ export default function TargetSizeCompressor({ defaultKb }: { defaultKb: number 
           id="target-kb"
           type="number"
           min={5}
-          max={5000}
-          value={targetKb}
-          onChange={(e) => setTargetKb(Math.max(5, parseInt(e.target.value) || defaultKb))}
+          max={20000}
+          inputMode="numeric"
+          value={kbInput}
+          onChange={(e) => setKbInput(e.target.value)}
+          onBlur={() => setKbInput(String(targetKb))}
           style={{ width: 110 }}
         />
         <span style={{ color: "var(--muted)", fontSize: "0.9rem" }}>KB (maximum)</span>
         {file && (
-          <button className="btn-secondary" onClick={() => run(file, targetKb)} disabled={busy}>
-            Recompress
+          <button className="btn-secondary" onClick={() => { setKbInput(String(targetKb)); run(file, targetKb); }} disabled={busy}>
+            {result && result.targetKb !== targetKb ? `Compress to ${targetKb} KB` : "Recompress"}
           </button>
         )}
       </div>
@@ -135,7 +167,7 @@ export default function TargetSizeCompressor({ defaultKb }: { defaultKb: number 
       >
         <input id="target-file" type="file" accept="image/*" hidden onChange={(e) => onFiles(e.target.files)} />
         <p style={{ fontWeight: 600, marginBottom: "0.35rem" }}>
-          {busy ? "Compressing…" : `Drop an image here to compress it under ${targetKb} KB`}
+          {busy ? "Compressing…" : `Drop an image here or tap to choose one (under ${targetKb} KB)`}
         </p>
         <p style={{ color: "var(--muted)", fontSize: "0.85rem" }}>JPG, PNG or WebP · Output is JPG · Stays on your device</p>
       </div>
@@ -143,13 +175,13 @@ export default function TargetSizeCompressor({ defaultKb }: { defaultKb: number 
       {error && <p style={{ color: "var(--danger)", marginTop: "1rem" }}>{error}</p>}
 
       {result && file && (
-        <div className="scale-in" style={{ marginTop: "1.5rem", padding: "1.5rem", border: "1px solid var(--card-border)", borderRadius: "1rem", background: "var(--card-bg)" }}>
+        <div ref={resultRef} className="scale-in" style={{ marginTop: "1.5rem", padding: "1.5rem", border: "1px solid var(--card-border)", borderRadius: "1rem", background: "var(--card-bg)" }}>
           <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", alignItems: "center" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={result.url} alt="Compressed preview" style={{ maxWidth: 220, maxHeight: 220, borderRadius: 8, border: "1px solid var(--card-border)" }} />
             <div style={{ flex: 1, minWidth: 220 }}>
               <p style={{ fontWeight: 700, fontSize: "1.1rem", color: result.reachedTarget ? "var(--success)" : "var(--warning)", marginBottom: "0.5rem" }}>
-                {result.reachedTarget ? `✓ ${fmt(result.size)} — under ${targetKb} KB` : `Smallest we could reach: ${fmt(result.size)}`}
+                {result.reachedTarget ? `✓ ${fmt(result.size)} — under ${result.targetKb} KB` : `Smallest we could reach: ${fmt(result.size)}`}
               </p>
               <p style={{ color: "var(--muted)", fontSize: "0.85rem", lineHeight: 1.7 }}>
                 Original: {fmt(file.size)}<br />
@@ -159,7 +191,7 @@ export default function TargetSizeCompressor({ defaultKb }: { defaultKb: number 
               <a
                 href={result.url}
                 download={downloadName}
-                style={{ display: "inline-block", marginTop: "0.9rem", background: "#22c55e", color: "white", padding: "0.7rem 1.5rem", borderRadius: "0.625rem", fontWeight: 600, textDecoration: "none" }}
+                style={{ display: "inline-block", marginTop: "0.9rem", background: "#15803d", color: "white", padding: "0.7rem 1.5rem", borderRadius: "0.625rem", fontWeight: 600, textDecoration: "none" }}
               >
                 Download JPG
               </a>

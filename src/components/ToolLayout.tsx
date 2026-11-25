@@ -4,6 +4,7 @@ import ToolJsonLd from "./ToolJsonLd";
 import BreadcrumbSchema from "./BreadcrumbSchema";
 import FaqSchema from "./FaqSchema";
 import { tools, getToolBySlug } from "@/lib/tools";
+import { blogPosts } from "@/lib/blog";
 import { SITE_URL } from "@/lib/site";
 
 interface FaqItem {
@@ -17,9 +18,16 @@ interface ToolLayoutProps {
   slug: string;
   children: React.ReactNode;
   faqs?: FaqItem[];
+  /** Explicit related tool slugs (used by pages that aren't in the tools list). */
+  related?: string[];
+  /** Extra guide slugs to link, in addition to posts whose relatedTool is this page. */
+  guides?: string[];
 }
 
-function getRelatedTools(currentSlug: string) {
+function getRelatedTools(currentSlug: string, related?: string[]) {
+  if (related && related.length) {
+    return related.map((s) => getToolBySlug(s)).filter((t): t is NonNullable<typeof t> => Boolean(t));
+  }
   const currentTool = getToolBySlug(currentSlug);
   if (!currentTool) return tools.filter((t) => t.slug !== currentSlug).slice(0, 3);
 
@@ -35,8 +43,11 @@ function getRelatedTools(currentSlug: string) {
   return [...sameCategory, ...others].slice(0, 3);
 }
 
-export default function ToolLayout({ title, description, slug, children, faqs }: ToolLayoutProps) {
-  const relatedTools = getRelatedTools(slug);
+export default function ToolLayout({ title, description, slug, children, faqs, related, guides }: ToolLayoutProps) {
+  const relatedTools = getRelatedTools(slug, related);
+  const guidePosts = blogPosts.filter(
+    (p) => p.relatedTool === slug || (guides ?? []).includes(p.slug)
+  );
 
   return (
     <div style={{ maxWidth: 920, margin: "0 auto", padding: "2rem 1.5rem" }}>
@@ -102,48 +113,20 @@ export default function ToolLayout({ title, description, slug, children, faqs }:
 
       <div style={{ marginTop: "1.5rem" }}>{children}</div>
 
-      {/* How it works mini-steps */}
-      <div
-        className="steps-row"
-        style={{
-          display: "flex",
-          gap: "1.5rem",
-          marginTop: "3rem",
-          padding: "1.75rem",
-          background: "var(--accent)",
-          borderRadius: "1rem",
-        }}
-      >
-        {[
-          { num: "1", label: "Upload", desc: "Drop your file here" },
-          { num: "2", label: "Configure", desc: "Pick your settings" },
-          { num: "3", label: "Download", desc: "Get your result instantly" },
-        ].map((step, i) => (
-          <div key={step.num} style={{ flex: 1, display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: "50%",
-                background: i === 0 ? "var(--primary)" : "var(--card-border)",
-                color: i === 0 ? "white" : "var(--muted)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "0.8rem",
-                fontWeight: 700,
-                flexShrink: 0,
-              }}
-            >
-              {step.num}
-            </div>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: "0.85rem" }}>{step.label}</div>
-              <div style={{ color: "var(--muted)", fontSize: "0.75rem" }}>{step.desc}</div>
-            </div>
-          </div>
-        ))}
-      </div>
+      {guidePosts.length > 0 && (
+        <div style={{ marginTop: "2.5rem" }}>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.75rem" }}>Related Guides</h2>
+          <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            {guidePosts.map((p) => (
+              <li key={p.slug}>
+                <Link href={`/blog/${p.slug}`} style={{ color: "var(--primary)", textDecoration: "underline", fontWeight: 500, display: "inline-block", padding: "0.25rem 0" }}>
+                  {p.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Related Tools section for internal linking */}
       {relatedTools.length > 0 && (

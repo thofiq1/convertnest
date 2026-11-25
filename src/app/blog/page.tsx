@@ -3,7 +3,7 @@ import { blogPosts } from "@/lib/blog";
 
 export default function BlogPage() {
   return (
-    <main
+    <div
       style={{
         maxWidth: 900,
         margin: "0 auto",
@@ -20,7 +20,7 @@ export default function BlogPage() {
             letterSpacing: "-0.025em",
           }}
         >
-          Blog
+          Guides: Fit PDFs and Photos Under Upload Limits
         </h1>
         <p
           style={{
@@ -103,6 +103,6 @@ export default function BlogPage() {
           </Link>
         ))}
       </div>
-    </main>
+    </div>
   );
 }

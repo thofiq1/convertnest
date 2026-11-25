@@ -18,6 +18,7 @@ export default function RotatePDF() {
   const [processing, setProcessing] = useState(false);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   const loadPages = useCallback(async (pdfFile: File) => {
     setLoading(true);
@@ -25,7 +26,7 @@ export default function RotatePDF() {
     setResultUrl(null);
     try {
       const pdfjsLib = await import("pdfjs-dist");
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
       const arrayBuffer = await pdfFile.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       const pageInfos: PageInfo[] = [];
@@ -69,7 +70,11 @@ export default function RotatePDF() {
   const handleFile = useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return;
     const f = files[0];
-    if (f.type !== "application/pdf") return;
+    if (f.type !== "application/pdf" && !/\.pdf$/i.test(f.name)) {
+      setFileError(`${f.name} isn't a PDF. Please choose a PDF file.`);
+      return;
+    }
+    setFileError(null);
     const validation = validateFileSize(f, "pdf");
     if (!validation.valid) { alert(validation.error); return; }
     if (validation.warning) alert(validation.warning);
@@ -112,7 +117,7 @@ export default function RotatePDF() {
       for (let i = 0; i < pdfPages.length && i < pages.length; i++) {
         if (pages[i].rotation !== 0) {
           const currentRotation = pdfPages[i].getRotation().angle;
-          pdfPages[i].setRotation(degrees(currentRotation + pages[i].rotation));
+          pdfPages[i].setRotation(degrees((((currentRotation + pages[i].rotation) % 360) + 360) % 360));
         }
       }
 
@@ -156,7 +161,7 @@ export default function RotatePDF() {
       ]}
     >
       {!file ? (
-        <div
+        <div data-dropzone="true"
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files); }}
@@ -174,6 +179,7 @@ export default function RotatePDF() {
           <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🔄</div>
           <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>Drop a PDF file here or click to browse</p>
           <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>Rotate pages individually or all at once</p>
+          {fileError && <p role="alert" style={{ color: "#dc2626", fontSize: "0.85rem", marginTop: "0.75rem", fontWeight: 600 }}>{fileError}</p>}
         </div>
       ) : (
         <div>

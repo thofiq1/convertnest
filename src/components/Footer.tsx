@@ -53,7 +53,7 @@ export default function Footer() {
 
         {/* PDF Tools */}
         <div>
-          <h4 style={{ fontWeight: 700, marginBottom: "0.75rem", fontSize: "0.85rem" }}>PDF Tools</h4>
+          <p style={{ fontWeight: 700, marginBottom: "0.75rem", fontSize: "0.85rem" }}>PDF Tools</p>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             {[
               { href: "/compress-pdf", label: "Compress PDF" },
@@ -78,7 +78,7 @@ export default function Footer() {
 
         {/* Image & Doc Tools */}
         <div>
-          <h4 style={{ fontWeight: 700, marginBottom: "0.75rem", fontSize: "0.85rem" }}>Image & Doc Tools</h4>
+          <p style={{ fontWeight: 700, marginBottom: "0.75rem", fontSize: "0.85rem" }}>Image & Doc Tools</p>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             {[
               { href: "/image-compressor", label: "Image Compressor" },
@@ -103,7 +103,7 @@ export default function Footer() {
 
         {/* Company */}
         <div>
-          <h4 style={{ fontWeight: 700, marginBottom: "0.75rem", fontSize: "0.85rem" }}>Company</h4>
+          <p style={{ fontWeight: 700, marginBottom: "0.75rem", fontSize: "0.85rem" }}>Company</p>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
             <Link href="/about" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.8rem" }}>About</Link>
             <Link href="/blog" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.8rem" }}>Blog</Link>

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize, isDuplicateFile } from "@/utils/fileValidation";
+import { isHeicFile, isImageFile, unsupportedFileMessage, decodeErrorMessage, HEIC_HINT } from "@/lib/imageOutput";
 
 interface ImageEntry {
   file: File;
@@ -24,6 +25,7 @@ export default function JPGtoPDF() {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const [sizeWarnings, setSizeWarnings] = useState<string[]>([]);
+  const [error, setError] = useState<{ message: string; heic: boolean } | null>(null);
 
   // Cleanup URLs on unmount
   useEffect(() => {
@@ -55,10 +57,12 @@ export default function JPGtoPDF() {
 
   const handleFiles = useCallback(async (files: FileList | null) => {
     if (!files) return;
-    const imgFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const all = Array.from(files);
+    const imgFiles = all.filter(isImageFile);
     setResultUrl(null);
+    setError(null);
 
-    const warnings: string[] = [];
+    const warnings: string[] = all.filter((f) => !isImageFile(f)).map((f) => unsupportedFileMessage(f));
     const accepted: File[] = [];
     for (const f of imgFiles) {
       const sizeCheck = validateFileSize(f, "image");
@@ -75,7 +79,7 @@ export default function JPGtoPDF() {
     if (unique.length < accepted.length) {
       warnings.push(`${accepted.length - unique.length} duplicate file(s) skipped.`);
     }
-    if (warnings.length > 0) setSizeWarnings(warnings);
+    setSizeWarnings(warnings);
 
     const newEntries = await Promise.all(unique.map(loadImage));
     setImages((prev) => [...prev, ...newEntries]);
@@ -84,6 +88,7 @@ export default function JPGtoPDF() {
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
     setResultUrl(null);
+    setError(null);
   };
 
   const handleDragStart = (index: number) => setDragIndex(index);
@@ -109,6 +114,8 @@ export default function JPGtoPDF() {
     if (images.length === 0) return;
     setProcessing(true);
     setResultUrl(null);
+    setError(null);
+    let current: File | null = null;
     try {
       const { PDFDocument } = await import("pdf-lib");
       const pdfDoc = await PDFDocument.create();
@@ -119,6 +126,7 @@ export default function JPGtoPDF() {
       };
 
       for (const entry of images) {
+        current = entry.file;
         const imgBytes = new Uint8Array(await entry.file.arrayBuffer());
         let pdfImage;
         const type = entry.file.type.toLowerCase();
@@ -129,8 +137,9 @@ export default function JPGtoPDF() {
           if (type !== "image/jpeg" && type !== "image/jpg") {
             const canvas = document.createElement("canvas");
             const img = new Image();
-            await new Promise<void>((resolve) => {
+            await new Promise<void>((resolve, reject) => {
               img.onload = () => resolve();
+              img.onerror = () => reject(new Error(decodeErrorMessage(entry.file)));
               img.src = entry.previewUrl;
             });
             canvas.width = img.width;
@@ -188,9 +197,16 @@ export default function JPGtoPDF() {
       setResultUrl(URL.createObjectURL(blob));
     } catch (err) {
       console.error("Conversion error:", err);
-      alert("Error creating PDF. Please try again.");
+      if (current && isHeicFile(current)) {
+        setError({ message: `${current.name}: ${HEIC_HINT}.`, heic: true });
+      } else if (current) {
+        setError({ message: `Couldn't add ${current.name} to the PDF — it may be damaged or in a format your browser can't read. Remove it and try again.`, heic: false });
+      } else {
+        setError({ message: "Error creating PDF. Please try again.", heic: false });
+      }
+    } finally {
+      setProcessing(false);
     }
-    setProcessing(false);
   };
 
   const formatSize = (bytes: number) => {
@@ -221,7 +237,7 @@ export default function JPGtoPDF() {
           {sizeWarnings.map((w, i) => <div key={i}>⚠ {w}</div>)}
         </div>
       )}
-      <div
+      <div data-dropzone="true"
         onDragOver={(e) => { e.preventDefault(); if (dragIndex === null) setDragOver(true); }}
         onDragLeave={() => { if (dragIndex === null) setDragOver(false); }}
         onDrop={(e) => { e.preventDefault(); if (dragIndex === null) { setDragOver(false); handleFiles(e.dataTransfer.files); } }}
@@ -349,6 +365,16 @@ export default function JPGtoPDF() {
             style={{ width: "100%", padding: "0.85rem", fontSize: "1rem", fontWeight: 700 }}>
             {processing ? "Creating PDF..." : `Convert ${images.length} Image${images.length !== 1 ? "s" : ""} to PDF`}
           </button>
+          {error && (
+            <div role="alert" style={{
+              marginTop: "0.75rem", padding: "0.75rem 1rem",
+              background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.3)",
+              borderRadius: "0.5rem", fontSize: "0.85rem", color: "#ef4444",
+            }}>
+              {error.message}
+              {error.heic && <> <a href="/heic-to-jpg" style={{ color: "var(--primary)" }}>Open HEIC to JPG</a></>}
+            </div>
+          )}
         </div>
       )}
 

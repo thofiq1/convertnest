@@ -3,17 +3,18 @@ import Script from "next/script";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import DropZoneA11y from "@/components/DropZoneA11y";
 import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGES } from "@/lib/site";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   applicationName: SITE_NAME,
   title: {
-    default: "Free Online PDF Tools & File Converter | FitTheFile",
+    default: "Compress PDF & Photos to Any KB Size, Free | FitTheFile",
     template: "%s | FitTheFile",
   },
   description:
-    "Free online PDF tools and file converters. Compress PDF, merge PDF, convert images, JPG to PDF, and more. No signup required. 100% free.",
+    "Compress a PDF or photo to 20KB, 50KB, 100KB or any limit you type, plus merge, split and convert. Free, no signup, files never leave your browser.",
   keywords: [
     "compress pdf",
     "merge pdf",
@@ -33,11 +34,11 @@ export const metadata: Metadata = {
   },
   openGraph: {
     images: DEFAULT_OG_IMAGES,
-    title: "Free Online PDF Tools & File Converter | FitTheFile",
+    title: "Compress PDF & Photos to Any KB Size, Free | FitTheFile",
     siteName: SITE_NAME,
     locale: "en_US",
     description:
-      "Compress, merge, split, and convert PDFs and images. Free online tools — no signup, no watermarks.",
+      "Compress a PDF or photo to 20KB, 50KB, 100KB or any limit you type, plus merge, split and convert. Free, no signup, files never leave your browser.",
     type: "website",
   },
   twitter: {
@@ -77,6 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <main style={{ flex: 1 }}>{children}</main>
         <Footer />
+        <DropZoneA11y />
       </body>
     </html>
   );

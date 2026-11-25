@@ -14,7 +14,10 @@ function PdfUnlockTool() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [pageCount, setPageCount] = useState(0);
+  // Encrypted with only an owner (permissions) password: opens without a password, just has restrictions
+  const [ownerOnly, setOwnerOnly] = useState(false);
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -41,11 +44,13 @@ function PdfUnlockTool() {
           // Try to get page count with pdfjs-dist (which can handle encrypted PDFs with empty password)
           try {
             const pdfjsLib = await import("pdfjs-dist");
-            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+            pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
             const pdf = await pdfjsLib.getDocument({ data: await pdfFile.arrayBuffer() }).promise;
             setPageCount(pdf.numPages);
+            setOwnerOnly(true);
           } catch {
             setPageCount(0);
+            setOwnerOnly(false);
           }
         } else {
           setError("Error loading PDF. Please try another file.");
@@ -60,10 +65,11 @@ function PdfUnlockTool() {
   const handleFile = useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return;
     const f = files[0];
-    if (f.type !== "application/pdf") {
-      alert("Please select a PDF file.");
+    if (f.type !== "application/pdf" && !/\.pdf$/i.test(f.name)) {
+      setFileError(`${f.name} isn't a PDF. Please choose a PDF file.`);
       return;
     }
+    setFileError(null);
     const validation = validateFileSize(f, "pdf");
     if (!validation.valid) { alert(validation.error); return; }
     if (validation.warning) alert(validation.warning);
@@ -72,24 +78,27 @@ function PdfUnlockTool() {
     setPassword("");
     setError(null);
     setIsEncrypted(false);
+    setOwnerOnly(false);
     setPageCount(0);
     checkEncryption(f);
   }, [checkEncryption]);
 
   const unlockPdf = async () => {
-    if (!file || !password) return;
+    if (!file || (!password && !ownerOnly)) return;
     setProcessing(true);
     setResultUrl(null);
     setError(null);
     try {
       // Step 1: Open encrypted PDF with pdfjs-dist using the password
       const pdfjsLib = await import("pdfjs-dist");
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
       const arrayBuffer = await file.arrayBuffer();
 
       let pdfJsDoc;
       try {
-        pdfJsDoc = await pdfjsLib.getDocument({ data: arrayBuffer, password }).promise;
+        pdfJsDoc = await pdfjsLib.getDocument(
+          ownerOnly && !password ? { data: arrayBuffer } : { data: arrayBuffer, password }
+        ).promise;
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "";
         if (msg.toLowerCase().includes("incorrect") || msg.toLowerCase().includes("password") || msg.toLowerCase().includes("invalid")) {
@@ -167,7 +176,7 @@ function PdfUnlockTool() {
       ]}
     >
       {!file ? (
-        <div
+        <div data-dropzone="true"
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files); }}
@@ -185,6 +194,7 @@ function PdfUnlockTool() {
           <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>&#x1F513;</div>
           <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>Drop a password-protected PDF here or click to browse</p>
           <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>You must know the password to unlock the file</p>
+          {fileError && <p role="alert" style={{ color: "#dc2626", fontSize: "0.85rem", marginTop: "0.75rem", fontWeight: 600 }}>{fileError}</p>}
         </div>
       ) : (
         <div>
@@ -196,7 +206,7 @@ function PdfUnlockTool() {
               </span>
             </div>
             <button
-              onClick={() => { setFile(null); setPageCount(0); setResultUrl(null); setPassword(""); setError(null); setIsEncrypted(false); }}
+              onClick={() => { setFile(null); setPageCount(0); setResultUrl(null); setPassword(""); setError(null); setIsEncrypted(false); setOwnerOnly(false); }}
               className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}
             >
               Change File
@@ -204,7 +214,7 @@ function PdfUnlockTool() {
           </div>
 
           {/* Encryption status */}
-          {isEncrypted && (
+          {isEncrypted && !ownerOnly && (
             <div style={{
               padding: "0.75rem 1rem", marginBottom: "1.5rem", borderRadius: "0.5rem",
               background: "rgba(239, 68, 68, 0.06)", border: "1px solid rgba(239, 68, 68, 0.2)",
@@ -225,7 +235,31 @@ function PdfUnlockTool() {
             </div>
           )}
 
-          {isEncrypted && (
+          {isEncrypted && ownerOnly && (
+            <>
+              <div style={{
+                padding: "0.75rem 1rem", marginBottom: "1.5rem", borderRadius: "0.5rem",
+                background: "rgba(234, 179, 8, 0.06)", border: "1px solid rgba(234, 179, 8, 0.2)",
+                fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.5rem",
+              }}>
+                <span>&#x1F512;</span>
+                <span>This PDF opens without a password but has restrictions (such as printing, copying or editing). You can remove them without a password.</span>
+              </div>
+              {error && (
+                <p style={{ color: "#ef4444", fontSize: "0.8rem", marginBottom: "1rem", fontWeight: 500 }}>{error}</p>
+              )}
+              <button
+                onClick={unlockPdf}
+                disabled={processing}
+                className="btn-primary"
+                style={{ width: "100%", padding: "0.85rem", fontSize: "1rem", fontWeight: 700 }}
+              >
+                {processing ? "Removing restrictions..." : "Remove Restrictions"}
+              </button>
+            </>
+          )}
+
+          {isEncrypted && !ownerOnly && (
             <>
               {/* Password input */}
               <div style={{

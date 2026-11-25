@@ -17,6 +17,8 @@ export default function SplitPDF() {
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [resultKind, setResultKind] = useState<"pdf" | "zip">("pdf");
+  const [fileError, setFileError] = useState<string | null>(null);
   const [mode, setMode] = useState<"visual" | "range">("visual");
   const [rangeInput, setRangeInput] = useState("");
   const [dragOver, setDragOver] = useState(false);
@@ -27,7 +29,7 @@ export default function SplitPDF() {
     setResultUrl(null);
     try {
       const pdfjsLib = await import("pdfjs-dist");
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
       const arrayBuffer = await pdfFile.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       const pageInfos: PageInfo[] = [];
@@ -71,7 +73,11 @@ export default function SplitPDF() {
   const handleFile = useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return;
     const f = files[0];
-    if (f.type !== "application/pdf") return;
+    if (f.type !== "application/pdf" && !/\.pdf$/i.test(f.name)) {
+      setFileError(`${f.name} isn't a PDF. Please choose a PDF file.`);
+      return;
+    }
+    setFileError(null);
     const validation = validateFileSize(f, "pdf");
     if (!validation.valid) { alert(validation.error); return; }
     if (validation.warning) alert(validation.warning);
@@ -145,6 +151,7 @@ export default function SplitPDF() {
       copiedPages.forEach((page) => newPdf.addPage(page));
       const pdfBytes = await newPdf.save();
       const blob = new Blob([pdfBytes as BlobPart], { type: "application/pdf" });
+      setResultKind("pdf");
       setResultUrl(URL.createObjectURL(blob));
     } catch (err: unknown) {
       console.error("Split error:", err);
@@ -179,6 +186,7 @@ export default function SplitPDF() {
       }
 
       const zipBlob = await zip.generateAsync({ type: "blob" });
+      setResultKind("zip");
       setResultUrl(URL.createObjectURL(zipBlob));
     } catch (err: unknown) {
       console.error("Split all error:", err);
@@ -193,9 +201,10 @@ export default function SplitPDF() {
   };
 
   const selectedCount = pages.filter((p) => p.selected).length;
-  const downloadName = file
-    ? file.name.replace(/\.pdf$/i, "") + (mode === "visual" ? "-extracted.pdf" : "-split.pdf")
-    : "split.pdf";
+  const baseDownloadName = file ? file.name.replace(/\.pdf$/i, "") : "split";
+  const downloadName = resultKind === "zip"
+    ? baseDownloadName + "-pages.zip"
+    : baseDownloadName + "-extracted.pdf";
   // Result URL cleanup on unmount
   useEffect(() => {
     return () => {
@@ -216,7 +225,7 @@ export default function SplitPDF() {
       ]}
     >
       {!file ? (
-        <div
+        <div data-dropzone="true"
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files); }}
@@ -234,6 +243,7 @@ export default function SplitPDF() {
           <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>✂️</div>
           <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>Drop a PDF file here or click to browse</p>
           <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>Select pages visually or by range</p>
+          {fileError && <p role="alert" style={{ color: "#dc2626", fontSize: "0.85rem", marginTop: "0.75rem", fontWeight: 600 }}>{fileError}</p>}
         </div>
       ) : (
         <div>
@@ -359,7 +369,7 @@ export default function SplitPDF() {
       {resultUrl && (
         <div style={{ marginTop: "1.5rem", padding: "1.5rem", textAlign: "center", background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: "0.75rem" }}>
           <p style={{ fontWeight: 600, marginBottom: "1rem", color: "#22c55e", fontSize: "1.1rem" }}>✓ Pages extracted successfully!</p>
-          <a href={resultUrl} download={downloadName.includes("split") && mode !== "range" ? file!.name.replace(/\.pdf$/i, "") + "-pages.zip" : downloadName}
+          <a href={resultUrl} download={downloadName}
             className="btn-primary"
             style={{ padding: "0.75rem 2rem", fontSize: "1rem", textDecoration: "none", display: "inline-block" }}>
             Download

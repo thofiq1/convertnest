@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize, isDuplicateFile } from "@/utils/fileValidation";
+import { extFromMime, originalOutputMime, baseName, uniqueName, isHeicFile, isImageFile, unsupportedFileMessage, decodeErrorMessage } from "@/lib/imageOutput";
 
 interface ResizedImage {
   file: File;
@@ -13,7 +14,13 @@ interface ResizedImage {
   resizedBlob: Blob | null;
   resizedUrl: string | null;
   processing: boolean;
+  /** Extension matching the bytes in resizedBlob (set when the result is produced). */
+  outExt: string;
+  error: string | null;
 }
+
+const MAX_DIM = 16384;
+const clampDim = (n: number) => Math.min(MAX_DIM, Math.max(1, Math.round(Number.isFinite(n) ? n : 1)));
 
 const socialPresets = [
   { label: "Instagram Post", w: 1080, h: 1080 },
@@ -61,14 +68,16 @@ export default function ImageResizer() {
   }, [images]);
 
   const resizeImage = async (
-    file: File, targetW: number, targetH: number, fmt: string, q: number
+    file: File, targetW: number, targetH: number, fmt: string, q: number, cover = false
   ): Promise<{ blob: Blob; url: string }> => {
+    targetW = clampDim(targetW);
+    targetH = clampDim(targetH);
     return new Promise((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
       img.onerror = () => {
         URL.revokeObjectURL(url);
-        reject(new Error(`Failed to load image: ${file.name}`));
+        reject(new Error(decodeErrorMessage(file)));
       };
       img.onload = () => {
         const canvas = document.createElement("canvas");
@@ -85,7 +94,7 @@ export default function ImageResizer() {
 
         let mimeType: string;
         if (fmt === "original") {
-          mimeType = file.type === "image/png" ? "image/png" : file.type === "image/webp" ? "image/webp" : "image/jpeg";
+          mimeType = originalOutputMime(file.type);
         } else {
           const mimeMap: Record<string, string> = { jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
           mimeType = mimeMap[fmt] || "image/jpeg";
@@ -95,7 +104,17 @@ export default function ImageResizer() {
           ctx.fillStyle = "#ffffff";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
-        ctx.drawImage(img, 0, 0, targetW, targetH);
+        if (cover) {
+          // Scale to fill the target, then centre-crop the overflow so nothing is stretched.
+          const iw = img.naturalWidth || img.width;
+          const ih = img.naturalHeight || img.height;
+          const s = Math.max(targetW / iw, targetH / ih);
+          const sw = targetW / s;
+          const sh = targetH / s;
+          ctx.drawImage(img, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 0, 0, targetW, targetH);
+        } else {
+          ctx.drawImage(img, 0, 0, targetW, targetH);
+        }
 
         const qualityParam = mimeType === "image/png" ? undefined : q / 100;
         canvas.toBlob(
@@ -121,7 +140,7 @@ export default function ImageResizer() {
 
   const getTargetDimensions = (origW: number, origH: number): [number, number] => {
     if (mode === "percentage") {
-      return [Math.round(origW * percentage / 100), Math.round(origH * percentage / 100)];
+      return [clampDim(origW * percentage / 100), clampDim(origH * percentage / 100)];
     }
     if (mode === "preset") {
       const preset = socialPresets[selectedPreset];
@@ -130,16 +149,19 @@ export default function ImageResizer() {
     // exact
     if (lockAspect) {
       const aspect = origW / origH;
-      return [width, Math.round(width / aspect)];
+      return [clampDim(width), clampDim(width / aspect)];
     }
-    return [width, height];
+    return [clampDim(width), clampDim(height)];
   };
+
+  const exactInvalid = mode === "exact" && (!(width >= 1) || (!lockAspect && !(height >= 1)));
 
   const handleFiles = useCallback(async (files: FileList | null) => {
     if (!files) return;
-    const imgFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const all = Array.from(files);
+    const imgFiles = all.filter(isImageFile);
 
-    const warnings: string[] = [];
+    const warnings: string[] = all.filter((f) => !isImageFile(f)).map((f) => unsupportedFileMessage(f));
     const accepted: File[] = [];
     for (const f of imgFiles) {
       const sizeCheck = validateFileSize(f, "image");
@@ -156,46 +178,57 @@ export default function ImageResizer() {
     if (unique.length < accepted.length) {
       warnings.push(`${accepted.length - unique.length} duplicate file(s) skipped.`);
     }
-    if (warnings.length > 0) setSizeWarnings(warnings);
-
     const newImages: ResizedImage[] = [];
     for (const file of unique) {
       const url = URL.createObjectURL(file);
-      const dims = await new Promise<{ w: number; h: number }>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve({ w: img.width, h: img.height });
-        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`Failed to load image: ${file.name}`)); };
-        img.src = url;
-      });
-      newImages.push({
-        file, previewUrl: url,
-        originalWidth: dims.w, originalHeight: dims.h,
-        resizedBlob: null, resizedUrl: null, processing: false,
-      });
+      try {
+        const dims = await new Promise<{ w: number; h: number }>((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve({ w: img.width, h: img.height });
+          img.onerror = () => { URL.revokeObjectURL(url); reject(new Error(decodeErrorMessage(file))); };
+          img.src = url;
+        });
+        newImages.push({
+          file, previewUrl: url,
+          originalWidth: dims.w, originalHeight: dims.h,
+          resizedBlob: null, resizedUrl: null, processing: false, outExt: "", error: null,
+        });
+      } catch (err) {
+        warnings.push(`${file.name}: ${err instanceof Error ? err.message : "couldn't be opened"}`);
+      }
     }
+    setSizeWarnings(warnings);
 
     setImages((prev) => [...prev, ...newImages]);
     if (newImages.length > 0 && mode === "exact") {
       setWidth(newImages[0].originalWidth);
       setHeight(newImages[0].originalHeight);
     }
-  }, [mode]);
+  }, [mode, images]);
 
   const resizeAll = async () => {
-    setImages((prev) => prev.map((img) => ({ ...img, processing: true, resizedBlob: null, resizedUrl: null })));
+    if (exactInvalid) return;
+    const current = [...images];
+    setImages((prev) => prev.map((img) => ({ ...img, processing: true, resizedBlob: null, resizedUrl: null, error: null })));
 
-    for (const img of images) {
-      const [tw, th] = getTargetDimensions(img.originalWidth, img.originalHeight);
-      const { blob, url } = await resizeImage(img.file, tw, th, outputFormat, quality);
+    for (const img of current) {
+      let result: Partial<ResizedImage>;
+      try {
+        const [tw, th] = getTargetDimensions(img.originalWidth, img.originalHeight);
+        const { blob, url } = await resizeImage(img.file, tw, th, outputFormat, quality, mode === "preset");
+        result = { resizedBlob: blob, resizedUrl: url, outExt: extFromMime(blob.type), error: null };
+      } catch (err) {
+        result = { resizedBlob: null, resizedUrl: null, error: err instanceof Error ? err.message : `Couldn't resize ${img.file.name}` };
+      }
       setImages((prev) => {
         const updated = [...prev];
         const idx = updated.findIndex((r) => r.file === img.file);
-        if (idx >= 0) {
-          updated[idx] = { ...updated[idx], resizedBlob: blob, resizedUrl: url, processing: false };
-        }
+        if (idx >= 0) updated[idx] = { ...updated[idx], ...result, processing: false };
         return updated;
       });
     }
+    // Safety net: never leave a row (and the Resize button) stuck in the busy state.
+    setImages((prev) => prev.map((img) => (img.processing ? { ...img, processing: false } : img)));
   };
 
   const removeImage = (index: number) => {
@@ -210,11 +243,9 @@ export default function ImageResizer() {
 
   const downloadSingle = (img: ResizedImage) => {
     if (!img.resizedUrl) return;
-    const extMap: Record<string, string> = { jpeg: "jpg", png: "png", webp: "webp" };
-    const ext = outputFormat === "original" ? img.file.name.split(".").pop() : extMap[outputFormat];
     const a = document.createElement("a");
     a.href = img.resizedUrl;
-    a.download = img.file.name.replace(/\.[^.]+$/, "") + `-resized.${ext}`;
+    a.download = baseName(img.file.name) + `-resized.${img.outExt}`;
     a.click();
   };
 
@@ -225,10 +256,9 @@ export default function ImageResizer() {
 
     const JSZip = (await import("jszip")).default;
     const zip = new JSZip();
-    const extMap: Record<string, string> = { jpeg: "jpg", png: "png", webp: "webp" };
+    const used = new Set<string>();
     completed.forEach((img) => {
-      const ext = outputFormat === "original" ? img.file.name.split(".").pop() || "jpg" : extMap[outputFormat];
-      zip.file(img.file.name.replace(/\.[^.]+$/, "") + `-resized.${ext}`, img.resizedBlob!);
+      zip.file(uniqueName(baseName(img.file.name) + `-resized.${img.outExt}`, used), img.resizedBlob!);
     });
     const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
@@ -249,7 +279,7 @@ export default function ImageResizer() {
       description="Resize images to exact dimensions, by percentage, or social media presets. Batch resize supported."
       faqs={[
         { question: "How do I resize without stretching my photo?", answer: "Use Exact Size with the aspect-ratio lock on, or Percentage mode. Both keep the original proportions." },
-        { question: "Do the social media presets crop my image?", answer: "No. Presets resize to the preset's exact width and height, so a photo with a different shape will be stretched. Crop it to the right ratio first with the Crop Image tool." },
+        { question: "Do the social media presets crop my image?", answer: "Yes, if the shape differs. Presets scale your photo to fill the preset's exact width and height and trim the edges evenly (centre crop), so nothing is stretched. To choose the crop yourself, use the Crop Image tool first." },
         { question: "Can I resize several images at once?", answer: "Yes. Add multiple images, apply the same settings, and download them individually or as a ZIP file." },
         { question: "Does resizing also reduce file size?", answer: "Making an image smaller in pixels usually makes the file smaller too. If you need to get under a specific KB limit, use one of the compress-image-to-KB tools." },
       ]}
@@ -263,7 +293,7 @@ export default function ImageResizer() {
           {sizeWarnings.map((w, i) => <div key={i}>⚠ {w}</div>)}
         </div>
       )}
-      <div
+      <div data-dropzone="true"
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
@@ -374,7 +404,16 @@ export default function ImageResizer() {
                     <div style={{ fontSize: "0.7rem", color: "var(--muted)" }}>{preset.w} × {preset.h}</div>
                   </button>
                 ))}
+                <p style={{ gridColumn: "1 / -1", fontSize: "0.75rem", color: "var(--muted)", margin: 0 }}>
+                  Images are scaled to fill the preset and cropped to fit (centred), so nothing is stretched.
+                </p>
               </div>
+            )}
+
+            {exactInvalid && (
+              <p style={{ fontSize: "0.8rem", color: "#ef4444", marginTop: "0.5rem" }}>
+                Width{lockAspect ? "" : " and height"} must be at least 1px.
+              </p>
             )}
 
             <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem" }}>
@@ -452,7 +491,12 @@ export default function ImageResizer() {
                       {img.file.name}
                     </div>
                     <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
-                      {img.processing ? "Resizing..." : (
+                      {img.processing ? "Resizing..." : img.error ? (
+                        <span style={{ color: "#ef4444" }}>
+                          {img.error}
+                          {isHeicFile(img.file) && <> · <a href="/heic-to-jpg" style={{ color: "var(--primary)" }}>Open HEIC to JPG</a></>}
+                        </span>
+                      ) : (
                         <>
                           {img.originalWidth}×{img.originalHeight} → {tw}×{th}
                           {img.resizedBlob && <span style={{ marginLeft: "0.4rem" }}>({formatSize(img.resizedBlob.size)})</span>}
@@ -475,7 +519,7 @@ export default function ImageResizer() {
             })}
           </div>
 
-          <button onClick={resizeAll} disabled={images.some((img) => img.processing)} className="btn-primary"
+          <button onClick={resizeAll} disabled={exactInvalid || images.some((img) => img.processing)} className="btn-primary"
             style={{ width: "100%", padding: "0.85rem", fontSize: "1rem", fontWeight: 700, marginBottom: "0.75rem" }}>
             {images.some((img) => img.processing) ? "Resizing..." : `Resize ${images.length} Image${images.length !== 1 ? "s" : ""}`}
           </button>

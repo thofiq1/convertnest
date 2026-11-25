@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize, isDuplicateFile } from "@/utils/fileValidation";
+import { extFromMime, baseName, uniqueName, isHeicFile, isImageFile, unsupportedFileMessage, decodeErrorMessage } from "@/lib/imageOutput";
 
 interface ConvertedImage {
   file: File;
@@ -13,6 +14,11 @@ interface ConvertedImage {
   originalSize: number;
   convertedSize: number;
   processing: boolean;
+  /** Extension matching the bytes in convertedBlob (set when the result is produced). */
+  outExt: string;
+  /** Output format setting used to produce this result. */
+  fmtUsed: string;
+  error: string | null;
 }
 
 export default function ImageConverter() {
@@ -47,7 +53,7 @@ export default function ImageConverter() {
     return new Promise((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error(`Failed to load image: ${file.name}`)); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error(decodeErrorMessage(file))); };
       img.onload = () => {
         const canvas = document.createElement("canvas");
         canvas.width = img.width;
@@ -84,11 +90,25 @@ export default function ImageConverter() {
     });
   };
 
+  // Convert one file; never throws. Returns the fields to merge into its row.
+  const processOne = async (file: File, fmt: string, q: number): Promise<Partial<ConvertedImage>> => {
+    try {
+      const { blob, url } = await convertImage(file, fmt, q);
+      return { convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, outExt: extFromMime(blob.type, "png"), fmtUsed: fmt, error: null, processing: false };
+    } catch (err) {
+      return {
+        convertedBlob: null, convertedUrl: null, convertedSize: 0, fmtUsed: fmt, processing: false,
+        error: err instanceof Error ? err.message : `Couldn't convert ${file.name}`,
+      };
+    }
+  };
+
   const handleFiles = useCallback(async (files: FileList | null) => {
     if (!files) return;
-    const imgFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const all = Array.from(files);
+    const imgFiles = all.filter(isImageFile);
 
-    const warnings: string[] = [];
+    const warnings: string[] = all.filter((f) => !isImageFile(f)).map((f) => unsupportedFileMessage(f));
     const accepted: File[] = [];
     for (const f of imgFiles) {
       const sizeCheck = validateFileSize(f, "image");
@@ -105,7 +125,7 @@ export default function ImageConverter() {
     if (unique.length < accepted.length) {
       warnings.push(`${accepted.length - unique.length} duplicate file(s) skipped.`);
     }
-    if (warnings.length > 0) setSizeWarnings(warnings);
+    setSizeWarnings(warnings);
 
     const newImages: ConvertedImage[] = unique.map((file) => ({
       file,
@@ -115,35 +135,34 @@ export default function ImageConverter() {
       originalSize: file.size,
       convertedSize: 0,
       processing: true,
+      outExt: "",
+      fmtUsed: outputFormat,
+      error: null,
     }));
 
     setImages((prev) => [...prev, ...newImages]);
 
     for (const imgFile of unique) {
-      const { blob, url } = await convertImage(imgFile, outputFormat, quality);
+      const result = await processOne(imgFile, outputFormat, quality);
       setImages((prev) => {
         const updated = [...prev];
         const idx = updated.findIndex((r) => r.file === imgFile);
-        if (idx >= 0) {
-          updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, processing: false };
-        }
+        if (idx >= 0) updated[idx] = { ...updated[idx], ...result };
         return updated;
       });
     }
-  }, [outputFormat, quality]);
+  }, [outputFormat, quality, images]);
 
   const reconvertAll = async () => {
     const currentImages = [...images];
-    setImages(currentImages.map((img) => ({ ...img, processing: true, convertedBlob: null, convertedUrl: null, convertedSize: 0 })));
+    setImages(currentImages.map((img) => ({ ...img, processing: true, convertedBlob: null, convertedUrl: null, convertedSize: 0, error: null })));
 
     for (const img of currentImages) {
-      const { blob, url } = await convertImage(img.file, outputFormat, quality);
+      const result = await processOne(img.file, outputFormat, quality);
       setImages((prev) => {
         const updated = [...prev];
         const idx = updated.findIndex((r) => r.file === img.file);
-        if (idx >= 0) {
-          updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, processing: false };
-        }
+        if (idx >= 0) updated[idx] = { ...updated[idx], ...result };
         return updated;
       });
     }
@@ -153,13 +172,11 @@ export default function ImageConverter() {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const extMap: Record<string, string> = { jpeg: "jpg", png: "png", webp: "webp", bmp: "bmp" };
-
   const downloadSingle = (img: ConvertedImage) => {
     if (!img.convertedUrl) return;
     const a = document.createElement("a");
     a.href = img.convertedUrl;
-    a.download = img.file.name.replace(/\.[^.]+$/, "") + `.${extMap[outputFormat]}`;
+    a.download = baseName(img.file.name) + `.${img.outExt}`;
     a.click();
   };
 
@@ -170,13 +187,14 @@ export default function ImageConverter() {
 
     const JSZip = (await import("jszip")).default;
     const zip = new JSZip();
+    const used = new Set<string>();
     completed.forEach((img) => {
-      zip.file(img.file.name.replace(/\.[^.]+$/, "") + `.${extMap[outputFormat]}`, img.convertedBlob!);
+      zip.file(uniqueName(baseName(img.file.name) + `.${img.outExt}`, used), img.convertedBlob!);
     });
     const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `converted-images-${outputFormat}.zip`;
+    a.download = "converted-images.zip";
     a.click();
   };
 
@@ -187,6 +205,7 @@ export default function ImageConverter() {
   };
 
   const completedCount = images.filter((img) => img.convertedBlob).length;
+  const formatStale = images.some((img) => !img.processing && img.fmtUsed !== outputFormat);
 
   return (
     <ErrorBoundary>
@@ -210,7 +229,7 @@ export default function ImageConverter() {
           {sizeWarnings.map((w, i) => <div key={i}>⚠ {w}</div>)}
         </div>
       )}
-      <div
+      <div data-dropzone="true"
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
@@ -274,6 +293,11 @@ export default function ImageConverter() {
               <button onClick={reconvertAll} className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
                 Re-convert with new settings
               </button>
+              {formatStale && (
+                <span style={{ fontSize: "0.8rem", color: "#b45309", alignSelf: "center" }}>
+                  Format changed — click Re-convert to apply it.
+                </span>
+              )}
               <button onClick={() => {
                 const input = document.createElement("input");
                 input.type = "file"; input.accept = "image/*"; input.multiple = true;
@@ -315,6 +339,11 @@ export default function ImageConverter() {
                   <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
                     {img.processing ? (
                       <span>Converting...</span>
+                    ) : img.error ? (
+                      <span style={{ color: "#ef4444" }}>
+                        {img.error}
+                        {isHeicFile(img.file) && <> · <a href="/heic-to-jpg" style={{ color: "var(--primary)" }}>Open HEIC to JPG</a></>}
+                      </span>
                     ) : (
                       <>
                         {formatSize(img.originalSize)} → {formatSize(img.convertedSize)}
@@ -323,7 +352,7 @@ export default function ImageConverter() {
                           color: img.convertedSize <= img.originalSize ? "#22c55e" : "#f59e0b",
                           fontWeight: 600,
                         }}>
-                          .{extMap[outputFormat]}
+                          .{img.outExt}
                         </span>
                       </>
                     )}

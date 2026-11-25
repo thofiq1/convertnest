@@ -165,7 +165,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "how-to-compress-pdf-to-100kb",
-    title: "How to Compress a PDF to 100KB (or 200KB, 500KB) — Free",
+    title: "PDF Won't Go Under 100KB? How to Shrink It (and When It Can't)",
     description:
       "Compress a PDF to 100KB, 200KB or 500KB for job, exam and government portals. Free, runs in your browser, and finds the best quality that fits.",
     date: "2026-11-24",
@@ -181,7 +181,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "how-to-compress-image-to-50kb",
-    title: "How to Compress a Photo to 50KB or 20KB for Online Forms",
+    title: "Getting a Photo Under 50KB or 20KB for Online Forms: A Practical Guide",
     description:
       "Reduce a photo, passport picture or signature to 50KB or 20KB for online application forms. Free, browser-based, and your photo never leaves your device.",
     date: "2026-11-24",

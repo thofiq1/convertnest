@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize, isDuplicateFile } from "@/utils/fileValidation";
+import { extFromMime, baseName, uniqueName, unsupportedFileMessage } from "@/lib/imageOutput";
 
 interface ConvertedSvg {
   file: File;
@@ -17,6 +18,10 @@ interface ConvertedSvg {
   naturalHeight: number;
   processing: boolean;
   error: string | null;
+  /** Extension matching the bytes in convertedBlob (set when the result is produced). */
+  outExt: string;
+  /** Output format setting used to produce this result. */
+  fmtUsed: string;
 }
 
 export default function SvgToPng() {
@@ -134,17 +139,17 @@ export default function SvgToPng() {
 
   const handleFiles = useCallback(async (files: FileList | null) => {
     if (!files) return;
-    const svgFiles = Array.from(files).filter((f) => {
-      const ext = f.name.toLowerCase().split(".").pop();
-      return ext === "svg" || f.type === "image/svg+xml";
-    });
+    const isSvg = (f: File) => f.name.toLowerCase().split(".").pop() === "svg" || f.type === "image/svg+xml";
+    const all = Array.from(files);
+    const svgFiles = all.filter(isSvg);
+    const rejected = all.filter((f) => !isSvg(f)).map((f) => unsupportedFileMessage(f, "an SVG file"));
 
     if (svgFiles.length === 0) {
-      setSizeWarnings(["No SVG files found. Please select .svg files."]);
+      setSizeWarnings([...rejected, "No SVG files found. Please select .svg files."]);
       return;
     }
 
-    const warnings: string[] = [];
+    const warnings: string[] = rejected;
     const accepted: File[] = [];
     for (const f of svgFiles) {
       const sizeCheck = validateFileSize(f, "image");
@@ -161,7 +166,7 @@ export default function SvgToPng() {
     if (unique.length < accepted.length) {
       warnings.push(`${accepted.length - unique.length} duplicate file(s) skipped.`);
     }
-    if (warnings.length > 0) setSizeWarnings(warnings);
+    setSizeWarnings(warnings);
 
     // Read SVG text for all files first
     const fileTexts: { file: File; text: string }[] = [];
@@ -182,6 +187,8 @@ export default function SvgToPng() {
       naturalHeight: 0,
       processing: true,
       error: null,
+      outExt: "",
+      fmtUsed: outputFormat,
     }));
 
     setImages((prev) => [...prev, ...newImages]);
@@ -193,7 +200,7 @@ export default function SvgToPng() {
           const updated = [...prev];
           const idx = updated.findIndex((r) => r.file === file);
           if (idx >= 0) {
-            updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, naturalWidth, naturalHeight, processing: false };
+            updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, naturalWidth, naturalHeight, processing: false, outExt: extFromMime(blob.type, "png"), fmtUsed: outputFormat };
           }
           return updated;
         });
@@ -202,7 +209,7 @@ export default function SvgToPng() {
           const updated = [...prev];
           const idx = updated.findIndex((r) => r.file === file);
           if (idx >= 0) {
-            updated[idx] = { ...updated[idx], processing: false, error: err instanceof Error ? err.message : "Conversion failed" };
+            updated[idx] = { ...updated[idx], processing: false, fmtUsed: outputFormat, error: err instanceof Error ? err.message : "Conversion failed" };
           }
           return updated;
         });
@@ -221,7 +228,7 @@ export default function SvgToPng() {
           const updated = [...prev];
           const idx = updated.findIndex((r) => r.file === img.file);
           if (idx >= 0) {
-            updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, naturalWidth, naturalHeight, processing: false };
+            updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, naturalWidth, naturalHeight, processing: false, outExt: extFromMime(blob.type, "png"), fmtUsed: outputFormat };
           }
           return updated;
         });
@@ -230,7 +237,7 @@ export default function SvgToPng() {
           const updated = [...prev];
           const idx = updated.findIndex((r) => r.file === img.file);
           if (idx >= 0) {
-            updated[idx] = { ...updated[idx], processing: false, error: err instanceof Error ? err.message : "Conversion failed" };
+            updated[idx] = { ...updated[idx], processing: false, fmtUsed: outputFormat, error: err instanceof Error ? err.message : "Conversion failed" };
           }
           return updated;
         });
@@ -247,13 +254,11 @@ export default function SvgToPng() {
     });
   };
 
-  const extMap: Record<string, string> = { png: "png", jpeg: "jpg" };
-
   const downloadSingle = (img: ConvertedSvg) => {
     if (!img.convertedUrl) return;
     const a = document.createElement("a");
     a.href = img.convertedUrl;
-    a.download = img.file.name.replace(/\.[^.]+$/, "") + `.${extMap[outputFormat]}`;
+    a.download = baseName(img.file.name) + `.${img.outExt}`;
     a.click();
   };
 
@@ -264,13 +269,14 @@ export default function SvgToPng() {
 
     const JSZip = (await import("jszip")).default;
     const zip = new JSZip();
+    const used = new Set<string>();
     completed.forEach((img) => {
-      zip.file(img.file.name.replace(/\.[^.]+$/, "") + `.${extMap[outputFormat]}`, img.convertedBlob!);
+      zip.file(uniqueName(baseName(img.file.name) + `.${img.outExt}`, used), img.convertedBlob!);
     });
     const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `svg-converted-${outputFormat}.zip`;
+    a.download = "svg-converted.zip";
     a.click();
   };
 
@@ -281,6 +287,7 @@ export default function SvgToPng() {
   };
 
   const completedCount = images.filter((img) => img.convertedBlob).length;
+  const formatStale = images.some((img) => !img.processing && img.fmtUsed !== outputFormat);
 
   return (
     <ErrorBoundary>
@@ -304,7 +311,7 @@ export default function SvgToPng() {
           {sizeWarnings.map((w, i) => <div key={i}>{w}</div>)}
         </div>
       )}
-      <div
+      <div data-dropzone="true"
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
@@ -397,6 +404,11 @@ export default function SvgToPng() {
               <button onClick={reconvertAll} className="btn-secondary" style={{ padding: "0.4rem 0.75rem", fontSize: "0.8rem" }}>
                 Re-convert with new settings
               </button>
+              {formatStale && (
+                <span style={{ fontSize: "0.8rem", color: "#b45309", alignSelf: "center" }}>
+                  Format changed — click Re-convert to apply it.
+                </span>
+              )}
               <button onClick={() => {
                 const input = document.createElement("input");
                 input.type = "file"; input.accept = ".svg,image/svg+xml"; input.multiple = true;

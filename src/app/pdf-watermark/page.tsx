@@ -13,6 +13,7 @@ export default function PDFWatermark() {
   const [processing, setProcessing] = useState(false);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [pageCount, setPageCount] = useState(0);
 
@@ -31,7 +32,7 @@ export default function PDFWatermark() {
     setResultUrl(null);
     try {
       const pdfjsLib = await import("pdfjs-dist");
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
       const arrayBuffer = await pdfFile.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       setPageCount(pdf.numPages);
@@ -109,7 +110,11 @@ export default function PDFWatermark() {
   const handleFile = useCallback((files: FileList | null) => {
     if (!files || files.length === 0) return;
     const f = files[0];
-    if (f.type !== "application/pdf") return;
+    if (f.type !== "application/pdf" && !/\.pdf$/i.test(f.name)) {
+      setFileError(`${f.name} isn't a PDF. Please choose a PDF file.`);
+      return;
+    }
+    setFileError(null);
     const validation = validateFileSize(f, "pdf");
     if (!validation.valid) { alert(validation.error); return; }
     if (validation.warning) alert(validation.warning);
@@ -133,24 +138,35 @@ export default function PDFWatermark() {
       const arrayBuffer = await file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer);
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      // Standard fonts only cover Latin (WinAnsi) characters; check before drawing anything
+      try {
+        font.encodeText(watermarkText);
+      } catch {
+        alert("Only basic Latin characters (A–Z, numbers and common punctuation) are supported in watermarks. Please remove other characters, such as non-Latin letters or emoji, and try again.");
+        setProcessing(false);
+        return;
+      }
       const pages = pdfDoc.getPages();
       const { r, g, b } = hexToRgb(color);
 
       for (const page of pages) {
         const { width, height } = page.getSize();
         const textWidth = font.widthOfTextAtSize(watermarkText, fontSize);
+        const textHeight = font.heightAtSize(fontSize, { descender: false });
 
         let x: number;
         let y: number;
         let rotation = degrees(0);
 
         if (position === "diagonal") {
-          x = width / 2 - textWidth / 2;
-          y = height / 2;
+          // pdf-lib rotates text around its start point, so offset it to keep the text's centre on the page centre
+          const a = Math.PI / 4;
+          x = width / 2 - (textWidth / 2) * Math.cos(a) + (textHeight / 2) * Math.sin(a);
+          y = height / 2 - (textWidth / 2) * Math.sin(a) - (textHeight / 2) * Math.cos(a);
           rotation = degrees(45);
         } else if (position === "center") {
           x = width / 2 - textWidth / 2;
-          y = height / 2;
+          y = height / 2 - textHeight / 2;
         } else if (position === "top") {
           x = width / 2 - textWidth / 2;
           y = height - fontSize - 20;
@@ -208,7 +224,7 @@ export default function PDFWatermark() {
       ]}
     >
       {!file ? (
-        <div
+        <div data-dropzone="true"
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files); }}
@@ -226,6 +242,7 @@ export default function PDFWatermark() {
           <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>💧</div>
           <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>Drop a PDF file here or click to browse</p>
           <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>Add a text watermark to every page</p>
+          {fileError && <p role="alert" style={{ color: "#dc2626", fontSize: "0.85rem", marginTop: "0.75rem", fontWeight: 600 }}>{fileError}</p>}
         </div>
       ) : (
         <div>

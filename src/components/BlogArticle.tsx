@@ -237,7 +237,7 @@ export function RelatedPosts({ currentSlug }: { currentSlug: string }) {
 
 export function ArticleWrapper({ children }: { children: React.ReactNode }) {
   return (
-    <main
+    <div
       style={{
         maxWidth: 720,
         margin: "0 auto",
@@ -245,7 +245,7 @@ export function ArticleWrapper({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
-    </main>
+    </div>
   );
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize, isDuplicateFile } from "@/utils/fileValidation";
@@ -18,11 +18,15 @@ export default function MergePDF() {
   const [dragOver, setDragOver] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  // Mirrors the files currently in the list so duplicate checks never see stale state
+  const filesRef = useRef<File[]>([]);
+  useEffect(() => { filesRef.current = entries.map((e) => e.file); }, [entries]);
 
   const generateThumbnail = async (file: File): Promise<{ url: string; pages: number }> => {
     try {
       const pdfjsLib = await import("pdfjs-dist");
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       const page = await pdf.getPage(1);
@@ -55,7 +59,10 @@ export default function MergePDF() {
 
   const handleFiles = useCallback(async (newFiles: FileList | null) => {
     if (!newFiles) return;
-    const pdfFiles = Array.from(newFiles).filter((f) => f.type === "application/pdf");
+    const all = Array.from(newFiles);
+    const isPdf = (f: File) => f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+    const pdfFiles = all.filter(isPdf);
+    const messages: string[] = all.filter((f) => !isPdf(f)).map((f) => `${f.name} isn't a PDF.`);
     setResultUrl(null);
 
     // Validate file sizes and filter duplicates
@@ -67,10 +74,21 @@ export default function MergePDF() {
       accepted.push(f);
     }
 
-    const newEntries: PdfFileEntry[] = accepted
-      .filter((f) => !isDuplicateFile(f, entries.map((e) => e.file)))
-      .map((file) => ({ file, thumbnailUrl: null, pageCount: 0 }));
-    setEntries((prev) => [...prev, ...newEntries]);
+    const known = [...filesRef.current];
+    const unique: File[] = [];
+    for (const f of accepted) {
+      if (isDuplicateFile(f, known)) { messages.push(`${f.name} is already added.`); continue; }
+      known.push(f);
+      unique.push(f);
+    }
+    filesRef.current = known;
+    setNotice(messages.length ? messages.join(" ") : null);
+    const newEntries: PdfFileEntry[] = unique.map((file) => ({ file, thumbnailUrl: null, pageCount: 0 }));
+    // Re-check against the latest state inside the updater as well
+    setEntries((prev) => [
+      ...prev,
+      ...newEntries.filter((e) => !isDuplicateFile(e.file, prev.map((p) => p.file))),
+    ]);
 
     const addedFiles = newEntries.map((e) => e.file);
     for (let i = 0; i < addedFiles.length; i++) {
@@ -170,7 +188,7 @@ export default function MergePDF() {
         { question: "Can I merge password-protected PDFs?", answer: "You need to remove the password first. Use FitTheFile's PDF Unlock tool, then merge the unprotected files." },
       ]}
     >
-      <div
+      <div data-dropzone="true"
         onDragOver={(e) => { e.preventDefault(); if (dragIndex === null) setDragOver(true); }}
         onDragLeave={() => { if (dragIndex === null) setDragOver(false); }}
         onDrop={(e) => { e.preventDefault(); if (dragIndex === null) { setDragOver(false); handleFiles(e.dataTransfer.files); } }}
@@ -188,6 +206,7 @@ export default function MergePDF() {
         <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📎</div>
         <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>Drop PDF files here or click to browse</p>
         <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.5rem" }}>Select two or more PDFs to combine</p>
+        {notice && <p role="alert" style={{ color: "#dc2626", fontSize: "0.85rem", marginTop: "0.75rem", fontWeight: 600 }}>{notice}</p>}
       </div>
 
       {entries.length > 0 && (

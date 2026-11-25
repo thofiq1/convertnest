@@ -29,7 +29,8 @@ export default function AdBanner({ slot, format = "auto" }: AdBannerProps) {
   }
 
   return (
-    <div ref={adRef} style={{ textAlign: "center", margin: "1rem 0" }}>
+    // Reserve the ad's height up front so the page doesn't jump when it loads.
+    <div ref={adRef} style={{ textAlign: "center", margin: "1rem 0", minHeight: format === "rectangle" ? 280 : format === "vertical" ? 600 : 100 }}>
       <ins
         className="adsbygoogle"
         style={{ display: "block" }}
