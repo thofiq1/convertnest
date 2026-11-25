@@ -210,6 +210,52 @@ export const blogPosts: BlogPost[] = [
     relatedTool: "compress-pdf-to-200kb",
     relatedToolName: "Compress PDF to 200KB",
   },
+  {
+    slug: "how-to-resize-signature-for-online-form",
+    title: "How to Resize a Signature to 10KB–20KB for Online Forms",
+    description:
+      "Make a clean JPG signature under 10KB or 20KB for exam, job and government forms. Free, from a phone photo, and your signature never leaves your device.",
+    date: "2026-11-24",
+    readTime: "4 min read",
+    keywords: [
+      "signature size 20kb",
+      "resize signature for online form",
+      "signature under 10kb",
+      "compress signature jpg",
+    ],
+    relatedTool: "compress-image-to-20kb",
+    relatedToolName: "Compress Image to 20KB",
+  },
+  {
+    slug: "smallpdf-alternative-free",
+    title: "Free Smallpdf Alternative: No Account, No Uploads",
+    description:
+      "An honest comparison of FitTheFile and Smallpdf: what each does better, free plan limits, and when to use which. FitTheFile runs in your browser with no account.",
+    date: "2026-11-24",
+    readTime: "4 min read",
+    keywords: [
+      "smallpdf alternative",
+      "free smallpdf alternative",
+      "smallpdf free limit",
+    ],
+    relatedTool: "compress-pdf-to-100kb",
+    relatedToolName: "Compress PDF to 100KB",
+  },
+  {
+    slug: "ilovepdf-alternative-free",
+    title: "Free iLovePDF Alternative That Keeps Files on Your Device",
+    description:
+      "FitTheFile vs iLovePDF: an honest look at privacy, exact-size compression, price and features, and when iLovePDF is still the better choice.",
+    date: "2026-11-24",
+    readTime: "3 min read",
+    keywords: [
+      "ilovepdf alternative",
+      "free ilovepdf alternative",
+      "pdf tools without upload",
+    ],
+    relatedTool: "compress-image-to-50kb",
+    relatedToolName: "Compress Image to 50KB",
+  },
 ];
 
 export function getBlogPost(slug: string): BlogPost | undefined {

@@ -99,6 +99,7 @@ export function ArticleHeader({
             year: "numeric",
             month: "long",
             day: "numeric",
+            timeZone: "UTC",
           })}
         </time>
         <span>{readTime}</span>

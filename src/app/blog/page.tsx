@@ -94,6 +94,7 @@ export default function BlogPage() {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
+            timeZone: "UTC",
                   })}
                 </time>
                 <span>{post.readTime}</span>
