@@ -203,7 +203,7 @@ export const examPages: ExamPage[] = [
       },
     ],
     related: ["image-crop", "heic-to-jpg", "image-resizer"],
-    guides: ["how-to-compress-image-to-50kb"],
+    guides: ["india-visa-photo-size-requirements", "how-to-compress-image-to-50kb"],
   },
   {
     slug: "pan-card-photo-signature-resizer",
@@ -265,7 +265,7 @@ export const examPages: ExamPage[] = [
       },
     ],
     related: ["image-crop", "image-resizer", "heic-to-jpg"],
-    guides: ["how-to-resize-signature-for-online-form", "how-to-compress-image-to-50kb"],
+    guides: ["pan-card-photo-signature-size", "how-to-resize-signature-for-online-form"],
   },
 ];
 

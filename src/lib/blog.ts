@@ -211,6 +211,38 @@ export const blogPosts: BlogPost[] = [
     relatedToolName: "Compress PDF to 200KB",
   },
   {
+    slug: "pan-card-photo-signature-size",
+    title: "PAN Card Photo and Signature Size in Pixels, KB and DPI",
+    description:
+      "The official Protean (NSDL) PAN card photo and signature sizes in cm, pixels, DPI and KB, and a free way to make both files in your browser.",
+    date: "2026-11-25",
+    readTime: "3 min read",
+    keywords: [
+      "pan card photo size",
+      "pan card signature size",
+      "pan card photo size in pixels",
+      "nsdl pan photo size kb",
+    ],
+    relatedTool: "pan-card-photo-signature-resizer",
+    relatedToolName: "PAN Card Photo & Signature Resizer",
+  },
+  {
+    slug: "india-visa-photo-size-requirements",
+    title: "India Visa Photo Rejected? Size Rules and How to Fix It",
+    description:
+      "The four checks the Indian online visa form runs on your photo (JPEG, 10–300 KB, square, 350–1000 px) and a free way to fix each one.",
+    date: "2026-11-25",
+    readTime: "3 min read",
+    keywords: [
+      "india visa photo size",
+      "indian visa photo rejected",
+      "india e-visa photo requirements",
+      "india visa photo 350x350",
+    ],
+    relatedTool: "india-visa-photo-resizer",
+    relatedToolName: "India Visa Photo Resizer",
+  },
+  {
     slug: "how-to-resize-signature-for-online-form",
     title: "How to Resize a Signature to 10KB–20KB for Online Forms",
     description:
