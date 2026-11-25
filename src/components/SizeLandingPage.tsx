@@ -113,6 +113,18 @@ export default function SizeLandingPage({ kb }: { kb: number }) {
             the exact pixel size and KB range for each item in one step.
           </p>
         )}
+        {kb <= 20 && (
+          <p style={{ marginTop: "0.75rem" }}>
+            Applying for a PAN card? The <Link href="/pan-card-photo-signature-resizer" style={{ color: "var(--primary)", textDecoration: "underline" }}>PAN card photo and signature resizer</Link> sets
+            the Protean (NSDL) size, 200 DPI and KB limit in one step.
+          </p>
+        )}
+        {kb === 300 && (
+          <p style={{ marginTop: "0.75rem" }}>
+            Uploading an India visa photo? The <Link href="/india-visa-photo-resizer" style={{ color: "var(--primary)", textDecoration: "underline" }}>India visa photo resizer</Link> makes
+            a square JPEG between 10 KB and 300 KB.
+          </p>
+        )}
         {kb >= 200 && kb <= 300 && (
           <p style={{ marginTop: "0.75rem" }}>
             Uploading a US visa photo? The <Link href="/us-visa-photo-resizer" style={{ color: "var(--primary)", textDecoration: "underline" }}>US visa photo resizer</Link> makes

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { sizePages } from "@/lib/sizePages";
-import { type SizePreset, loadImageFile, drawExact, bestQualityUnder, padJpegTo, cleanSource, frameWarnings, looksTruncated } from "@/lib/exactSize";
+import { type SizePreset, loadImageFile, drawExact, bestQualityUnder, padJpegTo, cleanSource, frameWarnings, looksTruncated, setJpegDpi } from "@/lib/exactSize";
 
 interface Result {
   url: string;
@@ -156,6 +156,7 @@ export default function TargetSizeCompressor({
         const warnings = [...damaged, ...frameWarnings(img, exactDims.w, exactDims.h, exactDims.fit)];
         const r = await bestQualityUnder(canvas, target);
         let blob = r.blob;
+        if (preset?.dpi) blob = await setJpegDpi(blob, preset.dpi);
         let padded = false;
         // Meet a portal's minimum under either KB definition (1000 or 1024 bytes).
         if (exactDims.minKb && blob.size < exactDims.minKb * 1024) {

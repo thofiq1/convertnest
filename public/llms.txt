@@ -38,6 +38,8 @@
 ## Exam and visa upload tools
 - [US Visa Photo Resizer — 600×600, Under 240KB (DS-160)](https://fitthefile.com/us-visa-photo-resizer): Make a square US visa photo at 600×600 pixels and under 240KB for the DS-160 and other uploads. Free, private, done in your browser. Requirements cited from: https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/photos/digital-image-requirements.html
 - [IBPS Photo & Signature Resizer — 200×230, 140×60 px](https://fitthefile.com/ibps-photo-signature-resizer): Resize your photo to 200×230 px (20–50KB), signature to 140×60 px (10–20KB), thumb and declaration for IBPS and bank exam forms. Free, private. Requirements cited from: https://punjabandsind.bank.in/system/uploads/document/2150_2024101518104187881.pdf
+- [India Visa Photo Resizer — Square JPEG, 10KB to 300KB](https://fitthefile.com/india-visa-photo-resizer): Make a square India visa photo as a JPEG between 350×350 and 1000×1000 pixels and 10–300KB for the online visa form. Free, private, in your browser. Requirements cited from: https://indianvisaonline.gov.in/visa/VSS_IMAGE.pdf
+- [PAN Card Photo & Signature Resizer — 200 DPI, 20KB / 10KB](https://fitthefile.com/pan-card-photo-signature-resizer): Resize your PAN card photo to 3.5 × 2.5 cm (under 20KB) and signature to 2 × 4.5 cm (under 10KB) at 200 DPI for the Protean (NSDL) online form. Free, private. Requirements cited from: https://tin.tin.proteantech.in/pan/InstructionDSC.html
 
 ## Key facts
 - All processing is client-side in the browser; files are never uploaded.
