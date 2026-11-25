@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { sizePages } from "@/lib/sizePages";
-import { type SizePreset, loadImageFile, drawExact, bestQualityUnder, padJpegTo, cleanSource, frameWarnings } from "@/lib/exactSize";
+import { type SizePreset, loadImageFile, drawExact, bestQualityUnder, padJpegTo, cleanSource, frameWarnings, looksTruncated } from "@/lib/exactSize";
 
 interface Result {
   url: string;
@@ -71,8 +71,9 @@ async function compressToTarget(file: File, targetBytes: number) {
     if (found && found.q >= MIN_GOOD_QUALITY) {
       return { blob: found.blob, w, h, q: found.q, reached: true };
     }
-    // Remember the largest result that fit, in case we can't keep quality up.
-    if (found && !lowQuality) lowQuality = { blob: found.blob, w, h, q: found.q };
+    // Remember a fallback in case we can't keep quality up: prefer the largest
+    // size whose quality is still tolerable, otherwise the best quality seen.
+    if (found && (!lowQuality || lowQuality.q < 0.3)) lowQuality = { blob: found.blob, w, h, q: found.q };
     const nw = Math.round(w * 0.8);
     const nh = Math.round(h * 0.8);
     if (Math.min(nw, nh) < MIN_SIDE) {
@@ -116,6 +117,7 @@ export default function TargetSizeCompressor({
     : exactW >= 16 && exactH >= 16 && exactW <= 8000 && exactH <= 8000
       ? { w: exactW, h: exactH, fit: "cover" as const, minKb: undefined }
       : null;
+  const dimsInvalid = !preset && (dimW.trim() !== "" || dimH.trim() !== "") && !exactDims;
   const doClean = Boolean(preset && preset.fit === "contain" && cleanUp);
   const sig = `${targetKb}|${exactDims ? `${exactDims.w}x${exactDims.h}` : ""}|${presetId}|${doClean}`;
   const [file, setFile] = useState<File | null>(null);
@@ -131,11 +133,18 @@ export default function TargetSizeCompressor({
     if (result) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [result]);
 
+  // Each run gets an id; only the newest run may publish a result, so a file
+  // dropped mid-run can never be paired with the previous file's output.
+  const runIdRef = useRef(0);
   const run = async (f: File, kb: number) => {
+    const id = ++runIdRef.current;
+    const live = () => runIdRef.current === id;
+    const publish = (r: Result) => { if (live()) setResult(r); else URL.revokeObjectURL(r.url); };
     setBusy(true);
     setError(null);
     setResult(null);
     try {
+      const damaged = (await looksTruncated(f)) ? ["This file looks incomplete (it may be a damaged or partial download), so part of the picture may be missing. Check the result before uploading it."] : [];
       // Use 1KB = 1000 bytes so the file fits whether a portal counts
       // KB as 1000 or 1024 bytes.
       const target = kb * 1000;
@@ -144,7 +153,7 @@ export default function TargetSizeCompressor({
         const source = doClean ? cleanSource(img, { w: exactDims.w, h: exactDims.h }) : img;
         const cleaned = doClean;
         const canvas = drawExact(source, exactDims.w, exactDims.h, exactDims.fit);
-        const warnings = frameWarnings(img, exactDims.w, exactDims.h, exactDims.fit);
+        const warnings = [...damaged, ...frameWarnings(img, exactDims.w, exactDims.h, exactDims.fit)];
         const r = await bestQualityUnder(canvas, target);
         let blob = r.blob;
         let padded = false;
@@ -153,19 +162,20 @@ export default function TargetSizeCompressor({
           blob = await padJpegTo(blob, exactDims.minKb * 1024 + 256);
           padded = true;
         }
-        setResult({ url: URL.createObjectURL(blob), size: blob.size, width: exactDims.w, height: exactDims.h, quality: r.q, reachedTarget: r.reached, targetKb: kb, minKb: exactDims.minKb, padded, label: preset?.id, sig, warnings, cleaned });
-      } else if (f.size <= target && f.type === "image/jpeg") {
+        publish({ url: URL.createObjectURL(blob), size: blob.size, width: exactDims.w, height: exactDims.h, quality: r.q, reachedTarget: r.reached, targetKb: kb, minKb: exactDims.minKb, padded, label: preset?.id, sig, warnings, cleaned });
+      } else if (f.size <= target && f.type === "image/jpeg" && damaged.length === 0) {
         const img = await loadImage(f);
-        setResult({ url: URL.createObjectURL(f), size: f.size, width: img.naturalWidth, height: img.naturalHeight, quality: 1, reachedTarget: true, targetKb: kb, sig });
+        publish({ url: URL.createObjectURL(f), size: f.size, width: img.naturalWidth, height: img.naturalHeight, quality: 1, reachedTarget: true, targetKb: kb, sig });
       } else {
         const r = await compressToTarget(f, target);
-        setResult({ url: URL.createObjectURL(r.blob), size: r.blob.size, width: r.w, height: r.h, quality: r.q, reachedTarget: r.reached, targetKb: kb, sig });
+        publish({ url: URL.createObjectURL(r.blob), size: r.blob.size, width: r.w, height: r.h, quality: r.q, reachedTarget: r.reached, targetKb: kb, sig, warnings: damaged });
       }
     } catch (e) {
+      if (!live()) return;
       const heic = /\.hei[cf]$/i.test(f.name) || /hei[cf]/i.test(f.type);
       setError(heic ? "iPhone HEIC photos can't be read here. Convert it with HEIC to JPG first, then compress." : e instanceof Error ? e.message : "Something went wrong.");
     }
-    setBusy(false);
+    if (live()) setBusy(false);
   };
 
   const onFiles = (files: FileList | null) => {
@@ -246,6 +256,11 @@ export default function TargetSizeCompressor({
             <input id="exact-h" type="number" inputMode="numeric" placeholder="Height" aria-label="Exact height in pixels" value={dimH} onChange={(e) => setDimH(e.target.value)} style={{ width: 90 }} />
             <span style={{ color: "var(--muted)" }}>px</span>
           </div>
+          {dimsInvalid && (
+            <p role="alert" style={{ color: "var(--danger)", fontSize: "0.85rem", margin: "-0.5rem 0 1rem" }}>
+              Exact size needs both width and height, each between 16 and 8000 px. It is being ignored for now.
+            </p>
+          )}
         </>
       )}
 

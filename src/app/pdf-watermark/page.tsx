@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { visualSize, toPageSpace } from "@/lib/pdfPlace";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize } from "@/utils/fileValidation";
@@ -51,10 +52,12 @@ export default function PDFWatermark() {
       console.error("Error loading PDF:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is password-protected. Please remove the password first.");
+        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error loading PDF. Please try another file.");
       }
+      // Go back to the upload box instead of leaving an empty editor behind.
+      setFile(null);
     }
     setLoading(false);
   }, []);
@@ -150,20 +153,20 @@ export default function PDFWatermark() {
       const { r, g, b } = hexToRgb(color);
 
       for (const page of pages) {
-        const { width, height } = page.getSize();
+        const { width, height } = visualSize(page);
         const textWidth = font.widthOfTextAtSize(watermarkText, fontSize);
         const textHeight = font.heightAtSize(fontSize, { descender: false });
 
         let x: number;
         let y: number;
-        let rotation = degrees(0);
+        let angle = 0;
 
         if (position === "diagonal") {
           // pdf-lib rotates text around its start point, so offset it to keep the text's centre on the page centre
           const a = Math.PI / 4;
           x = width / 2 - (textWidth / 2) * Math.cos(a) + (textHeight / 2) * Math.sin(a);
           y = height / 2 - (textWidth / 2) * Math.sin(a) - (textHeight / 2) * Math.cos(a);
-          rotation = degrees(45);
+          angle = 45;
         } else if (position === "center") {
           x = width / 2 - textWidth / 2;
           y = height / 2 - textHeight / 2;
@@ -176,14 +179,15 @@ export default function PDFWatermark() {
           y = 20;
         }
 
+        const at = toPageSpace(page, x, y, angle);
         page.drawText(watermarkText, {
-          x,
-          y,
+          x: at.x,
+          y: at.y,
           size: fontSize,
           font,
           color: rgb(r, g, b),
           opacity: opacity / 100,
-          rotate: rotation,
+          rotate: degrees(at.angle),
         });
       }
 
@@ -194,7 +198,7 @@ export default function PDFWatermark() {
       console.error("Watermark error:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is password-protected. Please remove the password first.");
+        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error adding watermark. Please try again.");
       }

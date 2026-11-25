@@ -67,3 +67,41 @@ export function decodeErrorMessage(f: File): string {
   if (isHeicFile(f)) return HEIC_HINT;
   return `Couldn't open ${f.name} — it may be damaged or in a format your browser can't read`;
 }
+
+/** Sniff the real format from the first bytes, ignoring the file extension. */
+export function sniffImageType(b: Uint8Array): "jpeg" | "png" | "other" {
+  if (b[0] === 0xff && b[1] === 0xd8) return "jpeg";
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "png";
+  return "other";
+}
+
+/** EXIF orientation (1–8) of a JPEG, or 1 when absent/unreadable. */
+export function jpegOrientation(b: Uint8Array): number {
+  try {
+    const v = new DataView(b.buffer, b.byteOffset, b.byteLength);
+    if (v.getUint16(0) !== 0xffd8) return 1;
+    let off = 2;
+    while (off + 4 < v.byteLength) {
+      const marker = v.getUint16(off);
+      if ((marker & 0xff00) !== 0xff00) return 1;
+      const len = v.getUint16(off + 2);
+      if (marker === 0xffe1 && v.getUint32(off + 4) === 0x45786966) {
+        const tiff = off + 10;
+        const le = v.getUint16(tiff) === 0x4949;
+        const ifd = tiff + v.getUint32(tiff + 4, le);
+        const n = v.getUint16(ifd, le);
+        for (let i = 0; i < n; i++) {
+          const e = ifd + 2 + i * 12;
+          if (v.getUint16(e, le) === 0x0112) {
+            const o = v.getUint16(e + 8, le);
+            return o >= 1 && o <= 8 ? o : 1;
+          }
+        }
+        return 1;
+      }
+      if (marker === 0xffda) return 1;
+      off += 2 + len;
+    }
+  } catch { /* unreadable */ }
+  return 1;
+}

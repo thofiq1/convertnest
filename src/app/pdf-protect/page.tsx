@@ -14,7 +14,7 @@ export default function PDFProtect() {
     <ToolLayout
       slug="pdf-protect"
       title="Protect PDF with Password"
-      description="Add password protection to your PDF files. Set user and owner passwords with permission controls. Free online tool."
+      description="PDF password protection is temporarily unavailable on FitTheFile. See the note below for what you can use instead."
     >
       <div
         role="status"

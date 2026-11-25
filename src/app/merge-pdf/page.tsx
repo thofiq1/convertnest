@@ -128,19 +128,29 @@ export default function MergePDF() {
   };
   const handleDragEnd = () => { setDragIndex(null); setDragOverIndex(null); };
 
+  const mergingRef = useRef(false);
   const merge = async () => {
-    if (entries.length < 2) return;
+    if (entries.length < 2 || mergingRef.current) return;
+    mergingRef.current = true;
     setProcessing(true);
     setResultUrl(null);
+    let currentName = "";
     try {
       const { PDFDocument } = await import("pdf-lib");
+      const { collectFields, attachForm } = await import("@/lib/mergeForms");
       const mergedPdf = await PDFDocument.create();
+      const forms = [];
       for (const entry of entries) {
+        currentName = entry.file.name;
         const arrayBuffer = await entry.file.arrayBuffer();
         const pdf = await PDFDocument.load(arrayBuffer);
         const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
         copiedPages.forEach((page) => mergedPdf.addPage(page));
+        // Keep fillable form fields editable in the merged file (best effort).
+        try { forms.push(collectFields(mergedPdf, pdf, copiedPages)); } catch { forms.push(null); }
       }
+      currentName = "";
+      try { attachForm(mergedPdf, forms); } catch { /* forms stay visible but not editable */ }
       const mergedBytes = await mergedPdf.save();
       const blob = new Blob([mergedBytes as BlobPart], { type: "application/pdf" });
       setResultUrl(URL.createObjectURL(blob));
@@ -148,11 +158,12 @@ export default function MergePDF() {
       console.error("Merge error:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("One or more PDFs are password-protected. Please remove passwords before merging.");
+        alert(`${currentName || "One of these PDFs"} is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then merge.`);
       } else {
-        alert("Error merging PDFs. Please check your files and try again.");
+        alert(currentName ? `Couldn't read ${currentName} — it may be damaged or not a real PDF. Remove it and try again.` : "Error merging PDFs. Please check your files and try again.");
       }
     }
+    mergingRef.current = false;
     setProcessing(false);
   };
 
@@ -185,6 +196,7 @@ export default function MergePDF() {
       faqs={[
         { question: "Can I reorder files before merging?", answer: "Yes. Drag and drop your files into any order before merging. Files are combined from top to bottom." },
         { question: "Will merging reduce the quality of my PDFs?", answer: "No. Merging copies original pages without recompression, so quality stays identical to the source files." },
+        { question: "Do fillable form fields survive merging?", answer: "Yes. Fillable fields and the values already typed into them are kept, so the merged PDF can still be filled in." },
         { question: "Can I merge password-protected PDFs?", answer: "You need to remove the password first. Use FitTheFile's PDF Unlock tool, then merge the unprotected files." },
       ]}
     >
@@ -214,7 +226,7 @@ export default function MergePDF() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
             <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
               {entries.length} file{entries.length !== 1 ? "s" : ""}
-              {totalPages > 0 && ` · ${totalPages} pages`}
+              {totalPages > 0 && ` · ${totalPages} page${totalPages === 1 ? "" : "s"}`}
               {" · "}{formatSize(totalSize)} total
             </p>
             <div style={{ display: "flex", gap: "0.5rem" }}>

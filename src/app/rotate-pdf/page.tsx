@@ -50,10 +50,12 @@ export default function RotatePDF() {
       console.error("Error loading PDF:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is password-protected. Please remove the password first.");
+        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error loading PDF. Please try another file.");
       }
+      // Go back to the upload box instead of leaving an empty editor behind.
+      setFile(null);
     }
     setLoading(false);
   }, []);
@@ -128,7 +130,7 @@ export default function RotatePDF() {
       console.error("Rotation error:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is password-protected. Please remove the password first.");
+        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error rotating PDF. Please try again.");
       }

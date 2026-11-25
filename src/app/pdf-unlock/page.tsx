@@ -117,7 +117,9 @@ function PdfUnlockTool() {
 
       for (let i = 1; i <= numPages; i++) {
         const page = await pdfJsDoc.getPage(i);
-        const viewport = page.getViewport({ scale: 2 });
+        // Cap each page at ~16 megapixels so very large pages still render.
+        const base = page.getViewport({ scale: 1 });
+        const viewport = page.getViewport({ scale: Math.min(2, Math.sqrt(16_000_000 / Math.max(1, base.width * base.height))) });
 
         const canvas = document.createElement("canvas");
         canvas.width = viewport.width;

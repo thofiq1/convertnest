@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { parsePageRange } from "@/lib/pageRange";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize } from "@/utils/fileValidation";
@@ -84,22 +85,11 @@ export default function PDFtoJPG() {
     });
   }, []);
 
-  const parseRange = (input: string, total: number): number[] => {
-    const result = new Set<number>();
-    input.split(",").map((s) => s.trim()).filter(Boolean).forEach((part) => {
-      if (part.includes("-")) {
-        const [a, b] = part.split("-").map((s) => parseInt(s.trim()));
-        if (!isNaN(a) && !isNaN(b)) for (let i = Math.max(1, a); i <= Math.min(total, b); i++) result.add(i);
-      } else {
-        const n = parseInt(part);
-        if (!isNaN(n) && n >= 1 && n <= total) result.add(n);
-      }
-    });
-    return Array.from(result).sort((a, b) => a - b);
-  };
 
+  const convertingRef = useRef(false);
   const convert = async () => {
-    if (!file) return;
+    if (!file || convertingRef.current) return;
+    convertingRef.current = true;
     setProcessing(true);
     setConvertedPages([]);
     try {
@@ -108,16 +98,23 @@ export default function PDFtoJPG() {
       const ab = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
 
-      const pageNums = rangeMode === "all"
-        ? Array.from({ length: pdf.numPages }, (_, i) => i + 1)
-        : parseRange(rangeInput, pdf.numPages);
+      const parsed = rangeMode === "all" ? null : parsePageRange(rangeInput, pdf.numPages);
+      if (parsed?.error) {
+        alert(parsed.error);
+        convertingRef.current = false;
+        setProcessing(false);
+        return;
+      }
+      const pageNums = parsed ? parsed.pages : Array.from({ length: pdf.numPages }, (_, i) => i + 1);
 
       if (pageNums.length === 0) {
         alert("No valid pages selected.");
+        convertingRef.current = false;
         setProcessing(false);
         return;
       }
       if (pageNums.length > 300 && !window.confirm(`This will convert ${pageNums.length} pages, which can take a long time and use a lot of memory. Continue? (Tip: pick a page range instead.)`)) {
+        convertingRef.current = false;
         setProcessing(false);
         return;
       }
@@ -129,7 +126,9 @@ export default function PDFtoJPG() {
       for (const pageNum of pageNums) {
         setProgress(`Converting page ${pageNum} of ${pdf.numPages}...`);
         const page = await pdf.getPage(pageNum);
-        const viewport = page.getViewport({ scale });
+        // Cap each page at ~16 megapixels so very large pages still convert.
+        const base = page.getViewport({ scale: 1 });
+        const viewport = page.getViewport({ scale: Math.min(scale, Math.sqrt(16_000_000 / Math.max(1, base.width * base.height))) });
         const canvas = document.createElement("canvas");
         canvas.width = viewport.width;
         canvas.height = viewport.height;
@@ -160,7 +159,8 @@ export default function PDFtoJPG() {
         alert("Error converting PDF. Please try again.");
       }
     }
-    setProcessing(false);
+    convertingRef.current = false;
+        setProcessing(false);
   };
 
   const downloadAll = async () => {

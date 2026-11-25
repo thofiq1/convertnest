@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { visualSize, toPageSpace } from "@/lib/pdfPlace";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize } from "@/utils/fileValidation";
@@ -70,10 +71,12 @@ export default function PDFPageNumbers() {
       console.error("Error loading PDF:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is password-protected. Please remove the password first.");
+        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error loading PDF. Please try another file.");
       }
+      // Go back to the upload box instead of leaving an empty editor behind.
+      setFile(null);
     }
     setLoading(false);
   }, []);
@@ -140,12 +143,17 @@ export default function PDFPageNumbers() {
     setProcessing(true);
     setResultUrl(null);
     try {
-      const { PDFDocument, rgb, StandardFonts } = await import("pdf-lib");
+      const { PDFDocument, rgb, degrees, StandardFonts } = await import("pdf-lib");
       const arrayBuffer = await file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer);
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const pdfPages = pdfDoc.getPages();
       const totalPages = skipFirstPage ? pdfPages.length - 1 : pdfPages.length;
+      if (totalPages < 1) {
+        alert("This PDF has only one page, so skipping the first page leaves nothing to number. Untick \"Skip first page\" and try again.");
+        setProcessing(false);
+        return;
+      }
 
       for (let i = 0; i < pdfPages.length; i++) {
         if (skipFirstPage && i === 0) continue;
@@ -153,16 +161,18 @@ export default function PDFPageNumbers() {
         const pageIndex = skipFirstPage ? i - 1 : i;
         const text = formatPageNumber(pageIndex, totalPages);
         const page = pdfPages[i];
-        const { width, height } = page.getSize();
+        const { width, height } = visualSize(page);
         const textWidth = font.widthOfTextAtSize(text, fontSize);
-        const { x, y } = getPositionCoords(numberPosition, width, height, textWidth);
+        const pos = getPositionCoords(numberPosition, width, height, textWidth);
+        const at = toPageSpace(page, pos.x, pos.y);
 
         page.drawText(text, {
-          x,
-          y,
+          x: at.x,
+          y: at.y,
           size: fontSize,
           font,
           color: rgb(0, 0, 0),
+          rotate: degrees(at.angle),
         });
       }
 
@@ -173,7 +183,7 @@ export default function PDFPageNumbers() {
       console.error("Page number error:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is password-protected. Please remove the password first.");
+        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error adding page numbers. Please try again.");
       }

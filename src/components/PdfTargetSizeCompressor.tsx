@@ -54,7 +54,20 @@ async function compressPdfToTarget(
   onProgress: (msg: string) => void
 ): Promise<{ data: Uint8Array; dpi: number; quality: number; pages: number; reached: boolean }> {
   const pdfjsLib = await loadPdfjs();
-  const src = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+  const task = pdfjsLib.getDocument({ data: bytes.slice() });
+  // Always shut the pdf.js worker down afterwards; otherwise each run leaks one.
+  try {
+    return await compressLoaded(await task.promise, targetBytes, onProgress);
+  } finally {
+    await task.destroy().catch(() => {});
+  }
+}
+
+async function compressLoaded(
+  src: Awaited<ReturnType<Awaited<ReturnType<typeof loadPdfjs>>["getDocument"]>["promise"]>,
+  targetBytes: number,
+  onProgress: (msg: string) => void
+): Promise<{ data: Uint8Array; dpi: number; quality: number; pages: number; reached: boolean }> {
   const pages = src.numPages;
   if (pages > MAX_PAGES) throw new Error(`This PDF has ${pages} pages. Please split it first (max ${MAX_PAGES} pages for exact-size compression).`);
 
@@ -67,12 +80,22 @@ async function compressPdfToTarget(
   let fallback: { data: Uint8Array; dpi: number; quality: number } | null = null;
   let smallest: { data: Uint8Array; dpi: number; quality: number } | null = null;
 
-  for (const dpi of DPI_LADDER) {
+  // Every page is held in memory while we search for the best quality, so cap the
+  // total pixels (lower on phones) and skip resolutions that would exceed it.
+  const lowMem = typeof navigator !== "undefined" && (((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8) <= 4 || /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent));
+  const pixelBudget = lowMem ? 45_000_000 : 110_000_000;
+  const pixelsAt = (dpi: number) => sizes.reduce((n, s) => n + Math.min(16_000_000, s.w * s.h * (dpi / 72) ** 2), 0);
+  const ladder = DPI_LADDER.filter((dpi, i) => pixelsAt(dpi) <= pixelBudget || i === DPI_LADDER.length - 1);
+
+  for (const dpi of ladder) {
     onProgress(`Rendering ${pages} page${pages > 1 ? "s" : ""} at ${dpi} DPI…`);
     const canvases: HTMLCanvasElement[] = [];
     for (let i = 1; i <= pages; i++) {
       const page = await src.getPage(i);
-      const vp = page.getViewport({ scale: dpi / 72 });
+      // Keep each page under ~16 megapixels so very large pages (posters, plans) still encode.
+      const base = sizes[i - 1];
+      const scale = Math.min(dpi / 72, Math.sqrt(16_000_000 / Math.max(1, base.w * base.h)));
+      const vp = page.getViewport({ scale });
       const c = document.createElement("canvas");
       c.width = Math.ceil(vp.width);
       c.height = Math.ceil(vp.height);
@@ -127,7 +150,14 @@ export default function PdfTargetSizeCompressor({ defaultKb }: { defaultKb: numb
     if (outcome) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [outcome]);
 
+  // Only the newest run may publish, so a PDF dropped mid-run can't receive
+  // the previous file's output.
+  const runIdRef = useRef(0);
   const run = async (f: File, kb: number) => {
+    const id = ++runIdRef.current;
+    const live = () => runIdRef.current === id;
+    const publish = (o: Outcome) => { if (live()) setOutcome(o); else URL.revokeObjectURL(o.url); };
+    const report = (m: string) => { if (live()) setProgress(m); };
     setBusy(true); setError(null); setOutcome(null); setProgress("Reading PDF…");
     try {
       const target = kb * 1000; // fits whether a portal counts 1KB as 1000 or 1024 bytes
@@ -135,17 +165,33 @@ export default function PdfTargetSizeCompressor({ defaultKb }: { defaultKb: numb
       const head = new TextDecoder().decode(bytes.slice(0, 1024));
       if (!head.includes("%PDF-")) throw new Error("This file isn't a valid PDF. Please choose a PDF document.");
       if (f.size <= target) {
-        setOutcome({ url: URL.createObjectURL(f), size: f.size, pages: 0, dpi: null, quality: null, reachedTarget: true, keptOriginal: true, targetKb: kb });
+        // Open it once so a damaged or password-protected PDF isn't passed through as "done".
+        const pdfjsLib = await loadPdfjs();
+        try {
+          const task = pdfjsLib.getDocument({ data: bytes.slice() });
+          const probe = await task.promise;
+          await probe.getPage(1);
+          await task.destroy();
+        } catch (e) {
+          const m = e instanceof Error ? `${e.name} ${e.message}` : "";
+          throw new Error(/password/i.test(m) ? "password" : "This PDF looks damaged or incomplete and can't be opened. Please try another copy of the file.");
+        }
+        publish({ url: URL.createObjectURL(f), size: f.size, pages: 0, dpi: null, quality: null, reachedTarget: true, keptOriginal: true, targetKb: kb });
       } else {
-        const r = await compressPdfToTarget(bytes, target, setProgress);
+        const r = await compressPdfToTarget(bytes, target, report);
         const blob = new Blob([r.data as BlobPart], { type: "application/pdf" });
-        setOutcome({ url: URL.createObjectURL(blob), size: blob.size, pages: r.pages, dpi: r.dpi, quality: r.quality, reachedTarget: r.reached, keptOriginal: false, targetKb: kb });
+        if (!r.reached && blob.size >= f.size) {
+          // Text-only PDFs can get bigger when rasterised. Never hand back a larger file.
+          publish({ url: URL.createObjectURL(f), size: f.size, pages: r.pages, dpi: null, quality: null, reachedTarget: false, keptOriginal: true, targetKb: kb });
+        } else publish({ url: URL.createObjectURL(blob), size: blob.size, pages: r.pages, dpi: r.dpi, quality: r.quality, reachedTarget: r.reached, keptOriginal: false, targetKb: kb });
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "";
-      setError(/password/i.test(msg) ? "This PDF is password-protected. Unlock it first with our PDF Unlock tool." : msg || "Something went wrong reading this PDF.");
+      if (!live()) return;
+      const msg = e instanceof Error ? `${e.message}` : "";
+      const name = e instanceof Error ? e.name : "";
+      setError(/password/i.test(msg + name) ? "This PDF is password-protected. Unlock it first with our PDF Unlock tool." : msg || "Something went wrong reading this PDF.");
     }
-    setBusy(false); setProgress("");
+    if (live()) { setBusy(false); setProgress(""); }
   };
 
   const onFiles = (files: FileList | null) => {
@@ -187,7 +233,9 @@ export default function PdfTargetSizeCompressor({ defaultKb }: { defaultKb: numb
       {outcome && file && (
         <div ref={resultRef} className="scale-in" style={{ marginTop: "1.5rem", padding: "1.5rem", border: "1px solid var(--card-border)", borderRadius: "1rem", background: "var(--card-bg)" }}>
           <p style={{ fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.5rem", color: outcome.reachedTarget ? "var(--success)" : "var(--warning)" }}>
-            {outcome.keptOriginal
+            {outcome.keptOriginal && !outcome.reachedTarget
+              ? `Couldn't reach ${outcome.targetKb} KB — your original (${fmt(outcome.size)}) is already the smallest version`
+              : outcome.keptOriginal
               ? `✓ Already under ${outcome.targetKb} KB (${fmt(outcome.size)}) — no changes needed`
               : outcome.reachedTarget
                 ? `✓ ${fmt(outcome.size)} — under ${outcome.targetKb} KB`
@@ -201,6 +249,11 @@ export default function PdfTargetSizeCompressor({ defaultKb }: { defaultKb: numb
             style={{ display: "inline-block", marginTop: "0.9rem", background: "#15803d", color: "white", padding: "0.7rem 1.5rem", borderRadius: "0.625rem", fontWeight: 600, textDecoration: "none" }}>
             Download PDF
           </a>
+          {outcome.keptOriginal && !outcome.reachedTarget && (
+            <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
+              This PDF is mostly text, which is already compact — squeezing it further would make the file bigger, not smaller. The download below is your original file. Try a larger target, or <Link href="/split-pdf" style={{ color: "var(--primary)" }}>split it</Link> into parts.
+            </p>
+          )}
           {!outcome.keptOriginal && (
             <p style={{ marginTop: "1rem", fontSize: "0.85rem", color: "var(--muted)", lineHeight: 1.6 }}>
               To fit under a size limit, each page is saved as an image, so text in the result can&apos;t be selected or searched.

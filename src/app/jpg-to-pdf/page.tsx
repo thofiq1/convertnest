@@ -4,7 +4,8 @@ import { useState, useCallback, useEffect } from "react";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize, isDuplicateFile } from "@/utils/fileValidation";
-import { isHeicFile, isImageFile, unsupportedFileMessage, decodeErrorMessage, HEIC_HINT } from "@/lib/imageOutput";
+import { isHeicFile, isImageFile, unsupportedFileMessage, decodeErrorMessage, HEIC_HINT, sniffImageType, jpegOrientation } from "@/lib/imageOutput";
+import { looksTruncated } from "@/lib/exactSize";
 
 interface ImageEntry {
   file: File;
@@ -129,12 +130,16 @@ export default function JPGtoPDF() {
         current = entry.file;
         const imgBytes = new Uint8Array(await entry.file.arrayBuffer());
         let pdfImage;
-        const type = entry.file.type.toLowerCase();
-        if (type === "image/png") {
+        // Go by the real bytes, not the extension, so a JPEG named .png still works.
+        const kind = sniffImageType(imgBytes);
+        const truncated = await looksTruncated(entry.file);
+        if (kind === "png" && !truncated) {
           pdfImage = await pdfDoc.embedPng(imgBytes);
         } else {
-          // Convert non-JPEG to JPEG via canvas
-          if (type !== "image/jpeg" && type !== "image/jpg") {
+          // Everything except a plain upright JPEG goes through a canvas. The browser
+          // applies the photo's EXIF rotation there; PDF viewers ignore EXIF, so
+          // embedding a rotated phone photo directly would come out sideways.
+          if (kind !== "jpeg" || truncated || jpegOrientation(imgBytes) !== 1) {
             const canvas = document.createElement("canvas");
             const img = new Image();
             await new Promise<void>((resolve, reject) => {
@@ -149,6 +154,8 @@ export default function JPGtoPDF() {
             canvas.height = img.height;
             const ctx = canvas.getContext("2d");
             if (!ctx) throw new Error("Canvas not supported by your browser");
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0);
             const blob = await new Promise<Blob>((resolve, reject) =>
               canvas.toBlob((b) => {

@@ -138,9 +138,15 @@ export default function ImageResizer() {
     });
   };
 
+  // Shrink both sides by the same factor so hitting the size limit never distorts the picture.
+  const fitProportional = (w: number, h: number): [number, number] => {
+    const k = Math.min(1, MAX_DIM / Math.max(w, h, 1));
+    return [clampDim(w * k), clampDim(h * k)];
+  };
+
   const getTargetDimensions = (origW: number, origH: number): [number, number] => {
     if (mode === "percentage") {
-      return [clampDim(origW * percentage / 100), clampDim(origH * percentage / 100)];
+      return fitProportional(origW * percentage / 100, origH * percentage / 100);
     }
     if (mode === "preset") {
       const preset = socialPresets[selectedPreset];
@@ -149,7 +155,7 @@ export default function ImageResizer() {
     // exact
     if (lockAspect) {
       const aspect = origW / origH;
-      return [clampDim(width), clampDim(width / aspect)];
+      return fitProportional(width, width / aspect);
     }
     return [clampDim(width), clampDim(height)];
   };
@@ -342,7 +348,7 @@ export default function ImageResizer() {
               <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end", flexWrap: "wrap" }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.3rem" }}>Width (px)</label>
-                  <input type="number" value={width} onChange={(e) => {
+                  <input type="number" value={width || ""} onChange={(e) => {
                     const w = parseInt(e.target.value) || 0;
                     setWidth(w);
                     if (lockAspect && images.length > 0) {
@@ -364,7 +370,7 @@ export default function ImageResizer() {
                 </button>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, marginBottom: "0.3rem" }}>Height (px)</label>
-                  <input type="number" value={height} onChange={(e) => setHeight(parseInt(e.target.value) || 0)}
+                  <input type="number" value={height || ""} onChange={(e) => setHeight(parseInt(e.target.value) || 0)}
                     disabled={lockAspect}
                     style={{
                       width: "100%", padding: "0.5rem", border: "1px solid var(--card-border)",

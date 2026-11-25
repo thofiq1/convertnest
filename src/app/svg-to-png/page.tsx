@@ -16,6 +16,8 @@ interface ConvertedSvg {
   convertedSize: number;
   naturalWidth: number;
   naturalHeight: number;
+  outW?: number;
+  outH?: number;
   processing: boolean;
   error: string | null;
   /** Extension matching the bytes in convertedBlob (set when the result is produced). */
@@ -60,7 +62,7 @@ export default function SvgToPng() {
     customW: string,
     fmt: string,
     bg: string
-  ): Promise<{ blob: Blob; url: string; naturalWidth: number; naturalHeight: number }> => {
+  ): Promise<{ blob: Blob; url: string; naturalWidth: number; naturalHeight: number; outW: number; outH: number }> => {
     return new Promise((resolve, reject) => {
       const svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
       const svgUrl = URL.createObjectURL(svgBlob);
@@ -104,6 +106,10 @@ export default function SvgToPng() {
         if (outW > maxDim) { outH = Math.round(outH * (maxDim / outW)); outW = maxDim; }
         if (outH > maxDim) { outW = Math.round(outW * (maxDim / outH)); outH = maxDim; }
 
+        outW = Math.max(1, outW);
+        outH = Math.max(1, outH);
+        const finalW = outW, finalH = outH;
+
         const canvas = document.createElement("canvas");
         canvas.width = outW;
         canvas.height = outH;
@@ -128,7 +134,7 @@ export default function SvgToPng() {
             canvas.width = 0;
             canvas.height = 0;
             URL.revokeObjectURL(svgUrl);
-            resolve({ blob, url: convUrl, naturalWidth: natW, naturalHeight: natH });
+            resolve({ blob, url: convUrl, naturalWidth: natW, naturalHeight: natH, outW: finalW, outH: finalH });
           },
           mimeType,
           qualityParam
@@ -200,12 +206,12 @@ export default function SvgToPng() {
 
     for (const { file, text } of fileTexts) {
       try {
-        const { blob, url, naturalWidth, naturalHeight } = await convertSvg(file, text, scale, customWidth, outputFormat, bgColor);
+        const { blob, url, naturalWidth, naturalHeight, outW, outH } = await convertSvg(file, text, scale, customWidth, outputFormat, bgColor);
         setImages((prev) => {
           const updated = [...prev];
           const idx = updated.findIndex((r) => r.file === file);
           if (idx >= 0) {
-            updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, naturalWidth, naturalHeight, processing: false, outExt: extFromMime(blob.type, "png"), fmtUsed: outputFormat };
+            updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, naturalWidth, naturalHeight, outW, outH, processing: false, outExt: extFromMime(blob.type, "png"), fmtUsed: outputFormat };
           }
           return updated;
         });
@@ -228,12 +234,12 @@ export default function SvgToPng() {
 
     for (const img of currentImages) {
       try {
-        const { blob, url, naturalWidth, naturalHeight } = await convertSvg(img.file, img.svgText, scale, customWidth, outputFormat, bgColor);
+        const { blob, url, naturalWidth, naturalHeight, outW, outH } = await convertSvg(img.file, img.svgText, scale, customWidth, outputFormat, bgColor);
         setImages((prev) => {
           const updated = [...prev];
           const idx = updated.findIndex((r) => r.file === img.file);
           if (idx >= 0) {
-            updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, naturalWidth, naturalHeight, processing: false, outExt: extFromMime(blob.type, "png"), fmtUsed: outputFormat };
+            updated[idx] = { ...updated[idx], convertedBlob: blob, convertedUrl: url, convertedSize: blob.size, naturalWidth, naturalHeight, outW, outH, processing: false, outExt: extFromMime(blob.type, "png"), fmtUsed: outputFormat };
           }
           return updated;
         });
@@ -461,9 +467,9 @@ export default function SvgToPng() {
                       {formatSize(img.originalSize)} &rarr; {formatSize(img.convertedSize)}
                       {img.naturalWidth > 0 && (
                         <span style={{ marginLeft: "0.3rem" }}>
-                          ({Math.round(img.naturalWidth * (customWidth ? parseInt(customWidth) / img.naturalWidth : scale))}
+                          ({img.outW ?? Math.round(img.naturalWidth * (customWidth ? parseInt(customWidth) / img.naturalWidth : scale))}
                           &times;
-                          {Math.round(img.naturalHeight * (customWidth ? parseInt(customWidth) / img.naturalWidth : scale))}px)
+                          {img.outH ?? Math.round(img.naturalHeight * (customWidth ? parseInt(customWidth) / img.naturalWidth : scale))}px)
                         </span>
                       )}
                     </>

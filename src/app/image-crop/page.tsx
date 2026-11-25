@@ -136,6 +136,13 @@ export default function ImageCrop() {
   const onImageLoad = useCallback(() => {
     if (!imgRef.current) return;
     const img = imgRef.current;
+    if (img.clientWidth < 2 || img.clientHeight < 2) {
+      // Extremely thin images can't be shown large enough to drag a crop box on.
+      setSizeWarning(`This image is ${img.naturalWidth}×${img.naturalHeight} px, which is too thin to crop on screen. Use Image Resizer for it instead.`);
+      setImageUrl(null);
+      setFile(null);
+      return;
+    }
     setNaturalWidth(img.naturalWidth);
     setNaturalHeight(img.naturalHeight);
     setDisplayWidth(img.clientWidth);

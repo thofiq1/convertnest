@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { parsePageRange } from "@/lib/pageRange";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize } from "@/utils/fileValidation";
@@ -53,10 +54,12 @@ export default function SplitPDF() {
       console.error("Error loading PDF:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is password-protected. Please remove the password first.");
+        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error loading PDF. Please try another file.");
       }
+      // Go back to the upload box instead of leaving an empty editor behind.
+      setFile(null);
     }
     setLoading(false);
   }, []);
@@ -100,29 +103,6 @@ export default function SplitPDF() {
     setResultUrl(null);
   };
 
-  const parseRange = (input: string, totalPages: number): number[] => {
-    const result = new Set<number>();
-    const parts = input.split(",").map((s) => s.trim()).filter(Boolean);
-    for (const part of parts) {
-      if (part.includes("-")) {
-        const [startStr, endStr] = part.split("-").map((s) => s.trim());
-        const start = parseInt(startStr);
-        const end = parseInt(endStr);
-        if (!isNaN(start) && !isNaN(end)) {
-          for (let i = Math.max(1, start); i <= Math.min(totalPages, end); i++) {
-            result.add(i);
-          }
-        }
-      } else {
-        const num = parseInt(part);
-        if (!isNaN(num) && num >= 1 && num <= totalPages) {
-          result.add(num);
-        }
-      }
-    }
-    return Array.from(result).sort((a, b) => a - b);
-  };
-
   const extractPages = async () => {
     if (!file) return;
     setProcessing(true);
@@ -136,7 +116,13 @@ export default function SplitPDF() {
       if (mode === "visual") {
         selectedPageNums = pages.filter((p) => p.selected).map((p) => p.pageNum);
       } else {
-        selectedPageNums = parseRange(rangeInput, srcPdf.getPageCount());
+        const parsed = parsePageRange(rangeInput, srcPdf.getPageCount());
+        if (parsed.error) {
+          alert(parsed.error);
+          setProcessing(false);
+          return;
+        }
+        selectedPageNums = parsed.pages;
       }
 
       if (selectedPageNums.length === 0) {
@@ -157,7 +143,7 @@ export default function SplitPDF() {
       console.error("Split error:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is password-protected. Please remove the password first.");
+        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error splitting PDF. Please try again.");
       }
@@ -192,7 +178,7 @@ export default function SplitPDF() {
       console.error("Split all error:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is password-protected. Please remove the password first.");
+        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error splitting pages. Please try again.");
       }

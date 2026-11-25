@@ -69,14 +69,18 @@ export default function ImageCompressor() {
         canvas.height = h;
         const ctx = canvas.getContext("2d");
         if (!ctx) { URL.revokeObjectURL(url); reject(new Error("Canvas not supported")); return; }
-        ctx.drawImage(img, 0, 0, w, h);
-
         let mimeType: string;
         if (fmt === "original") {
           mimeType = originalOutputMime(file.type);
         } else {
           mimeType = fmt === "webp" ? "image/webp" : "image/jpeg";
         }
+        // JPEG has no transparency: without a white fill, clear areas turn black.
+        if (mimeType === "image/jpeg") {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, w, h);
+        }
+        ctx.drawImage(img, 0, 0, w, h);
 
         const qualityParam = mimeType === "image/png" ? undefined : q / 100;
 

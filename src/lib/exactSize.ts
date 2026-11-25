@@ -82,10 +82,13 @@ export async function padJpegTo(blob: Blob, minBytes: number): Promise<Blob> {
     needed -= seg.length;
   }
   const out = new Uint8Array(bytes.length + segments.reduce((n, s) => n + s.length, 0));
-  out.set(bytes.subarray(0, 2), 0);
-  let off = 2;
+  // Keep the JFIF (APP0) header first, right after SOI, so strict checkers still see "JFIF".
+  let head = 2;
+  if (bytes[2] === 0xff && bytes[3] === 0xe0) head = 4 + ((bytes[4] << 8) | bytes[5]);
+  out.set(bytes.subarray(0, head), 0);
+  let off = head;
   for (const s of segments) { out.set(s, off); off += s.length; }
-  out.set(bytes.subarray(2), off);
+  out.set(bytes.subarray(head), off);
   return new Blob([out], { type: "image/jpeg" });
 }
 
@@ -214,4 +217,23 @@ export function frameWarnings(img: HTMLImageElement, w: number, h: number, fit: 
     );
   }
   return out;
+}
+
+/** True when a JPEG or PNG is missing its end marker (a cut-off / partial file). */
+export async function looksTruncated(f: File): Promise<boolean> {
+  try {
+    const head = new Uint8Array(await f.slice(0, 8).arrayBuffer());
+    const tail = new Uint8Array(await f.slice(Math.max(0, f.size - 4096)).arrayBuffer());
+    const isJpeg = head[0] === 0xff && head[1] === 0xd8;
+    const isPng = head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47;
+    if (isJpeg) {
+      for (let i = tail.length - 2; i >= 0; i--) if (tail[i] === 0xff && tail[i + 1] === 0xd9) return false;
+      return true;
+    }
+    if (isPng) {
+      for (let i = tail.length - 4; i >= 0; i--) if (tail[i] === 0x49 && tail[i + 1] === 0x45 && tail[i + 2] === 0x4e && tail[i + 3] === 0x44) return false;
+      return true;
+    }
+  } catch { /* fall through */ }
+  return false;
 }

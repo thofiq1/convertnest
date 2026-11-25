@@ -509,7 +509,8 @@ async function compressPdfFile(
 
     // Calculate scale factor based on target DPI
     // PDF default is 72 DPI, so scale = targetDpi / 72
-    const scale = targetDpi / 72;
+    // Capped at ~16 megapixels per page so very large pages still compress.
+    const scale = Math.min(targetDpi / 72, Math.sqrt(16_000_000 / Math.max(1, viewport.width * viewport.height)));
     const scaledViewport = page.getViewport({ scale });
 
     // Render page to canvas
