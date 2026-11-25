@@ -1,5 +1,6 @@
 "use client";
 
+import { sizePages, pdfSizePages } from "@/lib/sizePages";
 import Link from "next/link";
 import { tools, categories } from "@/lib/tools";
 import AdBanner from "@/components/AdBanner";
@@ -362,13 +363,8 @@ export default function HomeContent() {
             </p>
             <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
               {[
-                { href: "/compress-pdf-to-100kb", label: "PDF to 100KB" },
-                { href: "/compress-pdf-to-200kb", label: "PDF to 200KB" },
-                { href: "/compress-pdf-to-500kb", label: "PDF to 500KB" },
-                { href: "/compress-image-to-20kb", label: "Image to 20KB" },
-                { href: "/compress-image-to-50kb", label: "Image to 50KB" },
-                { href: "/compress-image-to-100kb", label: "Image to 100KB" },
-                { href: "/compress-image-to-200kb", label: "Image to 200KB" },
+                ...pdfSizePages.map((p) => ({ href: `/${p.slug}`, label: `PDF to ${p.kb}KB` })),
+                ...sizePages.map((p) => ({ href: `/${p.slug}`, label: `Image to ${p.kb}KB` })),
               ].map((link) => (
                 <Link
                   key={link.href}
