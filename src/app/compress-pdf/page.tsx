@@ -551,5 +551,6 @@ async function compressPdfFile(
 
   onProgress("Finalizing...");
   const compressedBytes = await newPdf.save({ useObjectStreams: true });
+  void srcPdf.loadingTask.destroy(); // stop this file's pdf.js worker
   return compressedBytes as Uint8Array;
 }

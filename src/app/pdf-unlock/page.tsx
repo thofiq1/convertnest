@@ -18,6 +18,7 @@ function PdfUnlockTool() {
   const [pageCount, setPageCount] = useState(0);
   // Encrypted with only an owner (permissions) password: opens without a password, just has restrictions
   const [ownerOnly, setOwnerOnly] = useState(false);
+  const [rasterised, setRasterised] = useState(false);
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -110,7 +111,21 @@ function PdfUnlockTool() {
         return;
       }
 
-      // Step 2: Render each page to a canvas and build a new PDF with pdf-lib
+      // Step 2: Write a real unlocked copy — text stays selectable and the file stays small.
+      try {
+        const { unencryptedCopy } = await import("@/lib/pdfOpen");
+        const clean = await unencryptedCopy(pdfJsDoc as unknown as Parameters<typeof unencryptedCopy>[0]);
+        const cleanBlob = new Blob([clean as BlobPart], { type: "application/pdf" });
+        setRasterised(false);
+        setResultUrl(URL.createObjectURL(cleanBlob));
+        setPageCount(pdfJsDoc.numPages);
+        setProcessing(false);
+        return;
+      } catch (e) {
+        console.warn("Direct unlock failed, falling back to page images:", e);
+      }
+
+      // Fallback: render each page to a canvas and build a new PDF with pdf-lib
       const { PDFDocument } = await import("pdf-lib");
       const newPdf = await PDFDocument.create();
       const numPages = pdfJsDoc.numPages;
@@ -147,6 +162,7 @@ function PdfUnlockTool() {
 
       const pdfBytes = await newPdf.save();
       const blob = new Blob([pdfBytes as BlobPart], { type: "application/pdf" });
+      setRasterised(true);
       setResultUrl(URL.createObjectURL(blob));
       setPageCount(numPages);
     } catch (err: unknown) {
@@ -172,7 +188,7 @@ function PdfUnlockTool() {
       description="Remove password protection from PDF files. Enter the password you know and download an unlocked copy. Free online tool."
       faqs={[
         { question: "Can this tool remove a password I don't know?", answer: "No. It is not a password cracker. You must enter the correct password to open and unlock the file." },
-        { question: "Will the unlocked PDF look the same?", answer: "Each page is redrawn as a high-resolution image at the original page size, so it looks the same, but text in the unlocked copy can't be selected or searched. Keep your original if you need that." },
+        { question: "Will the unlocked PDF look the same?", answer: "Yes. The unlocked copy keeps the original pages, so text stays selectable and searchable and the quality is unchanged. For a few unusual files the tool falls back to redrawing each page as an image; those look the same but their text can't be selected." },
         { question: "Is my password sent anywhere?", answer: "No. The PDF is opened and rebuilt in your browser, and the password is only used there." },
         { question: "What can I do after unlocking?", answer: "You can merge, split, rotate or add page numbers to the unlocked copy, since those tools can't open password-protected PDFs." },
       ]}
@@ -329,7 +345,9 @@ function PdfUnlockTool() {
             Download Unlocked PDF
           </a>
           <p style={{ color: "var(--muted)", fontSize: "0.75rem", marginTop: "0.75rem" }}>
-            Note: The unlocked PDF is re-rendered as images to ensure the password is fully removed.
+            {rasterised
+              ? "Note: this file couldn't be unlocked directly, so each page was redrawn as an image. It looks the same, but the text can't be selected."
+              : "The password and restrictions are removed. Text stays selectable and the quality is unchanged."}
           </p>
         </div>
       )}

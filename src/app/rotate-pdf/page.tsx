@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { loadPdf } from "@/lib/pdfOpen";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize } from "@/utils/fileValidation";
@@ -46,11 +47,12 @@ export default function RotatePDF() {
         pageInfos.push({ pageNum: i, thumbnailUrl: url, rotation: 0 });
       }
       setPages(pageInfos);
+      void pdf.loadingTask.destroy(); // stop this file's pdf.js worker
     } catch (err: unknown) {
       console.error("Error loading PDF:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
+        alert("This PDF needs a password to open. Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error loading PDF. Please try another file.");
       }
@@ -113,7 +115,7 @@ export default function RotatePDF() {
     try {
       const { PDFDocument, degrees } = await import("pdf-lib");
       const arrayBuffer = await file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer);
+      const pdfDoc = await loadPdf(arrayBuffer);
       const pdfPages = pdfDoc.getPages();
 
       for (let i = 0; i < pdfPages.length && i < pages.length; i++) {
@@ -130,7 +132,7 @@ export default function RotatePDF() {
       console.error("Rotation error:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
+        alert("This PDF needs a password to open. Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error rotating PDF. Please try again.");
       }

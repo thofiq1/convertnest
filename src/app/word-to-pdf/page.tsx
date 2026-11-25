@@ -30,7 +30,7 @@ export default function WordToPDF() {
     if (!files || files.length === 0) return;
     const f = files[0];
     if (!f.name.match(/\.docx$/i)) {
-      alert("Please select a .docx file");
+      alert(/\.doc$/i.test(f.name) ? "Old .doc files aren't supported. Open it in Word or Google Docs, save it as .docx, then try again." : "Please select a .docx file");
       return;
     }
 
@@ -66,7 +66,14 @@ export default function WordToPDF() {
         // Not a readable zip — let mammoth report the error below.
       }
       const result = await mammoth.convertToHtml({ arrayBuffer });
-      setHtmlContent(sanitizeHtml(result.value));
+      const safeHtml = sanitizeHtml(result.value);
+      if (!safeHtml.replace(/<[^>]*>/g, "").trim() && !/<img/i.test(safeHtml)) {
+        alert("This document appears to be empty — there is nothing to convert.");
+        setFile(null);
+        setProcessing(false);
+        return;
+      }
+      setHtmlContent(safeHtml);
 
       const msgs = result.messages
         .filter((m: { type: string }) => m.type === "warning")

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { loadPdf } from "@/lib/pdfOpen";
 import { parsePageRange } from "@/lib/pageRange";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -50,11 +51,12 @@ export default function SplitPDF() {
         pageInfos.push({ pageNum: i, thumbnailUrl: url, selected: false });
       }
       setPages(pageInfos);
+      void pdf.loadingTask.destroy(); // stop this file's pdf.js worker
     } catch (err: unknown) {
       console.error("Error loading PDF:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
+        alert("This PDF needs a password to open. Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error loading PDF. Please try another file.");
       }
@@ -110,7 +112,7 @@ export default function SplitPDF() {
     try {
       const { PDFDocument } = await import("pdf-lib");
       const arrayBuffer = await file.arrayBuffer();
-      const srcPdf = await PDFDocument.load(arrayBuffer);
+      const srcPdf = await loadPdf(arrayBuffer);
 
       let selectedPageNums: number[];
       if (mode === "visual") {
@@ -143,7 +145,7 @@ export default function SplitPDF() {
       console.error("Split error:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
+        alert("This PDF needs a password to open. Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error splitting PDF. Please try again.");
       }
@@ -159,7 +161,7 @@ export default function SplitPDF() {
       const { PDFDocument } = await import("pdf-lib");
       const JSZip = (await import("jszip")).default;
       const arrayBuffer = await file.arrayBuffer();
-      const srcPdf = await PDFDocument.load(arrayBuffer);
+      const srcPdf = await loadPdf(arrayBuffer);
       const zip = new JSZip();
       const baseName = file.name.replace(/\.pdf$/i, "");
 
@@ -178,7 +180,7 @@ export default function SplitPDF() {
       console.error("Split all error:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
+        alert("This PDF needs a password to open. Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error splitting pages. Please try again.");
       }

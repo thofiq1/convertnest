@@ -353,7 +353,7 @@ export default function ImageResizer() {
                     setWidth(w);
                     if (lockAspect && images.length > 0) {
                       const aspect = images[0].originalWidth / images[0].originalHeight;
-                      setHeight(Math.round(w / aspect));
+                      setHeight(w > 0 ? fitProportional(w, w / aspect)[1] : 0);
                     }
                   }}
                     style={{ width: "100%", padding: "0.5rem", border: "1px solid var(--card-border)", borderRadius: "0.3rem", background: "var(--card-bg)", fontSize: "0.9rem" }}

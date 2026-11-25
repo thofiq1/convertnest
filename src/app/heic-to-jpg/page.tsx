@@ -165,7 +165,7 @@ export default function HeicToJpg() {
           const updated = [...prev];
           const idx = updated.findIndex((r) => r.file === imgFile);
           if (idx >= 0) {
-            updated[idx] = { ...updated[idx], processing: false, fmtUsed: outputFormat, error: err instanceof Error ? err.message : "Conversion failed" };
+            updated[idx] = { ...updated[idx], processing: false, fmtUsed: outputFormat, error: "Couldn't read this file — it may be damaged or not a real HEIC photo." };
           }
           return updated;
         });
@@ -193,7 +193,7 @@ export default function HeicToJpg() {
           const updated = [...prev];
           const idx = updated.findIndex((r) => r.file === img.file);
           if (idx >= 0) {
-            updated[idx] = { ...updated[idx], processing: false, fmtUsed: outputFormat, error: err instanceof Error ? err.message : "Conversion failed" };
+            updated[idx] = { ...updated[idx], processing: false, fmtUsed: outputFormat, error: "Couldn't read this file — it may be damaged or not a real HEIC photo." };
           }
           return updated;
         });

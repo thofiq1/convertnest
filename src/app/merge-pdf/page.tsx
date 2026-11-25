@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { loadPdf } from "@/lib/pdfOpen";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { validateFileSize, isDuplicateFile } from "@/utils/fileValidation";
@@ -40,7 +41,9 @@ export default function MergePDF() {
       const url = canvas.toDataURL("image/jpeg", 0.7);
       canvas.width = 0;
       canvas.height = 0;
-      return { url, pages: pdf.numPages };
+      const pages = pdf.numPages;
+      void pdf.loadingTask.destroy(); // stop this file's pdf.js worker
+      return { url, pages };
     } catch {
       return { url: "", pages: 0 };
     }
@@ -143,7 +146,7 @@ export default function MergePDF() {
       for (const entry of entries) {
         currentName = entry.file.name;
         const arrayBuffer = await entry.file.arrayBuffer();
-        const pdf = await PDFDocument.load(arrayBuffer);
+        const pdf = await loadPdf(arrayBuffer);
         const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
         copiedPages.forEach((page) => mergedPdf.addPage(page));
         // Keep fillable form fields editable in the merged file (best effort).
@@ -158,7 +161,7 @@ export default function MergePDF() {
       console.error("Merge error:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert(`${currentName || "One of these PDFs"} is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then merge.`);
+        alert(`${currentName || "One of these PDFs"} needs a password to open. Unlock it first with the PDF Unlock tool, then merge.`);
       } else {
         alert(currentName ? `Couldn't read ${currentName} — it may be damaged or not a real PDF. Remove it and try again.` : "Error merging PDFs. Please check your files and try again.");
       }
@@ -311,7 +314,7 @@ export default function MergePDF() {
 
           <button onClick={merge} disabled={processing || entries.length < 2} className="btn-primary"
             style={{ marginTop: "1rem", width: "100%", padding: "0.85rem", fontSize: "1rem", fontWeight: 700 }}>
-            {processing ? "Merging..." : `Merge ${entries.length} PDFs`}
+            {processing ? "Merging..." : entries.length < 2 ? "Add another PDF to merge" : `Merge ${entries.length} PDFs`}
           </button>
         </div>
       )}

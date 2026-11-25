@@ -74,6 +74,7 @@ export default function PDFtoJPG() {
       const ab = await f.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
       setTotalPages(pdf.numPages);
+      void pdf.loadingTask.destroy(); // stop this file's pdf.js worker
     })().catch((err) => {
       const msg = err instanceof Error ? err.message.toLowerCase() : "";
       if (msg.includes("encrypt") || msg.includes("password")) {
@@ -149,6 +150,7 @@ export default function PDFtoJPG() {
       }
 
       setConvertedPages(results);
+      void pdf.loadingTask.destroy(); // stop this file's pdf.js worker
       setProgress("");
     } catch (err) {
       console.error("Conversion error:", err);

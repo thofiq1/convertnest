@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { loadPdf } from "@/lib/pdfOpen";
 import { visualSize, toPageSpace } from "@/lib/pdfPlace";
 import ToolLayout from "@/components/ToolLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -67,11 +68,12 @@ export default function PDFPageNumbers() {
         thumbs.push({ pageNum: i, thumbnailUrl: null });
       }
       setPages(thumbs);
+      void pdf.loadingTask.destroy(); // stop this file's pdf.js worker
     } catch (err: unknown) {
       console.error("Error loading PDF:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
+        alert("This PDF needs a password to open. Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error loading PDF. Please try another file.");
       }
@@ -145,7 +147,7 @@ export default function PDFPageNumbers() {
     try {
       const { PDFDocument, rgb, degrees, StandardFonts } = await import("pdf-lib");
       const arrayBuffer = await file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer);
+      const pdfDoc = await loadPdf(arrayBuffer);
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const pdfPages = pdfDoc.getPages();
       const totalPages = skipFirstPage ? pdfPages.length - 1 : pdfPages.length;
@@ -183,7 +185,7 @@ export default function PDFPageNumbers() {
       console.error("Page number error:", err);
       const msg = err instanceof Error ? err.message : "";
       if (msg.toLowerCase().includes("encrypt") || msg.toLowerCase().includes("password")) {
-        alert("This PDF is locked (it has a password or editing restrictions). Unlock it first with the PDF Unlock tool, then try again.");
+        alert("This PDF needs a password to open. Unlock it first with the PDF Unlock tool, then try again.");
       } else {
         alert("Error adding page numbers. Please try again.");
       }
