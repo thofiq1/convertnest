@@ -2,9 +2,9 @@ import { Metadata } from "next";
 import { tools } from "@/lib/tools";
 
 export const metadata: Metadata = {
-  title: "About Us — Free, Private Browser-Based File Tools",
+  title: "About FitTheFile and Its Founder, Thofiq Imamsab",
   alternates: { canonical: "/about" },
-  description: "FitTheFile provides free PDF tools and file converters. Compress, merge, split PDFs and convert images — all in your browser.",
+  description: "Who builds FitTheFile and why: free PDF and image tools that fit files under upload limits, built by developer Thofiq Imamsab. Files never leave your browser.",
 };
 
 export default function AboutPage() {
@@ -17,6 +17,25 @@ export default function AboutPage() {
           FitTheFile is a collection of <strong>{tools.length} free online tools</strong> for
           PDF conversion, image processing, and file management. Compress PDFs, merge documents,
           convert images — everything you need, right in your browser.
+        </p>
+
+        <h2 id="founder" style={{ fontSize: "1.25rem", fontWeight: 700, marginTop: "2rem", marginBottom: "0.5rem" }}>
+          Who Builds FitTheFile
+        </h2>
+        <p style={{ marginBottom: "1rem" }}>
+          FitTheFile is built and maintained by <strong>Thofiq Imamsab</strong>, a full-stack developer with more
+          than five years of experience building web applications.
+        </p>
+        <p style={{ marginBottom: "1rem" }}>
+          It started with a boring, recurring problem: application portals rejecting files with messages like
+          &ldquo;maximum 100 KB&rdquo; or &ldquo;signature must be 10&ndash;20 KB&rdquo;. Most compressors offered
+          a vague high/medium/low setting, or wanted documents like passport scans uploaded to their servers.
+          FitTheFile does it differently: you type the limit, it finds the best quality that fits, and the file
+          never leaves your device.
+        </p>
+        <p>
+          Every tool is tested with real files before it goes live, and the size pages publish the actual results
+          of those tests. If something doesn&apos;t work the way it should, please email me. I read every message.
         </p>
 
         <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginTop: "2rem", marginBottom: "0.5rem" }}>

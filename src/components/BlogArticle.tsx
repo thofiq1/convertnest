@@ -54,8 +54,13 @@ export function ArticleHeader({
     datePublished: date,
     dateModified: date,
     ...(postUrl ? { url: postUrl, mainEntityOfPage: { "@type": "WebPage", "@id": postUrl } } : {}),
-    author: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
-    publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+    author: { "@type": "Person", name: "Thofiq Imamsab", url: `${SITE_URL}/about#founder` },
+    publisher: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      url: SITE_URL,
+      logo: { "@type": "ImageObject", url: `${SITE_URL}/press/logo.png` },
+    },
     image: `${SITE_URL}/opengraph-image`,
     inLanguage: "en",
   };
@@ -92,8 +97,12 @@ export function ArticleHeader({
           gap: "1rem",
           fontSize: "0.85rem",
           color: "var(--muted)",
+          flexWrap: "wrap",
         }}
       >
+        <span>
+          By <a href="/about#founder" style={{ color: "var(--foreground)", fontWeight: 600, textDecoration: "none" }}>Thofiq Imamsab</a>
+        </span>
         <time dateTime={date}>
           {new Date(date).toLocaleDateString("en-US", {
             year: "numeric",
