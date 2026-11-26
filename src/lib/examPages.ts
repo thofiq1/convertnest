@@ -79,7 +79,7 @@ export const examPages: ExamPage[] = [
       },
     ],
     related: ["image-crop", "heic-to-jpg", "image-resizer"],
-    guides: ["how-to-compress-image-to-50kb"],
+    guides: ["us-visa-photo-size-ds-160", "how-to-compress-image-to-50kb"],
   },
   {
     slug: "ibps-photo-signature-resizer",
@@ -93,8 +93,8 @@ export const examPages: ExamPage[] = [
     presets: [
       { id: "photo-200x230", label: "Photo · 200 × 230 px · 20–50 KB", width: 200, height: 230, minKb: 20, maxKb: 50, fit: "cover" },
       { id: "signature-140x60", label: "Signature · 140 × 60 px · 10–20 KB", width: 140, height: 60, minKb: 10, maxKb: 20, fit: "contain" },
-      { id: "thumb-240x240", label: "Left thumb · 240 × 240 px · 20–50 KB", width: 240, height: 240, minKb: 20, maxKb: 50, fit: "contain" },
-      { id: "declaration-800x400", label: "Declaration · 800 × 400 px · 50–100 KB", width: 800, height: 400, minKb: 50, maxKb: 100, fit: "contain" },
+      { id: "thumb-240x240", label: "Left thumb · 240 × 240 px · 20–50 KB", width: 240, height: 240, minKb: 20, maxKb: 50, fit: "contain", dpi: 200 },
+      { id: "declaration-800x400", label: "Declaration · 800 × 400 px · 50–100 KB", width: 800, height: 400, minKb: 50, maxKb: 100, fit: "contain", dpi: 200 },
     ],
     requirements: [
       { item: "Photograph", spec: "200 × 230 pixels (preferred), 20–50 KB" },
@@ -144,7 +144,7 @@ export const examPages: ExamPage[] = [
       },
     ],
     related: ["image-crop", "image-resizer", "heic-to-jpg"],
-    guides: ["how-to-resize-signature-for-online-form", "how-to-compress-image-to-50kb"],
+    guides: ["ibps-photo-signature-size", "how-to-resize-signature-for-online-form", "how-to-compress-image-to-50kb"],
   },
   {
     slug: "india-visa-photo-resizer",

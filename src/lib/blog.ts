@@ -288,6 +288,86 @@ export const blogPosts: BlogPost[] = [
     relatedTool: "compress-image-to-50kb",
     relatedToolName: "Compress Image to 50KB",
   },
+  {
+    slug: "us-visa-photo-size-ds-160",
+    title: "US Visa Photo Size for the DS-160: Pixels, KB and Common Rejections",
+    description:
+      "The official DS-160 photo file rules: square JPEG, 600×600 to 1200×1200 pixels, 240 kB or less. Why uploads fail and how to fix the file for free.",
+    date: "2026-11-26",
+    readTime: "4 min read",
+    keywords: [
+      "us visa photo size",
+      "ds-160 photo size",
+      "us visa photo 600x600",
+      "us visa photo 240kb",
+    ],
+    relatedTool: "us-visa-photo-resizer",
+    relatedToolName: "US Visa Photo Resizer",
+  },
+  {
+    slug: "ibps-photo-signature-size",
+    title: "IBPS Photo, Signature, Thumb and Declaration Size in Pixels and KB",
+    description:
+      "Standard IBPS-style sizes: photo 200×230 px (20–50 KB), signature 140×60 px (10–20 KB), left thumb 240×240 px, declaration 800×400 px. Make each file free.",
+    date: "2026-11-26",
+    readTime: "4 min read",
+    keywords: [
+      "ibps photo size",
+      "ibps signature size",
+      "ibps thumb impression size",
+      "ibps handwritten declaration size",
+    ],
+    relatedTool: "ibps-photo-signature-resizer",
+    relatedToolName: "IBPS Photo & Signature Resizer",
+  },
+  {
+    slug: "how-to-compress-pdf-to-200kb",
+    title: "How to Compress a PDF to 200KB for Online Forms",
+    description:
+      "Get a PDF under 200KB for government, visa and certificate uploads. How the free tool works, what to expect, its limits, and what to do if it won't fit.",
+    date: "2026-11-26",
+    readTime: "4 min read",
+    keywords: [
+      "compress pdf to 200kb",
+      "reduce pdf size to 200kb",
+      "pdf under 200kb",
+      "pdf size reducer 200kb",
+    ],
+    relatedTool: "compress-pdf-to-200kb",
+    relatedToolName: "Compress PDF to 200KB",
+  },
+  {
+    slug: "how-to-compress-image-to-20kb",
+    title: "How to Compress an Image to 20KB for Online Forms",
+    description:
+      "Get a photo or signature under 20KB as a JPG for exam, recruitment and government forms. Free, in your browser, with tips for a sharper result.",
+    date: "2026-11-26",
+    readTime: "4 min read",
+    keywords: [
+      "compress image to 20kb",
+      "reduce image size to 20kb",
+      "photo under 20kb",
+      "jpg 20kb",
+    ],
+    relatedTool: "compress-image-to-20kb",
+    relatedToolName: "Compress Image to 20KB",
+  },
+  {
+    slug: "how-to-unlock-pdf-remove-password",
+    title: "How to Unlock a PDF and Remove Its Password (When You Know It)",
+    description:
+      "Remove a PDF password you know, or lift printing, copying and editing restrictions, free in your browser. The unlocked copy keeps selectable text.",
+    date: "2026-11-26",
+    readTime: "4 min read",
+    keywords: [
+      "unlock pdf",
+      "remove pdf password",
+      "remove pdf restrictions",
+      "pdf password remover",
+    ],
+    relatedTool: "pdf-unlock",
+    relatedToolName: "PDF Unlock",
+  },
 ];
 
 export function getBlogPost(slug: string): BlogPost | undefined {
