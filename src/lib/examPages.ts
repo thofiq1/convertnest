@@ -343,7 +343,7 @@ export const examPages: ExamPage[] = [
       },
     ],
     related: ["compress-pdf", "jpg-to-pdf", "merge-pdf", "pdf-unlock", "heic-to-jpg", "image-crop"],
-    guides: ["how-to-compress-pdf-to-200kb", "how-to-unlock-pdf-remove-password"],
+    guides: ["opt-i-765-photo-document-upload-size", "how-to-compress-pdf-to-200kb", "how-to-unlock-pdf-remove-password"],
   },
 ];
 

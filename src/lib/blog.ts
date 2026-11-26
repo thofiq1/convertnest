@@ -368,6 +368,39 @@ export const blogPosts: BlogPost[] = [
     relatedTool: "pdf-unlock",
     relatedToolName: "PDF Unlock",
   },
+  {
+    slug: "how-to-compress-image-to-100kb",
+    title: "How to Compress an Image to 100KB for Applications and Forms",
+    description:
+      "Get a photo under 100KB as a JPG for job, visa and profile uploads. Free, in your browser, with real test results and tips for a sharper picture.",
+    date: "2026-11-26",
+    readTime: "4 min read",
+    keywords: ["compress image to 100kb", "reduce image size to 100kb", "photo under 100kb", "jpg 100kb"],
+    relatedTool: "compress-image-to-100kb",
+    relatedToolName: "Compress Image to 100KB",
+  },
+  {
+    slug: "how-to-compress-pdf-to-500kb",
+    title: "How to Compress a PDF to 500KB for Email and Applications",
+    description:
+      "Get a PDF under 500KB for email, job and university uploads. What fits, what you give up, and what to do when a long scan won't fit. Free, in your browser.",
+    date: "2026-11-26",
+    readTime: "4 min read",
+    keywords: ["compress pdf to 500kb", "reduce pdf size to 500kb", "pdf under 500kb", "pdf size reducer 500kb"],
+    relatedTool: "compress-pdf-to-500kb",
+    relatedToolName: "Compress PDF to 500KB",
+  },
+  {
+    slug: "opt-i-765-photo-document-upload-size",
+    title: "OPT and STEM OPT: I-765 Photo Size and Document Upload Limits",
+    description:
+      "The published USCIS rules for online I-765 uploads: accepted file types, the 6MB limit and the 2 × 2 inch photo, plus free tools to fix files that don't fit.",
+    date: "2026-11-26",
+    readTime: "5 min read",
+    keywords: ["i-765 photo size", "opt photo requirements", "uscis upload file size limit", "stem opt i-765 documents", "uscis 6mb limit"],
+    relatedTool: "uscis-i-765-opt-photo-document-resizer",
+    relatedToolName: "OPT / I-765 Photo and File Tool",
+  },
 ];
 
 export function getBlogPost(slug: string): BlogPost | undefined {
