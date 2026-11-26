@@ -267,6 +267,84 @@ export const examPages: ExamPage[] = [
     related: ["image-crop", "image-resizer", "heic-to-jpg"],
     guides: ["pan-card-photo-signature-size", "how-to-resize-signature-for-online-form"],
   },
+  {
+    slug: "uscis-i-765-opt-photo-document-resizer",
+    navLabel: "OPT / I-765 photo & files",
+    h1: "OPT and STEM OPT (Form I-765) Photo and Upload Sizes",
+    metaTitle: "OPT / STEM OPT I-765 Photo Resizer — 2×2 Photo, Files Under 6MB",
+    metaDescription:
+      "Make a square 2 × 2 inch photo for the online Form I-765 and get your OPT or STEM OPT documents under USCIS's 6MB upload limit. Free, private, in your browser.",
+    intro:
+      "F-1 students filing Form I-765 online for OPT or the STEM OPT extension upload a passport-style photo and several documents, and each file has to be an accepted type and under USCIS's size limit. Drop your photo below for a square 2 × 2 inch JPEG, then use the linked tools for your documents.",
+    presets: [
+      { id: "i765-photo-600", label: "2 × 2 in photo · 600 × 600 px", width: 600, height: 600, maxKb: 6000, fit: "cover", dpi: 300 },
+      { id: "i765-photo-1200", label: "2 × 2 in photo · 1200 × 1200 px", width: 1200, height: 1200, maxKb: 6000, fit: "cover", dpi: 600 },
+    ],
+    requirements: [
+      { item: "Evidence file types", spec: "PDF, JPG, JPEG, TIF or TIFF" },
+      { item: "Evidence file size", spec: "Not larger than 6MB per file" },
+      { item: "Photo", spec: "Passport-style, following the Department of State's passport photo specifications" },
+      { item: "Photo size", spec: "2 × 2 inches (51 × 51 mm), white or off-white background" },
+      { item: "Foreign-language documents", spec: "Upload an English translation with the original" },
+    ],
+    sources: [
+      {
+        label: "USCIS: Tips for Filing Forms Online (file types and 6MB limit)",
+        url: "https://www.uscis.gov/file-online/tips-for-filing-forms-online",
+      },
+      {
+        label: "U.S. Department of State: Passport photo requirements (2 × 2 inch photo)",
+        url: "https://travel.state.gov/content/travel/en/passports/how-apply/photos.html",
+      },
+      {
+        label: "USCIS webinar: Form I-765 online filing for F-1 students seeking OPT",
+        url: "https://www.uscis.gov/sites/default/files/document/outreach-engagements/USCIS_Online_Filing_Webinar_Form_I-765_Application_for_Employment_Authorization_for_F-1_Students_Seeking_OPT.pdf",
+      },
+    ],
+    verified: "File rules checked against the USCIS and State Department pages in November 2026",
+    caveat:
+      "USCIS gives the photo size in inches, not pixels: 600 × 600 and 1200 × 1200 pixels are our choice for a 2 × 2 inch photo, not a USCIS rule. In December 2025 USCIS announced it will no longer use photos that applicants submit themselves, so it may take your photo at a biometrics appointment even though the online form still asks for an upload. Rules for how recent the photo must be, and which documents your category needs, are in the current Form I-765 instructions; follow those and your school's DSO. This page is not legal advice.",
+    steps: [
+      "Start with a recent straight-on photo against a plain white or off-white background, without glasses.",
+      "Choose 600 × 600 or 1200 × 1200 pixels. Both are a 2 × 2 inch square; the larger one keeps more detail.",
+      "Drop the photo in. It's centred and cropped to a square and saved as a JPEG far below the 6MB limit.",
+      "For documents (I-20, I-94, passport, earlier EAD, degree evidence), scan or photograph each one and check the file is a PDF or JPG under 6MB. If it is too big, compress it with the tools linked below.",
+    ],
+    tips: [
+      "Leave space around your head in the original; the square crop removes the sides of a tall photo.",
+      "Name files with plain English letters, numbers, spaces, periods, hyphens, underscores and parentheses. USCIS's webinar says other characters can make an upload fail.",
+      "If a PDF is locked with a password, make an unlocked copy first with PDF Unlock, and combine the front and back of a card into one file with JPG to PDF or Merge PDF.",
+      "iPhone photos are often HEIC, which USCIS does not list. Convert them with HEIC to JPG first.",
+    ],
+    faqs: [
+      {
+        question: "What is the file size limit for uploading documents to USCIS online?",
+        answer:
+          "USCIS's online filing tips say files must not be larger than 6MB and must be PDF, JPG, JPEG, TIF or TIFF. Some schools report a higher limit on certain forms, but staying under 6MB is safe either way.",
+      },
+      {
+        question: "What size is the photo for the online I-765 for OPT?",
+        answer:
+          "A passport-style photo, 2 × 2 inches, following the State Department's passport photo rules. USCIS does not publish a pixel size, so this tool makes an exact square at 600 × 600 or 1200 × 1200 pixels.",
+      },
+      {
+        question: "Does USCIS still use the photo I upload?",
+        answer:
+          "USCIS announced in December 2025 that it will no longer use self-submitted photos. The online form may still ask for one, and advisers have suggested continuing to upload it until the form instructions change. USCIS may also schedule you for biometrics.",
+      },
+      {
+        question: "My I-20 PDF is too large to upload. What should I do?",
+        answer:
+          "Use the Compress PDF tool to shrink it, or a size tool such as Compress PDF to 500KB. Scanned pages shrink a lot. Check the result is still easy to read before you upload it.",
+      },
+      {
+        question: "Are my photo and documents uploaded to FitTheFile?",
+        answer: "No. Everything runs in your browser, so your passport, I-20 and other files never leave your device.",
+      },
+    ],
+    related: ["compress-pdf", "jpg-to-pdf", "merge-pdf", "pdf-unlock", "heic-to-jpg", "image-crop"],
+    guides: ["how-to-compress-pdf-to-200kb", "how-to-unlock-pdf-remove-password"],
+  },
 ];
 
 export function getExamPage(slug: string) {

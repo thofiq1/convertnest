@@ -49,6 +49,8 @@ function encode(img: HTMLImageElement, w: number, h: number, q: number): Promise
 // make the image a little smaller than to crush the quality.
 const MIN_GOOD_QUALITY = 0.5;
 // Don't shrink below this on the short side just to keep quality up.
+// Show big limits in MB ("6 MB") instead of "6000 KB".
+const kbLabel = (kb: number) => (kb >= 1000 && kb % 500 === 0 ? `${kb / 1000} MB` : `${kb} KB`);
 const MIN_SIDE = 160;
 
 // Finds the highest JPG quality that fits under the target. If the best
@@ -211,7 +213,7 @@ export default function TargetSizeCompressor({
           {preset && (
             <p style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
               Output: JPG, exactly {preset.width} × {preset.height}px,{" "}
-              {preset.minKb ? `${preset.minKb}–${preset.maxKb} KB` : `under ${preset.maxKb} KB`}
+              {preset.minKb ? `${preset.minKb}–${preset.maxKb} KB` : `under ${kbLabel(preset.maxKb)}`}
               {preset.fit === "contain" ? " · fitted on white, nothing cut off" : " · centred and cropped to fit"}
             </p>
           )}
@@ -291,7 +293,7 @@ export default function TargetSizeCompressor({
                 {result.reachedTarget
                   ? result.minKb
                     ? `✓ ${fmt(result.size)} — within ${result.minKb}–${result.targetKb} KB`
-                    : `✓ ${fmt(result.size)} — under ${result.targetKb} KB`
+                    : `✓ ${fmt(result.size)} — under ${kbLabel(result.targetKb)}`
                   : `Smallest we could reach: ${fmt(result.size)}`}
               </p>
               <p style={{ color: "var(--muted)", fontSize: "0.85rem", lineHeight: 1.7 }}>

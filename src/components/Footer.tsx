@@ -89,6 +89,7 @@ export default function Footer() {
               { href: "/ibps-photo-signature-resizer", label: "IBPS Photo & Signature" },
               { href: "/us-visa-photo-resizer", label: "US Visa Photo" },
               { href: "/india-visa-photo-resizer", label: "India Visa Photo" },
+              { href: "/uscis-i-765-opt-photo-document-resizer", label: "OPT / I-765 Photo & Files" },
               { href: "/pan-card-photo-signature-resizer", label: "PAN Card Photo & Signature" },
               { href: "/image-converter", label: "Image Converter" },
               { href: "/image-resizer", label: "Image Resizer" },
